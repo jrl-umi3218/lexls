@@ -763,7 +763,8 @@ namespace LexLS
                 {
                     normalIteration = false;
 
-                    printf("\n\nWARNING: normalIteration = false \n\n");
+                    /// @todo Commented out.
+                    //printf("\n\nWARNING: normalIteration = false \n\n");
                 }
             }
 

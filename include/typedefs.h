@@ -15,6 +15,7 @@ namespace LexLS
     typedef int Index;
     typedef double RealScalar;
 
+    /// @todo Why MatrixType, but dVectortype?
     typedef Eigen::Matrix<RealScalar, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> MatrixType;    
     //typedef Eigen::Matrix<RealScalar, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixType; 
     

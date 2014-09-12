@@ -10,6 +10,8 @@
 #include "lexls_common.h"
 
 
+const int MIN_INPUTS = 1;
+const int MAX_INPUTS = 2;
 const int MIN_OUTPUTS = 1;
 const int MAX_OUTPUTS = 3;
 const int MIN_NUMBER_OF_FIELDS_IN_OBJ = 2;
@@ -21,64 +23,55 @@ const int MIN_NUMBER_OF_FIELDS_IN_OBJ = 2;
 void mexFunction( int num_output, mxArray *output[],
                   int num_input, const mxArray *input[])
 {
-    checkInputOutput(num_output, output, num_input, input, MIN_OUTPUTS, MAX_OUTPUTS, MIN_NUMBER_OF_FIELDS_IN_OBJ);
+    checkInputOutput(num_output, output, num_input, input, 
+                    MIN_OUTPUTS, MAX_OUTPUTS, MIN_INPUTS, MAX_INPUTS,
+                    MIN_NUMBER_OF_FIELDS_IN_OBJ);
 
 // parameters of the solver
     double linear_dependence_tolerance = 0.0;
-    bool linear_dependence_tolerance_is_set = false;
-    bool fixed_variables_enabled = false;
+    bool is_linear_dependence_tolerance_set = false;
+    bool is_variables_fixing_enabled = false;
 
-    if (num_input == 2)
-    {
-        mxArray *linear_dependence_tolerance_option = mxGetField (input[1], 0, "linear_dependence_tolerance");
-
-        if (linear_dependence_tolerance_option != NULL) 
-        {
-            // if there is such field
-            failIfTrue (!mxIsDouble(linear_dependence_tolerance_option), "Tolerance must be of 'double' type.");
-            linear_dependence_tolerance = mxGetPr(linear_dependence_tolerance_option)[0];
-            linear_dependence_tolerance_is_set = true;
-        }
-
-
-        mxArray * enable_fixed_variables_option = mxGetField (input[1], 0, "enable_fixed_variables");
-
-        if (enable_fixed_variables_option != NULL) 
-        {
-            failIfTrue (!mxIsDouble(enable_fixed_variables_option), "Flag options must be of 'double' type.");
-            if (*mxGetPr(enable_fixed_variables_option) != 0)
-            {
-                fixed_variables_enabled = true;
-            }
-        }
-    }
 
 // parse parameters
 
-    LexLS::Index num_obj = mxGetNumberOfElements (input[0]);
+    if (num_input == 2)
+    {
+        const mxArray *options = input[1];
+
+        is_linear_dependence_tolerance_set = getOptionDouble(   &linear_dependence_tolerance, 
+                                                                options, 
+                                                                "linear_dependence_tolerance");
+        
+        is_variables_fixing_enabled = getOptionBool(options, "enable_fixed_variables", is_variables_fixing_enabled);
+    }
+
+// parse objectives
+
+    const mxArray *objectives = input[0];
+
+    LexLS::Index num_obj = mxGetNumberOfElements (objectives);
     int index_first_normal_obj = 0;
 
     mxArray *fixed_var_i = NULL;
     mxArray *fixed_var_b = NULL;
 
 
-    if (fixed_variables_enabled)
+    if (is_variables_fixing_enabled)
     { // fixed variables
-        mxArray *A = mxGetField (input[0], 0, "A");
-        mxArray *b = mxGetField (input[0], 0, "b");
+        mxArray *A = getObjectiveMatrix(objectives, 0, "A");
+        mxArray *b = getObjectiveMatrix(objectives, 0, "b");
+            
 
     // check A and b
-        checkInputMatrix(A, "A");
-        checkInputMatrix(b, "b");
-
         int num_rows = mxGetM(A);
-        checkInputMatrixSize(A, num_rows, 1, "A");
-        checkInputMatrixSize(b, num_rows, 1, "b");
+        checkInputMatrixSize(A, num_rows, 1, 0, "A");
+        checkInputMatrixSize(b, num_rows, 1, 0, "b");
 
         fixed_var_i = A;
         fixed_var_b = b;
 
-        fixed_variables_enabled = true;
+        is_variables_fixing_enabled = true;
         index_first_normal_obj = 1;
         --num_obj;
     }
@@ -97,13 +90,10 @@ void mexFunction( int num_output, mxArray *output[],
             index_obj < num_obj; 
             ++index_obj, ++i)
     {
-        mxArray *A = mxGetField (input[0], i, "A");
-        mxArray *b = mxGetField (input[0], i, "b");
+        mxArray *A = getObjectiveMatrix(objectives, i, "A");
+        mxArray *b = getObjectiveMatrix(objectives, i, "b");
 
     // check A and b
-        checkInputMatrix(A, "A");
-        checkInputMatrix(b, "b");
-
         num_constr[index_obj] = mxGetM(A);
         total_num_constr += num_constr[index_obj];
 
@@ -112,8 +102,8 @@ void mexFunction( int num_output, mxArray *output[],
             num_var = mxGetN(A);
         }
 
-        checkInputMatrixSize(A, num_constr[index_obj], num_var, "A");
-        checkInputMatrixSize(b, num_constr[index_obj], 1, "b");
+        checkInputMatrixSize(A, num_constr[index_obj], num_var, i, "A");
+        checkInputMatrixSize(b, num_constr[index_obj], 1, i, "b");
 
 
     // form Ab = [A, b]
@@ -144,13 +134,13 @@ void mexFunction( int num_output, mxArray *output[],
         LexLS::LexLSE lexlse(num_var, num_obj, num_constr.data());
 
         // tolerance
-        if (linear_dependence_tolerance_is_set)
+        if (is_linear_dependence_tolerance_set)
         {
             lexlse.setTolerance(linear_dependence_tolerance);
         }
 
         // fixed variables
-        if (fixed_variables_enabled)
+        if (is_variables_fixing_enabled)
         {
             int fixed_var_num = mxGetM(fixed_var_i);
 

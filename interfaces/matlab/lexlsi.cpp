@@ -8,6 +8,8 @@
 
 #include "lexls_common.h"
 
+const int MIN_INPUTS = 1;
+const int MAX_INPUTS = 4;
 const int MIN_OUTPUTS = 1;
 const int MAX_OUTPUTS = 4;
 const int MIN_NUMBER_OF_FIELDS_IN_OBJ = 3;
@@ -78,77 +80,56 @@ mxArray * formInfoStructure (
 void mexFunction( int num_output, mxArray *output[],
                   int num_input, const mxArray *input[])
 {
-    checkInputOutput(num_output, output, num_input, input, MIN_OUTPUTS, MAX_OUTPUTS, MIN_NUMBER_OF_FIELDS_IN_OBJ);
+    checkInputOutput(num_output, output, num_input, input, 
+                    MIN_OUTPUTS, MAX_OUTPUTS, MIN_INPUTS, MAX_INPUTS,
+                    MIN_NUMBER_OF_FIELDS_IN_OBJ);
 
 // parameters of the solver
     double linear_dependence_tolerance = 0.0;
     double deactivation_tolerance = 0.0;
-    bool tolerances_are_given = false;
+    bool is_linear_dependence_tolerance_set = false;
+    bool is_deactivation_tolerance_set = false;
 
-    bool simple_bounds_enabled = false;
-    bool max_iterations_set = false;
-    bool cycling_option_enabled = false;
+    bool is_simple_bounds_handling_enabled = false;
+    bool is_max_iterations_set = false;
+    bool is_cycling_handling_enabled = false;
 
     int max_iterations;
     int max_stall_iterations;
 
-    if (num_input == 2)
-    {
-        mxArray * linear_dependence_tolerance_opt   = mxGetField (input[1], 0, "linear_dependence_tolerance");
-        mxArray * deactivation_tolerance_opt        = mxGetField (input[1], 0, "deactivation_tolerance");
-
-        if ((linear_dependence_tolerance_opt == NULL) || (deactivation_tolerance_opt == NULL))
-        {
-            //mexWarnMsgTxt("Some tolerances are not defined, the default ones are used.");
-        }
-        else
-        {
-            failIfTrue (!mxIsDouble(linear_dependence_tolerance_opt), "Tolerance must be of 'double' type.");
-            failIfTrue (!mxIsDouble(deactivation_tolerance_opt     ), "Tolerance must be of 'double' type.");
-
-            linear_dependence_tolerance     = mxGetPr(linear_dependence_tolerance_opt)[0];
-            deactivation_tolerance          = mxGetPr(deactivation_tolerance_opt     )[0];
-
-            tolerances_are_given = true;
-        }
-
-
-        mxArray * enable_simple_bounds_option = mxGetField (input[1], 0, "enable_simple_bounds");
-
-        if (enable_simple_bounds_option != NULL) 
-        {
-            failIfTrue (!mxIsDouble(enable_simple_bounds_option), "Flag options must be of 'double' type.");
-            if (*mxGetPr(enable_simple_bounds_option) != 0)
-            {
-                simple_bounds_enabled = true;
-            }
-        }
-
-        mxArray * max_iterations_option = mxGetField (input[1], 0, "max_iterations");
-
-        if (max_iterations_option != NULL) 
-        {
-            failIfTrue (!mxIsDouble(max_iterations_option), "Flag options must be of 'double' type.");
-            max_iterations = static_cast <int> (round(*mxGetPr(max_iterations_option)));
-            max_iterations_set = true;
-        }
-
-        mxArray * enable_cycling_handling_option = mxGetField (input[1], 0, "cycling_handling");
-
-        if (enable_cycling_handling_option != NULL) 
-        {
-            failIfTrue (!mxIsDouble(enable_cycling_handling_option), "Flag options must be of 'double' type.");
-            if (*mxGetPr(enable_cycling_handling_option) != 0)
-            {
-                max_stall_iterations = static_cast <int> (round(*mxGetPr(enable_cycling_handling_option)));
-                cycling_option_enabled = true;
-            }
-        }
-
-    }
 
 // parse parameters
-    LexLS::Index num_obj = mxGetNumberOfElements (input[0]);
+
+    if (num_input == 4)
+    {
+        const mxArray *options = input[3];
+
+        is_linear_dependence_tolerance_set = getOptionDouble(   &linear_dependence_tolerance, 
+                                                                options, 
+                                                                "linear_dependence_tolerance");
+
+        is_deactivation_tolerance_set = getOptionDouble(&deactivation_tolerance, 
+                                                        options, 
+                                                        "deactivation_tolerance");
+
+        if ((is_linear_dependence_tolerance_set && !is_deactivation_tolerance_set) ||
+            (!is_linear_dependence_tolerance_set && is_deactivation_tolerance_set))
+        {
+            mexWarnMsgTxt("Some tolerances are not defined, the default ones are used.");
+        }
+
+
+        is_simple_bounds_handling_enabled = getOptionBool(options, "enable_simple_bounds", is_simple_bounds_handling_enabled);
+
+        is_max_iterations_set = getOptionInteger(&max_iterations, options, "max_iterations");
+        is_cycling_handling_enabled = getOptionInteger(&max_stall_iterations, options, "cycling_handling");
+    }
+
+
+// parse objectives
+    const mxArray * objectives = input[0];
+
+    LexLS::Index num_obj = mxGetNumberOfElements (objectives);
 
     std::vector<mxArray *> constraints;
 
@@ -156,49 +137,32 @@ void mexFunction( int num_output, mxArray *output[],
     std::vector<LexLS::Index> num_constr;
     std::vector<LexLS::Index> simple_bounds_indicies;
 
-    std::vector<mxArray *> active_set;
 
     obj_type.resize(num_obj);
     num_constr.resize(num_obj);
-    active_set.resize(num_obj);
     constraints.resize(num_obj);
 
     int total_num_constr = 0;
     int first_normal_obj_index = 0;
 
 
-    if (simple_bounds_enabled)
+    if (is_simple_bounds_handling_enabled)
     { // simple bounds
-        mxArray *A = mxGetField (input[0], 0, "A");
-        mxArray *ub = mxGetField (input[0], 0, "ub");
-        mxArray *lb = mxGetField (input[0], 0, "lb");
-        mxArray *c = mxGetField (input[0], 0, "c");
+
+        mxArray *A = getObjectiveMatrix(objectives, 0, "A");
+        mxArray *lb = getObjectiveMatrix(objectives, 0, "lb");
+        mxArray *ub = getObjectiveMatrix(objectives, 0, "ub");
+
 
     // check A and b
-        checkInputMatrix(A, "A");
-        checkInputMatrix(lb, "lb");
-        checkInputMatrix(ub, "ub");
-
         num_constr[0] = mxGetM(A);
         total_num_constr += num_constr[0];
 
-        checkInputMatrixSize(A, num_constr[0], 1, "A");
-        checkInputMatrixSize(lb, num_constr[0], 1, "lb");
-        checkInputMatrixSize(ub, num_constr[0], 1, "ub");
+        checkInputMatrixSize(A, num_constr[0], 1, 0, "A");
+        checkInputMatrixSize(lb, num_constr[0], 1, 0, "lb");
+        checkInputMatrixSize(ub, num_constr[0], 1, 0, "ub");
 
 
-    // update active set
-        if ((c == NULL) || (mxIsEmpty (c)))
-        {
-            active_set[0] = NULL;
-        }
-        else
-        {
-            failIfTrue (!mxIsDouble(c), "Matrix 'c' must be of 'double' type.");
-            checkInputMatrixSize(c, num_constr[0], 1, "c");
-            active_set[0] = c;
-        }
-          
     // form[lb, ub]
         mxArray *cat_input[3];
         mxArray *cat_output[1];
@@ -237,16 +201,11 @@ void mexFunction( int num_output, mxArray *output[],
 
     for (int i = first_normal_obj_index; i < num_obj; ++i)
     {
-        mxArray *A = mxGetField (input[0], i, "A");
-        mxArray *ub = mxGetField (input[0], i, "ub");
-        mxArray *lb = mxGetField (input[0], i, "lb");
-        mxArray *c = mxGetField (input[0], i, "c");
+        mxArray *A = getObjectiveMatrix(objectives, i, "A");
+        mxArray *lb = getObjectiveMatrix(objectives, i, "lb");
+        mxArray *ub = getObjectiveMatrix(objectives, i, "ub");
 
     // check A and b
-        checkInputMatrix(A, "A");
-        checkInputMatrix(lb, "lb");
-        checkInputMatrix(ub, "ub");
-
         num_constr[i] = mxGetM(A);
         total_num_constr += num_constr[i];
 
@@ -255,21 +214,9 @@ void mexFunction( int num_output, mxArray *output[],
             num_var = mxGetN(A);
         }
 
-        checkInputMatrixSize(A, num_constr[i], num_var, "A");
-        checkInputMatrixSize(lb, num_constr[i], 1, "lb");
-        checkInputMatrixSize(ub, num_constr[i], 1, "ub");
-
-    // update active set
-        if ((c == NULL) || (mxIsEmpty (c)))
-        {
-            active_set[i] = NULL;
-        }
-        else
-        {
-            failIfTrue (!mxIsDouble(c), "Matrix 'c' must be of 'double' type.");
-            checkInputMatrixSize(c, num_constr[i], 1, "c");
-            active_set[i] = c;
-        }
+        checkInputMatrixSize(A, num_constr[i], num_var, i, "A");
+        checkInputMatrixSize(lb, num_constr[i], 1, i, "lb");
+        checkInputMatrixSize(ub, num_constr[i], 1, i, "ub");
 
     // form Ab = [A, b]
         mxArray *cat_input[4];
@@ -296,7 +243,57 @@ void mexFunction( int num_output, mxArray *output[],
     }
 
 
+// process active set guess
+    std::vector<mxArray *> active_set;
+    active_set.resize(num_obj);
 
+    if (num_input >= 2)
+    {
+        const mxArray *active_set_cell = input[1];
+
+        if ((active_set_cell != NULL) && (!mxIsEmpty (active_set_cell)))
+        {
+            failIfTrue (!mxIsCell(active_set_cell), "Active set must be of 'cell' type.");
+            failIfTrue (mxGetNumberOfElements(active_set_cell) != num_obj, "Wrong dimention of the active set.");
+
+            for (int i = 0; i < num_obj; ++i)
+            {
+                mxArray *c = mxGetCell (active_set_cell, i);
+                if ((c == NULL) || (mxIsEmpty (c)))
+                {
+                    active_set[i] = NULL;
+                }
+                else
+                {
+                    failIfTrue (!mxIsDouble(c), "Active set flags must be of 'double' type.");
+                    checkInputMatrixSize(c, num_constr[i], 1, "active set");
+                    active_set[i] = c;
+                }
+            }
+        }
+    }
+
+
+// process solution guess
+    const mxArray *x0 = NULL;
+    bool is_initial_guess_set = false;
+
+    if (num_input >= 3)
+    {
+        x0 = input[2];
+
+        if ((x0 != NULL) && (!mxIsEmpty (x0)) )
+        {
+            failIfTrue (!mxIsDouble(x0), "Initial guess must be of 'double' type.");
+
+            checkInputMatrixSize(x0, num_var, 1, "x0");
+            is_initial_guess_set = true;
+        }
+    }
+
+
+
+// instantiate LexLS
     LexLS::TerminationStatus status;
     LexLS::LexLSI lexlsi(num_var, num_obj, num_constr.data(), obj_type.data());
 
@@ -305,26 +302,26 @@ void mexFunction( int num_output, mxArray *output[],
     try
     {
         // tolerance
-        if (tolerances_are_given)
+        if (is_linear_dependence_tolerance_set && is_deactivation_tolerance_set)
         {
             lexlsi.setTolerance(    linear_dependence_tolerance,
                                     deactivation_tolerance);
         }
 
         // set maximum number of iterations
-        if (max_iterations_set)
+        if (is_max_iterations_set)
         {
             lexlsi.setMaxIter(max_iterations);
         }
 
         // cycling handling
-        if (cycling_option_enabled)
+        if (is_cycling_handling_enabled)
         {
             lexlsi.setCyclingHandling(max_stall_iterations);
         }
 
         // constraints
-        if (simple_bounds_enabled)
+        if (is_simple_bounds_handling_enabled)
         {
             lexlsi.setData(
                     0, 
@@ -344,7 +341,24 @@ void mexFunction( int num_output, mxArray *output[],
                         num_var + 2));
         }
 
-    // activate constraints
+
+        // set initial guess
+        if (is_initial_guess_set)
+        {
+            /// @todo Map does not work for some reason
+            //lexlsi.set_x0(Eigen::Map<LexLS::dVectorType>(mxGetPr(x0), num_var));
+            LexLS::dVectorType x0_in(num_var);
+
+            for (int i = 0; i < num_var; ++i)
+            {
+                x0_in(i) = (static_cast <const double *> (x0))[i];
+            }
+
+            lexlsi.set_x0(x0_in);
+        }
+
+
+        // activate constraints
         for (int i = 0; i < num_obj; ++i)
         {
             if (active_set[i] == NULL)
@@ -489,5 +503,3 @@ void mexFunction( int num_output, mxArray *output[],
         }
     }
 }
-
-
