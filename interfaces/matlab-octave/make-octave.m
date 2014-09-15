@@ -3,12 +3,10 @@
 %
 % http://stackoverflow.com/questions/15568925/mex-files-on-mountain-lion-explicit-instantiation-error
 
-system('rm -rf *.mexmaci*');
 
 % ------------------------------------------------------------
 % compilation settings
 % ------------------------------------------------------------
-CXX           = 'g++';
 EIGEN_INCLUDE = '/usr/local/include/eigen3';
 LEXLS_INCLUDE = '../../include';
 
@@ -21,7 +19,6 @@ FILE{2}       = 'lexlsi.cpp';
 INCLUDES = ['-I', EIGEN_INCLUDE, ' -I', LEXLS_INCLUDE];
 
 for i=1:length(FILE)
-%  cc = ['mex ', 'CXX=', CXX, ' ', INCLUDES, ' ', FILE{i}];
   cc = ['mex -v', ' ', INCLUDES, ' ', FILE{i}];
 
   disp(cc);
