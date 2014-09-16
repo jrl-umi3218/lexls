@@ -12,6 +12,7 @@
 namespace LexLS
 {
 
+    /// @todo Why not unsigned?
     typedef int Index;
     typedef double RealScalar;
 

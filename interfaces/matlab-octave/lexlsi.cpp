@@ -20,7 +20,7 @@ enum ConstraintActivationType
     BOUNDS_INACTIVE = 0,
     LOWER_BOUND_ACTIVE = 1,
     UPPER_BOUND_ACTIVE = 2,
-    EQUALITY_CONSTRAINT = 3,
+    EQUALITY_CONSTRAINT = 3
 };
 
 
@@ -351,7 +351,7 @@ void mexFunction( int num_output, mxArray *output[],
 
             for (int i = 0; i < num_var; ++i)
             {
-                x0_in(i) = (static_cast <const double *> (x0))[i];
+                x0_in(i) = (static_cast <const double *> (mxGetPr(x0)))[i];
             }
 
             lexlsi.set_x0(x0_in);
@@ -441,23 +441,22 @@ void mexFunction( int num_output, mxArray *output[],
         output[2] = mxCreateCellMatrix(num_obj, 1);
         for (int i = 0; i < num_obj; ++i)
         {
-            mxArray * wi;
 
             try
             {
                 LexLS::dVectorType& w = lexlsi.getResidual(i);
-                wi = mxCreateDoubleMatrix(num_constr[i], 1, mxREAL);
+                mxArray * wi = mxCreateDoubleMatrix(num_constr[i], 1, mxREAL);
                 for (int j = 0; j < num_constr[i]; ++j)
                 {
                     mxGetPr(wi)[j] = w(j);
                 }
+            
+                mxSetCell(output[2], i, wi);
             }
             catch (std::exception &e)
             {
                 mexErrMsgTxt(e.what());
             }
-
-            mxSetCell(output[2], i, wi);
         }
     }
 
@@ -481,7 +480,7 @@ void mexFunction( int num_output, mxArray *output[],
             }
 
             mxArray * active_constraints = mxCreateDoubleMatrix(lexlsi_active_constraints.size(), 1, mxREAL);
-            for (int j = 0; j < lexlsi_active_constraints.size(); ++j)
+            for (unsigned int j = 0; j < lexlsi_active_constraints.size(); ++j)
             {
                 switch (lexlsi_active_constraints[j])
                 {

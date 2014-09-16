@@ -13,6 +13,7 @@ LEXLS_INCLUDE = '../../include';
 FILE{1}       = 'lexlse.cpp';
 FILE{2}       = 'lexlsi.cpp';
 
+%setenv('CXXFLAGS', cstrcat(octave_config_info.CXXFLAGS, ' -pedantic -Wall -std=c++98 '))
 % ------------------------------------------------------------
 % compilation 
 % ------------------------------------------------------------

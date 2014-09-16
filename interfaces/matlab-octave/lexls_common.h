@@ -60,7 +60,7 @@ void checkInputMatrix(const mxArray *M, const int objective_index, const char *n
 }
 
 
-void checkInputMatrixSize(const mxArray *M, const int nrows, const int ncols, const int objective_index, const char *name)
+void checkInputMatrixSize(const mxArray *M, const unsigned int nrows, const unsigned int ncols, const int objective_index, const char *name)
 {
     std::stringstream str_objective_index;
     str_objective_index << objective_index + 1;
@@ -70,7 +70,7 @@ void checkInputMatrixSize(const mxArray *M, const int nrows, const int ncols, co
 }
 
 
-void checkInputMatrixSize(const mxArray *M, const int nrows, const int ncols, const char *name)
+void checkInputMatrixSize(const mxArray *M, const unsigned int nrows, const unsigned int ncols, const char *name)
 {
     failIfTrue (mxGetM(M) != nrows, (std::string("Wrong number of rows in matrix '") + name + "'.").c_str());
     failIfTrue (mxGetN(M) != ncols, (std::string("Wrong number of columns in matrix '") + name + "'.").c_str());
