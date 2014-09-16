@@ -95,7 +95,6 @@ void mexFunction( int num_output, mxArray *output[],
     bool is_cycling_handling_enabled = false;
 
     int max_iterations;
-    int max_stall_iterations;
 
 
 // parse parameters
@@ -120,9 +119,9 @@ void mexFunction( int num_output, mxArray *output[],
 
 
         is_simple_bounds_handling_enabled = getOptionBool(options, "enable_simple_bounds", is_simple_bounds_handling_enabled);
+        is_cycling_handling_enabled = getOptionBool(options, "cycling_handling", is_cycling_handling_enabled);
 
         is_max_iterations_set = getOptionInteger(&max_iterations, options, "max_iterations");
-        is_cycling_handling_enabled = getOptionInteger(&max_stall_iterations, options, "cycling_handling");
     }
 
 
@@ -317,7 +316,7 @@ void mexFunction( int num_output, mxArray *output[],
         // cycling handling
         if (is_cycling_handling_enabled)
         {
-            lexlsi.setCyclingHandling(max_stall_iterations);
+            lexlsi.setCyclingHandling(true);
         }
 
         // constraints
