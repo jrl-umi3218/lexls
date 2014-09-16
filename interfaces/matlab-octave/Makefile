@@ -10,6 +10,4 @@ octave:
 clean:
 	rm -f *.o
 	rm -f *.mexmaci*
-
-forceclean: clean
 	rm -f *.mex
