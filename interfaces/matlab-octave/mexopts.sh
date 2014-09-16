@@ -163,7 +163,7 @@ echo "Error: Did not imbed 'options.sh' code"; exit 1 #imbed options.sh maci 12
             # CkeyManufacturer: GNU
             # CkeyLanguage: C
             # CkeyVersion:
-            CC='gcc'
+            CC='llvm-gcc'
             SDKROOT='/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk'
             MACOSX_DEPLOYMENT_TARGET='10.7'
             ARCHS='x86_64'
@@ -178,7 +178,7 @@ echo "Error: Did not imbed 'options.sh' code"; exit 1 #imbed options.sh maci 12
             # C++keyManufacturer: GNU
             # C++keyLanguage: C++
             # C++keyVersion: 
-            CXX=g++
+            CXX=llvm-g++
             CXXFLAGS="-fno-common -no-cpp-precomp -fexceptions -arch $ARCHS -isysroot $SDKROOT -mmacosx-version-min=$MACOSX_DEPLOYMENT_TARGET"
             CXXLIBS="$MLIBS -lstdc++"
             CXXOPTIMFLAGS='-O2 -DNDEBUG'
