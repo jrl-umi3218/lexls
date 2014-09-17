@@ -170,7 +170,8 @@ echo "Error: Did not imbed 'options.sh' code"; exit 1 #imbed options.sh maci 12
             CFLAGS="-fno-common -no-cpp-precomp -arch $ARCHS -isysroot $SDKROOT -mmacosx-version-min=$MACOSX_DEPLOYMENT_TARGET"
             CFLAGS="$CFLAGS  -fexceptions"
             CLIBS="$MLIBS"
-            COPTIMFLAGS='-O2 -DNDEBUG'
+#            COPTIMFLAGS='-O2 -DNDEBUG'
+            COPTIMFLAGS='-O2'
             CDEBUGFLAGS='-g'
 #
             CLIBS="$CLIBS -lstdc++"
@@ -181,7 +182,8 @@ echo "Error: Did not imbed 'options.sh' code"; exit 1 #imbed options.sh maci 12
             CXX=llvm-g++
             CXXFLAGS="-fno-common -no-cpp-precomp -fexceptions -arch $ARCHS -isysroot $SDKROOT -mmacosx-version-min=$MACOSX_DEPLOYMENT_TARGET"
             CXXLIBS="$MLIBS -lstdc++"
-            CXXOPTIMFLAGS='-O2 -DNDEBUG'
+#            CXXOPTIMFLAGS='-O2 -DNDEBUG'
+            CXXOPTIMFLAGS='-O2'
             CXXDEBUGFLAGS='-g'
 #
             # FortrankeyName: GNU Fortran

@@ -1,4 +1,4 @@
-// Time-stamp: <2014-07-15 14:30:56 drdv>
+// Time-stamp: <2014-09-17 11:47:37 drdv>
 #ifndef OBJECTIVE
 #define OBJECTIVE
 
@@ -568,22 +568,41 @@ namespace LexLS
         }
 
         /**
-           \brief Modify upper or lower bound (ObjType = DEFAULT_OBJECTIVE)
+           \brief Modify upper or lower bound
         */
         void relax_bounds(Index CtrIndex, ConstraintType CtrType, RealScalar p)
         {
+            Index lbIndex, ubIndex;
+
+            // ----------------------------------------------------
+            if (ObjType == DEFAULT_OBJECTIVE)
+            {
+                lbIndex = nVar;
+                ubIndex = nVar+1;
+            }
+            else if (ObjType == SIMPLE_BOUNDS_OBJECTIVE_HP)
+            {
+                lbIndex = 0;
+                ubIndex = 1;
+            }
+            else
+            {
+                throw Exception("Unknown objective type");
+            }
+            // ----------------------------------------------------
             if (CtrType == LOWER_BOUND)
             {
-                data(CtrIndex,nVar) -= p; // relax lower-bound
+                data(CtrIndex,lbIndex) -= p; // relax lower-bound
             }
             else if (CtrType == UPPER_BOUND)
             {
-                data(CtrIndex,nVar+1) += p; // relax upper-bound
+                data(CtrIndex,ubIndex) += p; // relax upper-bound
             }
             else
             {
                 throw Exception("Should not be here");
             }
+            // ----------------------------------------------------
                 
         }
 

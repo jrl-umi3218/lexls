@@ -1,4 +1,4 @@
-// Time-stamp: <2014-07-29 17:29:10 drdv>
+// Time-stamp: <2014-09-17 11:46:10 drdv>
 #ifndef CYCLING
 #define CYCLING
 
@@ -87,7 +87,7 @@ namespace LexLS
                         }
                         else
                         {
-                            relax_constraints(Obj);
+                            relax_bounds(Obj);
                         }
                     }
 
@@ -112,7 +112,7 @@ namespace LexLS
                         }
                         else
                         {
-                            relax_constraints(Obj);
+                            relax_bounds(Obj);
                         }
                     }
    
@@ -150,7 +150,7 @@ namespace LexLS
             return condition;
         }
 
-        void relax_constraints(std::vector<Objective> &Obj)
+        void relax_bounds(std::vector<Objective> &Obj)
         {
             for (Index k=0; k<CtrRemoved.size(); k++)
             {
