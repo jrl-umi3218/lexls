@@ -15,10 +15,10 @@ namespace LexLS
     public:
     
         CyclingHandlerType():
-            relax_step(1e-08),
-            previous_operation(UNDEFINED),
             counter(0),
-            max_counter(50)
+            max_counter(50),
+            relax_step(1e-08),
+            previous_operation(UNDEFINED)
         {
 
         }

@@ -97,7 +97,8 @@ namespace LexLS
         */
         void factorize()
         { 
-            RealScalar maxColNormValue, normTrailingRHS, tau, PivotValue;
+            /// @todo unused variable normTrailingRHS deleted
+            RealScalar maxColNormValue, tau, PivotValue;
             Index RemainingRows, ObjRank, ObjDim, TotalRank, maxColNormIndex;
 
             Index RowIndex;                   // Current constraint
@@ -742,7 +743,8 @@ namespace LexLS
 
             Eigen::JacobiRotation<RealScalar> G;
 
-            RealScalar c, s, x1_, x2_;
+            /// @todo unused variables deleted
+            //RealScalar c, s, x1_, x2_;
 
             for (Index k=0; k<ColDim; k++)
             {

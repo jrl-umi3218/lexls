@@ -14,6 +14,8 @@ FILE{1}       = 'lexlse.cpp';
 FILE{2}       = 'lexlsi.cpp';
 
 %setenv('CXXFLAGS', cstrcat(octave_config_info.CXXFLAGS, ' -pedantic -Wall -std=c++98 '))
+%setenv('CXXFLAGS', ' -g -pedantic -Wall -std=c++98 -O0 -fno-strict-aliasing  -D_THREAD_SAFE -pthread ')% -DNDEBUG')
+%setenv('DL_LDFLAGS', ' -g -shared -Wl,-x ');
 % ------------------------------------------------------------
 % compilation 
 % ------------------------------------------------------------
