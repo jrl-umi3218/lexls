@@ -2,6 +2,7 @@
 #include <cmath>
 #include <cstdarg>
 
+#include <stdint.h>
 #include <mex.h>
 #include <typedefs.h>
 #include <lexlse.h>

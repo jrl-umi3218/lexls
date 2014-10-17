@@ -1,6 +1,7 @@
 #include <vector>
 #include <cmath>
 
+#include <stdint.h>
 #include <mex.h>
 #include <typedefs.h>
 #include <lexlsi.h>
