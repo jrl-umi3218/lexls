@@ -1,4 +1,4 @@
-// Time-stamp: <2014-07-28 16:30:58 drdv>
+// Time-stamp: <2014-10-18 23:53:20 drdv>
 #ifndef LEXLSI
 #define LEXLSI
 
@@ -385,6 +385,19 @@ namespace LexLS
             Obj[ObjIndex].setData(VarIndex, data);
         }
 
+        /** 
+            \brief Set (a non-negative) regularization factor for objective ObjIndex
+
+            \note Regularization of an objective of type SIMPLE_BOUNDS_OBJECTIVE_HP is not performed
+        */        
+        void setRegularization(Index ObjIndex, RealScalar RegularizationFactor)
+        {
+            // @todo: check whether ObjIndex and RegularizationFactor make sense. 
+
+            regularization(ObjIndex) = RegularizationFactor;
+        }
+
+
         /**
            \brief Sets #CyclingHandling
         */
@@ -580,6 +593,8 @@ namespace LexLS
             // ObjDim_ + ObjOffset is pointer arithmetic
             lexlse.resize(nVar, nObj - ObjOffset, ObjDim_ + ObjOffset);
 
+            regularization.resize(nObj);
+
             nActive.resize(nObj);
             Obj.resize(nObj); 
             for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
@@ -600,7 +615,9 @@ namespace LexLS
             iterRemove = 0;
 
             x.setZero();
-            dx.setZero();   
+            dx.setZero();
+
+            regularization.setZero(); // by default there is no regularization
         }
 
         /** 
@@ -614,6 +631,10 @@ namespace LexLS
                 nActive(ObjIndex) = Obj[ObjIndex].getActiveCtrCount();
             lexlse.setObjDim(&nActive(0)+ObjOffset);
             
+            // skip the first regularization factor if the first objective is of type SIMPLE_BOUNDS_OBJECTIVE_HP
+            for (Index ObjIndex=0; ObjIndex<nObj-ObjOffset; ObjIndex++)
+                lexlse.setRegularization(ObjIndex,regularization(ObjIndex + ObjOffset));
+
             for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
                 Obj[ObjIndex].formLexLSE(lexlse, counter, ObjIndex-ObjOffset);
         }
@@ -670,35 +691,17 @@ namespace LexLS
         */
         bool findActiveCtr2Remove(Index &ObjIndex2Remove, Index &CtrIndex2Remove)
         {
-            bool DescentDirectionExists = false;
-            RealScalar tol, residual_norm;
-            Index dim;
-            
+            bool DescentDirectionExists = false;            
             for (Index ObjIndex=0; ObjIndex<nObj-ObjOffset; ObjIndex++) // loop over objectives of LexLSE problem
             {
-                // --------------------------------------------------
-                // determine exit tolerance for Lagrange multipliers
-                // --------------------------------------------------
-                if (0)
-                {
-                    dim = 0;
-                    residual_norm = 0;
-                    for (Index k=ObjIndex; k<nObj-ObjOffset; k++) 
-                    {
-                        dim           += Obj[k].getDim();
-                        residual_norm += Obj[k].get_wStarSquaredNorm();
-                    }
-                    tol = dim*DeactivationTolerance;
-                    if (residual_norm > 1)
-                        tol *= residual_norm;
-                }
-                else
-                {
-                    tol = DeactivationTolerance;
-                }
-                // --------------------------------------------------
-                
-                DescentDirectionExists = lexlse.ObjectiveSensitivity(ObjIndex, CtrIndex2Remove, ObjIndex2Remove, tol);
+                DescentDirectionExists = lexlse.ObjectiveSensitivity(ObjIndex, 
+                                                                     CtrIndex2Remove, 
+                                                                     ObjIndex2Remove, 
+                                                                     DeactivationTolerance,
+                                                                     Obj[ObjIndex].getOptimalResidual());
+
+                //DescentDirectionExists = lexlse.ObjectiveSensitivity(ObjIndex, CtrIndex2Remove, ObjIndex2Remove, DeactivationTolerance);
+
                 if (DescentDirectionExists)
                     break;
             }
@@ -914,6 +917,15 @@ namespace LexLS
             \brief The current descent direction from #x
         */
         dVectorType dx;
+
+        /** 
+            \brief A heuristic regularization for each objective
+
+            \note The number of elements is equal to the number of objectives (having a non-zero
+            regularization for objective of type SIMPLE_BOUNDS_OBJECTIVE_HP has no effect as it is
+            ignored)
+        */
+        dVectorType regularization; 
 
         /** 
             \brief Number of active constraints in each objective

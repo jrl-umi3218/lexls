@@ -1,4 +1,4 @@
-// Time-stamp: <2014-09-17 11:47:37 drdv>
+// Time-stamp: <2014-10-18 23:50:42 drdv>
 #ifndef OBJECTIVE
 #define OBJECTIVE
 
@@ -429,14 +429,6 @@ namespace LexLS
         // --------------------------------------------------------------------
         // set & get
         // --------------------------------------------------------------------
-
-        /**
-           \brief Returns the norm of #wStar
-        */
-        RealScalar get_wStarSquaredNorm()
-        {
-            return wStar.head(getActiveCtrCount()).squaredNorm();
-        }
         
         /**
            \brief Returns #wStar

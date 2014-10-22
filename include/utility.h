@@ -1,4 +1,4 @@
-// Time-stamp: <2014-07-15 14:34:54 drdv>
+// Time-stamp: <2014-10-21 21:01:59 drdv>
 #ifndef UTILITY
 #define UTILITY
 
@@ -271,6 +271,23 @@ namespace LexLS
     {
         double d = (double) rand() / (double) RAND_MAX;
         return min + d*(max - min);
+    }
+
+    /**
+       \brief Matlab does not display cout ... 
+    */
+    inline void print_eigen_matrix(MatrixType M, const char* variable_name)
+    {
+        printf(" %s = \n",variable_name);
+        for (Index d1=0; d1<M.rows(); d1++)
+        {
+            for (Index d2=0; d2<M.cols(); d2++)
+            {
+                printf(" % f ",M(d1,d2));
+            }
+            printf("\n");
+        }
+        printf("\n");
     }
     
 } // END namespace LexLS
