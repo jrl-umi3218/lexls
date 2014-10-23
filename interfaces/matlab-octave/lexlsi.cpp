@@ -25,6 +25,49 @@ enum ConstraintActivationType
 };
 
 
+
+class LexlsiOptions
+{
+    public:
+        bool    is_linear_dependence_tolerance_set;
+        double  linear_dependence_tolerance;
+
+        bool    is_deactivation_tolerance_set;
+        double  deactivation_tolerance;
+
+        bool    is_simple_bounds_handling_enabled;
+
+        bool    is_cycling_handling_enabled;
+
+        bool    is_max_iterations_set;
+        int     max_iterations;
+
+
+        bool                is_regularization_set;
+        std::vector<double> regularization;
+
+
+        LexlsiOptions()
+        {
+            is_linear_dependence_tolerance_set = false;
+            linear_dependence_tolerance = 0.0;
+
+            is_deactivation_tolerance_set = false;
+            deactivation_tolerance = 0.0;
+
+            is_simple_bounds_handling_enabled = false;
+
+            is_cycling_handling_enabled = false;
+
+            is_max_iterations_set = true;
+            max_iterations = 0;
+
+            is_regularization_set = false;
+        }
+};
+
+
+
 mxArray * formInfoStructure (
         const LexLS::TerminationStatus lexlsi_status, 
         const int num_activations, 
@@ -86,43 +129,46 @@ void mexFunction( int num_output, mxArray *output[],
                     MIN_NUMBER_OF_FIELDS_IN_OBJ);
 
 // parameters of the solver
-    double linear_dependence_tolerance = 0.0;
-    double deactivation_tolerance = 0.0;
-    bool is_linear_dependence_tolerance_set = false;
-    bool is_deactivation_tolerance_set = false;
-
-    bool is_simple_bounds_handling_enabled = false;
-    bool is_max_iterations_set = false;
-    bool is_cycling_handling_enabled = false;
-
-    int max_iterations;
+    LexlsiOptions   options;
 
 
 // parse parameters
 
     if (num_input == 4)
     {
-        const mxArray *options = input[3];
+        const mxArray *options_struct = input[3];
 
-        is_linear_dependence_tolerance_set = getOptionDouble(   &linear_dependence_tolerance, 
-                                                                options, 
-                                                                "linear_dependence_tolerance");
+        options.is_linear_dependence_tolerance_set = getOptionDouble(   &options.linear_dependence_tolerance, 
+                                                                        options_struct, 
+                                                                        "linear_dependence_tolerance");
 
-        is_deactivation_tolerance_set = getOptionDouble(&deactivation_tolerance, 
-                                                        options, 
-                                                        "deactivation_tolerance");
+        options.is_deactivation_tolerance_set = getOptionDouble(    &options.deactivation_tolerance, 
+                                                                    options_struct, 
+                                                                    "deactivation_tolerance");
 
-        if ((is_linear_dependence_tolerance_set && !is_deactivation_tolerance_set) ||
-            (!is_linear_dependence_tolerance_set && is_deactivation_tolerance_set))
+        if ( (! (options.is_linear_dependence_tolerance_set && options.is_deactivation_tolerance_set) ) &&
+             (options.is_linear_dependence_tolerance_set || options.is_deactivation_tolerance_set) )
         {
             mexWarnMsgTxt("Some tolerances are not defined, the default ones are used.");
         }
 
 
-        is_simple_bounds_handling_enabled = getOptionBool(options, "enable_simple_bounds", is_simple_bounds_handling_enabled);
-        is_cycling_handling_enabled = getOptionBool(options, "cycling_handling", is_cycling_handling_enabled);
+        options.is_simple_bounds_handling_enabled = getOptionBool(  options_struct, 
+                                                                    "enable_simple_bounds", 
+                                                                    options.is_simple_bounds_handling_enabled);
 
-        is_max_iterations_set = getOptionInteger(&max_iterations, options, "max_iterations");
+        options.is_cycling_handling_enabled = getOptionBool(options_struct, 
+                                                            "cycling_handling", 
+                                                            options.is_cycling_handling_enabled);
+
+        options.is_max_iterations_set = getOptionInteger(   &options.max_iterations, 
+                                                            options_struct, 
+                                                            "max_iterations");
+
+        options.is_regularization_set = getOptionArray( options.regularization, 
+                                                        mxGetNumberOfElements (input[0]),
+                                                        options_struct, 
+                                                        "regularization");
     }
 
 
@@ -146,7 +192,7 @@ void mexFunction( int num_output, mxArray *output[],
     int first_normal_obj_index = 0;
 
 
-    if (is_simple_bounds_handling_enabled)
+    if (options.is_simple_bounds_handling_enabled)
     { // simple bounds
 
         mxArray *A = getObjectiveMatrix(objectives, 0, "A");
@@ -164,24 +210,8 @@ void mexFunction( int num_output, mxArray *output[],
 
 
     // form[lb, ub]
-        mxArray *cat_input[3];
-        mxArray *cat_output[1];
-
-        mxArray *dimension = mxCreateDoubleMatrix (1, 1, mxREAL);
-        *mxGetPr(dimension) = 2;
-
-        cat_input[0] = dimension;
-        cat_input[1] = lb;
-        cat_input[2] = ub;
-
-        if(mexCallMATLAB (1, cat_output, 3, cat_input, "cat") != 0)
-        {
-            mexErrMsgTxt("catenation of A and b failed!");
-        }
-        mxDestroyArray(dimension);
-
     // remember objective
-        constraints[0] = cat_output[0];
+        constraints[0] = catenateMatrices(lb, ub);
         obj_type[0] = LexLS::SIMPLE_BOUNDS_OBJECTIVE_HP;
 
     // copy indices
@@ -219,26 +249,8 @@ void mexFunction( int num_output, mxArray *output[],
         checkInputMatrixSize(ub, num_constr[i], 1, i, "ub");
 
     // form Ab = [A, b]
-        mxArray *cat_input[4];
-        mxArray *cat_output[1];
-
-        mxArray *dimension = mxCreateDoubleMatrix (1, 1, mxREAL);
-        *mxGetPr(dimension) = 2;
-
-        cat_input[0] = dimension;
-        cat_input[1] = A;
-        cat_input[2] = lb;
-        cat_input[3] = ub;
-
-        if(mexCallMATLAB (1, cat_output, 4, cat_input, "cat") != 0)
-        {
-            mexErrMsgTxt("catenation of A and b failed!");
-        }
-        mxDestroyArray(dimension);
-
     // remember objective
-        constraints[i] = cat_output[0];
-
+        constraints[i] = catenateMatrices(A, lb, ub);
         obj_type[i] = LexLS::DEFAULT_OBJECTIVE;
     }
 
@@ -302,26 +314,35 @@ void mexFunction( int num_output, mxArray *output[],
     try
     {
         // tolerance
-        if (is_linear_dependence_tolerance_set && is_deactivation_tolerance_set)
+        if (options.is_linear_dependence_tolerance_set && options.is_deactivation_tolerance_set)
         {
-            lexlsi.setTolerance(    linear_dependence_tolerance,
-                                    deactivation_tolerance);
+            lexlsi.setTolerance(    options.linear_dependence_tolerance,
+                                    options.deactivation_tolerance);
         }
 
         // set maximum number of iterations
-        if (is_max_iterations_set)
+        if (options.is_max_iterations_set)
         {
-            lexlsi.setMaxIter(max_iterations);
+            lexlsi.setMaxIter(options.max_iterations);
         }
 
         // cycling handling
-        if (is_cycling_handling_enabled)
+        if (options.is_cycling_handling_enabled)
         {
             lexlsi.setCyclingHandling(true);
         }
 
+        // regularization
+        if (options.is_regularization_set)
+        {
+            for (int i = 0; i < num_obj; ++i)
+            {
+                lexlsi.setRegularization(i, options.regularization[i]);
+            }
+        }
+
         // constraints
-        if (is_simple_bounds_handling_enabled)
+        if (options.is_simple_bounds_handling_enabled)
         {
             lexlsi.setData(
                     0, 

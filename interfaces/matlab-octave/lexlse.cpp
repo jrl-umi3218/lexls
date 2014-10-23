@@ -18,6 +18,31 @@ const int MAX_OUTPUTS = 3;
 const int MIN_NUMBER_OF_FIELDS_IN_OBJ = 2;
 
 
+class LexlseOptions
+{
+    public:
+        bool    is_linear_dependence_tolerance_set;
+        double  linear_dependence_tolerance;
+
+        bool is_variables_fixing_enabled;
+
+        bool                is_regularization_set;
+        std::vector<double> regularization;
+
+
+        LexlseOptions()
+        {
+            is_linear_dependence_tolerance_set = false;
+            linear_dependence_tolerance = 0.0;
+
+            is_variables_fixing_enabled = false;
+
+            is_regularization_set = false;
+        }
+};
+
+
+
 /**
  * @brief The main function.
  */
@@ -29,22 +54,27 @@ void mexFunction( int num_output, mxArray *output[],
                     MIN_NUMBER_OF_FIELDS_IN_OBJ);
 
 // parameters of the solver
-    double linear_dependence_tolerance = 0.0;
-    bool is_linear_dependence_tolerance_set = false;
-    bool is_variables_fixing_enabled = false;
+    LexlseOptions options;
 
 
 // parse parameters
 
     if (num_input == 2)
     {
-        const mxArray *options = input[1];
+        const mxArray *options_struct = input[1];
 
-        is_linear_dependence_tolerance_set = getOptionDouble(   &linear_dependence_tolerance, 
-                                                                options, 
-                                                                "linear_dependence_tolerance");
+        options.is_linear_dependence_tolerance_set = getOptionDouble(   &options.linear_dependence_tolerance, 
+                                                                        options_struct, 
+                                                                        "linear_dependence_tolerance");
         
-        is_variables_fixing_enabled = getOptionBool(options, "enable_fixed_variables", is_variables_fixing_enabled);
+        options.is_variables_fixing_enabled = getOptionBool(    options_struct, 
+                                                                "enable_fixed_variables", 
+                                                                options.is_variables_fixing_enabled);
+
+        options.is_regularization_set = getOptionArray( options.regularization, 
+                                                        mxGetNumberOfElements (input[0]),
+                                                        options_struct, 
+                                                        "regularization");
     }
 
 // parse objectives
@@ -58,7 +88,7 @@ void mexFunction( int num_output, mxArray *output[],
     mxArray *fixed_var_b = NULL;
 
 
-    if (is_variables_fixing_enabled)
+    if (options.is_variables_fixing_enabled)
     { // fixed variables
         mxArray *A = getObjectiveMatrix(objectives, 0, "A");
         mxArray *b = getObjectiveMatrix(objectives, 0, "b");
@@ -72,7 +102,6 @@ void mexFunction( int num_output, mxArray *output[],
         fixed_var_i = A;
         fixed_var_b = b;
 
-        is_variables_fixing_enabled = true;
         index_first_normal_obj = 1;
         --num_obj;
     }
@@ -108,24 +137,8 @@ void mexFunction( int num_output, mxArray *output[],
 
 
     // form Ab = [A, b]
-        mxArray *cat_input[3];
-        mxArray *cat_output[1];
-
-        mxArray *dimension = mxCreateDoubleMatrix (1, 1, mxREAL);
-        *mxGetPr(dimension) = 2;
-
-        cat_input[0] = dimension;
-        cat_input[1] = A;
-        cat_input[2] = b;
-
-        if(mexCallMATLAB (1, cat_output, 3, cat_input, "cat") != 0)
-        {
-            mexErrMsgTxt("Catenation of A and b failed!");
-        }
-        mxDestroyArray(dimension);
-
     // remember objective
-        constraints[index_obj] = cat_output[0];
+        constraints[index_obj] = catenateMatrices(A, b);
     }
 
 
@@ -135,13 +148,13 @@ void mexFunction( int num_output, mxArray *output[],
         LexLS::LexLSE lexlse(num_var, num_obj, num_constr.data());
 
         // tolerance
-        if (is_linear_dependence_tolerance_set)
+        if (options.is_linear_dependence_tolerance_set)
         {
-            lexlse.setTolerance(linear_dependence_tolerance);
+            lexlse.setTolerance(options.linear_dependence_tolerance);
         }
 
         // fixed variables
-        if (is_variables_fixing_enabled)
+        if (options.is_variables_fixing_enabled)
         {
             int fixed_var_num = mxGetM(fixed_var_i);
 
@@ -157,6 +170,13 @@ void mexFunction( int num_output, mxArray *output[],
             }
         }
 
+        if (options.is_regularization_set)
+        {
+            for (int i = 0; i < num_obj; ++i)
+            {
+                lexlse.setRegularization(i, options.regularization[i]);
+            }
+        }
 
         // constraints
         for (int i = 0; i < num_obj; ++i)
