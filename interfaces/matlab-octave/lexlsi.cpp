@@ -59,7 +59,7 @@ class LexlsiOptions
 
             is_cycling_handling_enabled = false;
 
-            is_max_iterations_set = true;
+            is_max_iterations_set = false;
             max_iterations = 0;
 
             is_regularization_set = false;
