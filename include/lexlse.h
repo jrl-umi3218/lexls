@@ -1,4 +1,4 @@
-// Time-stamp: <2014-10-22 13:41:17 drdv>
+// Time-stamp: <2014-10-27 17:25:27 drdv>
 #ifndef LEXLSE
 #define LEXLSE
 
@@ -240,46 +240,16 @@ namespace LexLS
                 ObjRank = ObjInfo[ObjIndex].rank = ColIndex - FirstColIndex; // store the rank
 
                 // -----------------------------------------------------------------------
-                // Regularization of triangular part
+                // Regularization
                 // @todo: this implementation can be improved a lot
                 // -----------------------------------------------------------------------
-
-/*
-                if (ObjRank > 0)
-                { 
-                    dBlockType Rk(LQR,FirstRowIndex,FirstColIndex,ObjRank,ObjRank);
-                    RealScalar min_abs = std::abs(Rk(ObjRank-1,ObjRank-1));
-
-                    dVectorType rhs0 = LQR.col(nVar).segment(FirstRowIndex,ObjRank);
-                    Rk.triangularView<Eigen::Upper>().solveInPlace<Eigen::OnTheLeft>(rhs0);
-                         
-                    RealScalar max_norm = 1e+1;
-                    RealScalar actual_norm = rhs0.squaredNorm();
-                    if (actual_norm > max_norm)
-                    {
-                        //printf(" ObjIndex = %d, min_abs = %f, actual_norm = %e, ", ObjIndex, min_abs, actual_norm);
-                        //printf(" ObjIndex = %d, min_abs = %f, actual_norm = %e \n", ObjIndex, min_abs, actual_norm);
-                        regularization[ObjIndex] = 0.04;
-                    }
-                }
-*/
-/*
-                regularization[0] = 0.0;
-                regularization[1] = 0.0;
-                regularization[2] = 0.0;
-                regularization[3] = 0.04;
-                regularization[4] = 0.04;
-                regularization[5] = 0.04;
-                regularization[6] = 0.0;
-*/
-                // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                // TIKHONOV REGULARIZATION (very inefficient implementation!!!)
-                // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~                
-                // generate null-spaces                
                 if ( !isEqual(regularization[ObjIndex],0.0) ) // regularize if not equal to zero
                 {
                     if (ObjRank > 0)
                     {
+                        //printf("regularization[%d] = %e \n",ObjIndex,regularization[ObjIndex]);
+
+                        // generate null-spaces
                         std::vector<MatrixType> Zk;
                         std::vector<MatrixType> Nk;
                         Nk.push_back(MatrixType::Identity(nVar+1,nVar+1)); // include the rhs
@@ -309,13 +279,12 @@ namespace LexLS
 
                             Zk.push_back(tmp);
                             Nk.push_back(Nk.back()*tmp);
-
-                            //printf("k = %d, rows = %d, cols = %d \n",k, tmp.rows(), tmp.cols());
-                            //print_eigen_matrix(tmp,"tmp");
-                            //print_eigen_matrix(Nk[k+1],"Nk[k+1]");
                         }
 
-                        // solve regularized problem ([Rk,Tk])
+                        //===========================================
+                        // Tikhonov regularization (Z1*Y2*x2 + Z1*Z2*x2_bar)
+                        //===========================================
+/*
                         Index Nk_rows = Nk.back().rows();
                         Index Nk_cols = Nk.back().cols();
                         dBlockType Rk(LQR,FirstRowIndex,FirstColIndex        ,ObjRank,ObjRank);
@@ -332,55 +301,115 @@ namespace LexLS
                         T.block(0,0      ,ObjRank,ObjRank).triangularView<Eigen::Upper>() = Rk.triangularView<Eigen::Upper>();
                         T.block(0,ObjRank,ObjRank,Nk_cols-ObjRank) = Tk;
 
-                        //printf("ObjIndex = %d, Nk_rows = %d, Nk_cols = %d \n",ObjIndex, Nk_rows, Nk_cols);
-                        //print_eigen_matrix(T,"T");
-
-                        if (1) // Tikhonov regularization
-                        {
-                            Eigen::ColPivHouseholderQR<MatrixType> qr(T.leftCols(Nk_cols-1));
-                            dVectorType sol = qr.solve(T.col(Nk_cols-1));
+                        Eigen::ColPivHouseholderQR<MatrixType> qr(T.leftCols(Nk_cols-1));
+                        dVectorType sol = qr.solve(T.col(Nk_cols-1));
                         
-                            LQR.col(nVar).segment(FirstRowIndex,ObjRank) = Rk.triangularView<Eigen::Upper>() * 
-                                sol.head(ObjRank) + Tk.leftCols(Nk_cols-ObjRank-1)*sol.tail(Nk_cols-ObjRank-1);
-                        }
-                        else // Rk regularization
-                        {
-                            Eigen::ColPivHouseholderQR<MatrixType> qr(T.leftCols(ObjRank));
-                            dVectorType sol = qr.solve(T.col(Nk_cols-1));
-                        
-                            LQR.col(nVar).segment(FirstRowIndex,ObjRank) = Rk.triangularView<Eigen::Upper>() * sol;
-                        }
-                    }
-                }
-                // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                        LQR.col(nVar).segment(FirstRowIndex,ObjRank) = Rk.triangularView<Eigen::Upper>() * 
+                        sol.head(ObjRank) + Tk.leftCols(Nk_cols-ObjRank-1)*sol.tail(Nk_cols-ObjRank-1);
+*/
 
-                // -----------------------------------------------------------------------
-                // Simplified Rk regularization 
-                // -----------------------------------------------------------------------
+                        //===========================================
+                        // Basic-Tikhonov regularization (Y2*x2)
+                        //===========================================
 /*
-                if ( !isEqual(regularization[ObjIndex],0.0) ) // regularize if not equal to zero
-                {
-                    if (ObjRank > 0)
-                    {
+                        dBlockType Rk(LQR,FirstRowIndex,FirstColIndex,ObjRank,ObjRank);
+
                         MatrixType T(2*ObjRank,ObjRank+1);
                         T.setZero();
-                        T.col(ObjRank).head(ObjRank) = LQR.col(nVar).segment(FirstRowIndex,ObjRank);
+                       
+                        // set rhs
+                        T.col(ObjRank).head(ObjRank) = LQR.col(nVar).segment(FirstRowIndex,ObjRank);                      
                         
-                        T.block(ObjRank,0,ObjRank,ObjRank).setIdentity();
-                        T.block(ObjRank,0,ObjRank,ObjRank) *= regularization[ObjIndex];
-                        
-                        T.block(0,0,ObjRank,ObjRank)
-                            .triangularView<Eigen::Upper>() = LQR.block(FirstRowIndex,FirstColIndex,ObjRank,ObjRank)
-                            .triangularView<Eigen::Upper>();
+                        // set lhs
+                        T.block(0      ,0,ObjRank,ObjRank).triangularView<Eigen::Upper>() = Rk.triangularView<Eigen::Upper>();
+                        T.block(ObjRank,0,ObjRank,ObjRank) = regularization[ObjIndex] * MatrixType::Identity(ObjRank,ObjRank);
 
                         Eigen::ColPivHouseholderQR<MatrixType> qr(T.leftCols(ObjRank));
                         dVectorType sol = qr.solve(T.col(ObjRank));
 
-                        LQR.col(nVar).segment(FirstRowIndex,ObjRank) =
-                            LQR.block(FirstRowIndex,FirstColIndex,ObjRank,ObjRank).triangularView<Eigen::Upper>() * sol;
+                        LQR.col(nVar).segment(FirstRowIndex,ObjRank) = Rk.triangularView<Eigen::Upper>()*sol;
+*/
+                        
+                        //===========================================
+                        // Basic-Tikhonov regularization (Z1*Y2*x2)
+                        //===========================================
+/*
+                        Index Nk_rows = Nk.back().rows();
+
+                        dBlockType Rk(LQR,FirstRowIndex,FirstColIndex,ObjRank,ObjRank);
+
+                        MatrixType T(ObjRank+Nk_rows,ObjRank+1);
+                        T.setZero();
+                       
+                        // set rhs
+                        T.col(ObjRank).head(ObjRank) = LQR.col(nVar).segment(FirstRowIndex,ObjRank);                      
+                        
+                        // set lhs
+                        T.block(0      ,0,ObjRank,ObjRank).triangularView<Eigen::Upper>() = Rk.triangularView<Eigen::Upper>();
+                        T.block(ObjRank,0,Nk_rows,ObjRank) = regularization[ObjIndex]*Nk.back().leftCols(ObjRank);
+
+                        Eigen::ColPivHouseholderQR<MatrixType> qr(T.leftCols(ObjRank));
+                        dVectorType sol = qr.solve(T.col(ObjRank));
+
+                        LQR.col(nVar).segment(FirstRowIndex,ObjRank) = Rk.triangularView<Eigen::Upper>()*sol;
+*/
+
+                        //===========================================
+                        //regularization (Y2*x2 + x2_bar)
+                        //===========================================
+
+                        Index nVarRemaining = nVar - FirstColIndex;
+                        Index nLeftDoF = nVarRemaining - ObjRank;
+
+                        //printf("ObjIndex = %d, FirstColIndex = %d, nVar = %d, ObjRank = %d, nLeftDoF = %d, nVarRemaining = %d \n",ObjIndex, FirstColIndex, nVar, ObjRank, nLeftDoF, nVarRemaining);
+
+                        dBlockType Rk(LQR,FirstRowIndex,FirstColIndex,ObjRank,ObjRank);
+                        dBlockType Tk(LQR,FirstRowIndex,FirstColIndex+ObjRank,ObjRank,nLeftDoF);
+
+                        MatrixType T(2*ObjRank + nLeftDoF,2*ObjRank + nLeftDoF + 1);
+                        T.setZero();
+                       
+                        // set rhs
+                        T.col(nVarRemaining).head(ObjRank) = LQR.col(nVar).segment(FirstRowIndex,ObjRank);                      
+
+                        // set lhs
+                        T.block(0      ,0,ObjRank,ObjRank).triangularView<Eigen::Upper>() = Rk.triangularView<Eigen::Upper>();
+                        T.block(ObjRank,0,ObjRank,ObjRank) = regularization[ObjIndex] * MatrixType::Identity(ObjRank,ObjRank);
+
+                        T.block(ObjRank,ObjRank,nLeftDoF,nLeftDoF) = regularization[ObjIndex] * MatrixType::Identity(nLeftDoF,nLeftDoF);
+
+                        Eigen::ColPivHouseholderQR<MatrixType> qr(T.leftCols(nVarRemaining));
+                        dVectorType sol = qr.solve(T.col(nVarRemaining));
+
+                        LQR.col(nVar).segment(FirstRowIndex,ObjRank) = 
+                            Rk.triangularView<Eigen::Upper>() * sol.head(ObjRank); // + Tk*sol.tail(nLeftDoF);
+
+                        //===========================================
+                        // [I;I] (eye-eye) regularization (x2)
+                        //===========================================                        
+/*
+                        MatrixType T(2*ObjRank,ObjRank+1);
+                        T.setZero();
+                       
+                        // set rhs
+                        T.col(ObjRank).head(ObjRank) = LQR.col(nVar).segment(FirstRowIndex,ObjRank);                      
+                        
+                        // set lhs
+                        T.block(0      ,0,ObjRank,ObjRank).setIdentity();
+                        T.block(ObjRank,0,ObjRank,ObjRank).setIdentity();
+                        T.block(ObjRank,0,ObjRank,ObjRank) *= regularization[ObjIndex];
+
+                        Eigen::ColPivHouseholderQR<MatrixType> qr(T.leftCols(ObjRank));
+                        dVectorType sol = qr.solve(T.col(ObjRank));
+
+                        LQR.col(nVar).segment(FirstRowIndex,ObjRank) = sol;
+*/
                     }
                 }
-*/
+                // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
                 // -----------------------------------------------------------------------
 
                 if (ObjIndex < nObj-1) // if there are objectives with lower priority
@@ -843,8 +872,7 @@ namespace LexLS
         */
         bool ObjectiveSensitivity(Index ObjIndex, 
                                   Index &CtrIndex2Remove, Index &ObjIndex2Remove, 
-                                  RealScalar tolSensitivity,
-                                  dVectorType residual)
+                                  RealScalar tolSensitivity)
         {
             RealScalar maxAbsValue = 0.0;
             bool tmp_bool, FoundBetterDescentDirection = false;

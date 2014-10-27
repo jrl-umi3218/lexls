@@ -1,4 +1,4 @@
-// Time-stamp: <2014-10-18 23:53:20 drdv>
+// Time-stamp: <2014-10-27 17:25:45 drdv>
 #ifndef LEXLSI
 #define LEXLSI
 
@@ -694,13 +694,15 @@ namespace LexLS
             bool DescentDirectionExists = false;            
             for (Index ObjIndex=0; ObjIndex<nObj-ObjOffset; ObjIndex++) // loop over objectives of LexLSE problem
             {
+/*
                 DescentDirectionExists = lexlse.ObjectiveSensitivity(ObjIndex, 
                                                                      CtrIndex2Remove, 
                                                                      ObjIndex2Remove, 
                                                                      DeactivationTolerance,
                                                                      Obj[ObjIndex].getOptimalResidual());
+*/
 
-                //DescentDirectionExists = lexlse.ObjectiveSensitivity(ObjIndex, CtrIndex2Remove, ObjIndex2Remove, DeactivationTolerance);
+                DescentDirectionExists = lexlse.ObjectiveSensitivity(ObjIndex, CtrIndex2Remove, ObjIndex2Remove, DeactivationTolerance);
 
                 if (DescentDirectionExists)
                     break;

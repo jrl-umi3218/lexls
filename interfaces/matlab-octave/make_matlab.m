@@ -20,7 +20,8 @@ FILE{2}       = 'lexlsi.cpp';
 INCLUDES = ['-I', EIGEN_INCLUDE, ' -I', LEXLS_INCLUDE];
 
 for i=1:length(FILE)
-  cc = ['mex ', ' -v ', INCLUDES, ' ', FILE{i}];
+%  cc = ['mex ', ' -v ', INCLUDES, ' ', FILE{i}];
+  cc = ['mex ', INCLUDES, ' ', FILE{i}];
 
   disp(cc);
 

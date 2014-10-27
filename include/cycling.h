@@ -1,4 +1,4 @@
-// Time-stamp: <2014-10-20 10:59:38 drdv>
+// Time-stamp: <2014-10-27 16:11:08 drdv>
 #ifndef CYCLING
 #define CYCLING
 
@@ -16,7 +16,7 @@ namespace LexLS
     
         CyclingHandlerType():
             counter(0),
-            max_counter(1), //max_counter(50),
+            max_counter(1),
             relax_step(1e-08),
             previous_operation(UNDEFINED)
         {
