@@ -1,4 +1,4 @@
-// Time-stamp: <2014-10-27 16:11:08 drdv>
+// Time-stamp: <2014-10-29 16:17:17 drdv>
 #ifndef CYCLING
 #define CYCLING
 
@@ -16,7 +16,7 @@ namespace LexLS
     
         CyclingHandlerType():
             counter(0),
-            max_counter(1),
+            max_counter(50),
             relax_step(1e-08),
             previous_operation(UNDEFINED)
         {
@@ -158,6 +158,16 @@ namespace LexLS
                     .relax_bounds(CtrRemoved[k].getCtrIndex(), CtrRemoved[k].getCtrType(), relax_step);
             }
             counter++;
+        }
+
+        void set_max_counter(Index max_counter_)
+        {
+            max_counter = max_counter_;
+        }
+
+        void set_relax_step(RealScalar relax_step_)
+        {
+            relax_step = relax_step_;
         }
 
         /** 

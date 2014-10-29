@@ -1,4 +1,4 @@
-// Time-stamp: <2014-10-27 17:25:45 drdv>
+// Time-stamp: <2014-10-29 16:25:35 drdv>
 #ifndef LEXLSI
 #define LEXLSI
 
@@ -197,13 +197,13 @@ namespace LexLS
             {
                 verifyWorkingSet();
 
+//                printf("iter = %d, status = %d \n",iter, status);
+
 //                pfile << "------------------------------------------------------" << "\n";
 //                pfile << "iter = " << iter << "\n";
 //                pfile << "------------------------------------------------------" << "\n";
 //                pfile << getLambda() << "\n\n"; 
-
-                //printf("iter = %d \n", iter);
-                
+               
                 if ((status == PROBLEM_SOLVED) || (status == PROBLEM_SOLVED_CYCLING_HANDLING))
                 {
                     //cycling_handler.print_counter();
@@ -401,9 +401,11 @@ namespace LexLS
         /**
            \brief Sets #CyclingHandling
         */
-        void setCyclingHandling(bool CyclingHandling_)
+        void setCyclingHandling(bool CyclingHandling_, Index max_counter_ = 50, RealScalar relax_step_ = 1e-08)
         {
             CyclingHandling = CyclingHandling_;
+            cycling_handler.set_max_counter(max_counter_);
+            cycling_handler.set_relax_step(relax_step_);
         }
 
         /** 
@@ -823,7 +825,7 @@ namespace LexLS
                 }
             }
 
-            //printf("alpha = %f, status = %d\n", alpha, status);
+//            printf("alpha = %f, status = %d\n", alpha, status);
             
             if (alpha > 0) // take a step
             {
