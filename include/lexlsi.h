@@ -1,4 +1,4 @@
-// Time-stamp: <2014-10-29 16:25:35 drdv>
+// Time-stamp: <2014-10-30 10:51:31 drdv>
 #ifndef LEXLSI
 #define LEXLSI
 
@@ -35,8 +35,9 @@ namespace LexLS
             nObj(nObj_),
             iter(0),
             max_number_of_iterations(200),
-            LinearDependenceTolerance(1e-12),
-            DeactivationTolerance(1e-08),
+            tolLinearDependence(1e-12),
+            tolWrongSignLambda(1e-08),
+            tolCorrectSignLambda(1e-12),
             CyclingHandling(false),
             x0_is_initialized(false),
             status(TERMINATION_STATUS_UNKNOWN)
@@ -303,13 +304,15 @@ namespace LexLS
         /**
            \brief Sets tolerances
         */
-        void setTolerance(RealScalar LinearDependenceTolerance_, 
-                          RealScalar DeactivationTolerance_)
+        void setTolerance(RealScalar tolLinearDependence_, 
+                          RealScalar tolWrongSignLambda_,
+                          RealScalar tolCorrectSignLambda_)
         {
-            LinearDependenceTolerance = LinearDependenceTolerance_;
-            DeactivationTolerance     = DeactivationTolerance_;
+            tolLinearDependence  = tolLinearDependence_;
+            tolWrongSignLambda   = tolWrongSignLambda_;
+            tolCorrectSignLambda = tolCorrectSignLambda_;
 
-            lexlse.setTolerance(LinearDependenceTolerance);
+            lexlse.setTolerance(tolLinearDependence);
         }
 
         /** 
@@ -700,11 +703,16 @@ namespace LexLS
                 DescentDirectionExists = lexlse.ObjectiveSensitivity(ObjIndex, 
                                                                      CtrIndex2Remove, 
                                                                      ObjIndex2Remove, 
-                                                                     DeactivationTolerance,
+                                                                     tolWrongSignLambda,
+                                                                     tolCorrectSignLambda,
                                                                      Obj[ObjIndex].getOptimalResidual());
 */
 
-                DescentDirectionExists = lexlse.ObjectiveSensitivity(ObjIndex, CtrIndex2Remove, ObjIndex2Remove, DeactivationTolerance);
+                DescentDirectionExists = lexlse.ObjectiveSensitivity(ObjIndex, 
+                                                                     CtrIndex2Remove, 
+                                                                     ObjIndex2Remove, 
+                                                                     tolWrongSignLambda,
+                                                                     tolCorrectSignLambda);
 
                 if (DescentDirectionExists)
                     break;
@@ -886,14 +894,19 @@ namespace LexLS
         Index max_number_of_iterations;
 
         /** 
-            \brief Linear dependence tolerance (used when solving an LexLSE problem) 
+            \brief Tolerance: linear dependence (used when solving an LexLSE problem)
         */
-        RealScalar LinearDependenceTolerance;
+        RealScalar tolLinearDependence;
 
         /** 
-            \brief Sensitivity tolerance (used when determining the lexicographic sign of Lagrange multipliers)
+            \brief Tolerance: absolute value of Lagrange multiplier to be considered with "wrong" sign
         */
-        RealScalar DeactivationTolerance;
+        RealScalar tolWrongSignLambda;
+
+        /** 
+            \brief Tolerance: absolute value of Lagrange multiplier to be considered with "correct" sign
+        */
+        RealScalar tolCorrectSignLambda;
 
         /** 
             \brief If CyclingHandling == true, cycling handling is performed

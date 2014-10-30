@@ -1,4 +1,4 @@
-// Time-stamp: <2014-10-28 22:54:07 drdv>
+// Time-stamp: <2014-10-30 10:45:45 drdv>
 #ifndef LEXLSE
 #define LEXLSE
 
@@ -872,7 +872,7 @@ namespace LexLS
         */
         bool ObjectiveSensitivity(Index ObjIndex, 
                                   Index &CtrIndex2Remove, Index &ObjIndex2Remove, 
-                                  RealScalar tolSensitivity)
+                                  RealScalar tolWrongSignLambda, RealScalar tolCorrectSignLambda)
         {
             RealScalar maxAbsValue = 0.0;
             bool tmp_bool, FoundBetterDescentDirection = false;
@@ -930,7 +930,8 @@ namespace LexLS
                                                                maxAbsValue,
                                                                CtrIndex2Remove,
                                                                Lambda,
-                                                               tolSensitivity);
+                                                               tolWrongSignLambda,
+                                                               tolCorrectSignLambda);
             
             if (FoundBetterDescentDirection)
                 ObjIndex2Remove = ObjIndex;  
@@ -969,7 +970,8 @@ namespace LexLS
                                                     maxAbsValue,
                                                     CtrIndex2Remove,
                                                     Lambda,
-                                                    tolSensitivity);
+                                                    tolWrongSignLambda,
+                                                    tolCorrectSignLambda);
                     
                     if (tmp_bool)
                         ObjIndex2Remove = k;
@@ -987,7 +989,8 @@ namespace LexLS
                                                 maxAbsValue,
                                                 CtrIndex2Remove,
                                                 LambdaFixed,
-                                                tolSensitivity);
+                                                tolWrongSignLambda,
+                                                tolCorrectSignLambda);
                                 
                 // -1(-st) objective implies the fixed variables
                 //   :if there are no fixed variables we will not be here
@@ -1097,7 +1100,15 @@ namespace LexLS
            \param[in,out] maxAbsValue    Largest (in absolute value) multiplier with wrong sign
            \param[in,out] CtrIndex       Index of largest (in absolute value) multiplier with wrong sign.
            \param[in]     lambda         Vector of lagrange multipliers.
-           \param[in]     tolSensitivity Sensitivity tolerance.
+           \param[in]     tolWrongSignLambda   Absolute value of Lagrange multiplier to be considered with "wrong" sign.
+           \param[in]     tolCorrectSignLambda Absolute value of Lagrange multiplier to be considered with "correct" sign.
+
+           \note Lagrange multipliers in the interval (-tolWrongSignLambda --- 0 --- tolCorrectSignLambda) are considered equal to zero.
+
+           \note Using tolCorrectSignLambda = 0 is not a good idea in general. This might lead to
+           situations where in order to decrease the norm of the residual of a higher-level task
+           with e.g., 1e-12, the solver might worsen the nor of the residual of lower-level taks
+           with a lot more (e.g., 10).
 
            \return true if there are multipliers with a wrong sign whose absolute value is larger
            than the largest multiplier with a wrong sign from previous groups of Lagrange
@@ -1108,7 +1119,8 @@ namespace LexLS
                                   RealScalar &maxAbsValue,   // modified
                                   Index &CtrIndex,           // modified
                                   const dVectorType& lambda,
-                                  RealScalar tolSensitivity)
+                                  RealScalar tolWrongSignLambda, 
+                                  RealScalar tolCorrectSignLambda)
         {
             bool FoundBetterDescentDirection = false;
             RealScalar aLambda;
@@ -1136,11 +1148,11 @@ namespace LexLS
                         aLambda = -aLambda;
                             
                     // FIXME: to have as user input
-                    if (aLambda > 1e-12) // is this reasonable?
+                    if (aLambda > tolCorrectSignLambda) // is this reasonable?
                     {
                         *aCtrType = CORRECT_SIGN_OF_LAMBDA;
                     }
-                    else if (aLambda < -tolSensitivity)
+                    else if (aLambda < -tolWrongSignLambda)
                     {
                         if (aLambda < maxAbsValue) // heuristics: find the multiplier with largest absolute value
                         {
