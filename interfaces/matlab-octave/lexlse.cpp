@@ -67,9 +67,9 @@ void mexFunction( int num_output, mxArray *output[],
                                                                         options_struct, 
                                                                         "linear_dependence_tolerance");
         
-        options.is_variables_fixing_enabled = getOptionBool(    options_struct, 
-                                                                "enable_fixed_variables", 
-                                                                options.is_variables_fixing_enabled);
+        getOptionBool(&options.is_variables_fixing_enabled,    
+                      options_struct, 
+                      "enable_fixed_variables");
 
         options.is_regularization_set = getOptionArray( options.regularization, 
                                                         mxGetNumberOfElements (input[0]),

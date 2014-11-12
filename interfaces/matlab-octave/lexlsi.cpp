@@ -26,48 +26,6 @@ enum ConstraintActivationType
 
 
 
-class LexlsiOptions
-{
-    public:
-        bool    is_linear_dependence_tolerance_set;
-        double  linear_dependence_tolerance;
-
-        bool    is_deactivation_tolerance_set;
-        double  deactivation_tolerance;
-
-        bool    is_simple_bounds_handling_enabled;
-
-        bool    is_cycling_handling_enabled;
-
-        bool    is_max_iterations_set;
-        int     max_iterations;
-
-
-        bool                is_regularization_set;
-        std::vector<double> regularization;
-
-
-        LexlsiOptions()
-        {
-            is_linear_dependence_tolerance_set = false;
-            linear_dependence_tolerance = 0.0;
-
-            is_deactivation_tolerance_set = false;
-            deactivation_tolerance = 0.0;
-
-            is_simple_bounds_handling_enabled = false;
-
-            is_cycling_handling_enabled = false;
-
-            is_max_iterations_set = false;
-            max_iterations = 0;
-
-            is_regularization_set = false;
-        }
-};
-
-
-
 mxArray * formInfoStructure (
         const LexLS::TerminationStatus lexlsi_status, 
         const int num_activations, 
@@ -129,7 +87,16 @@ void mexFunction( int num_output, mxArray *output[],
                     MIN_NUMBER_OF_FIELDS_IN_OBJ);
 
 // parameters of the solver
-    LexlsiOptions   options;
+    LexLS::LexLSIParameters lexlsi_parameters;
+
+    lexlsi_parameters.setDefaults();
+
+
+    bool    is_simple_bounds_handling_enabled = false;
+
+    bool                is_regularization_set = false;
+    std::vector<double> regularization;
+
 
 
 // parse parameters
@@ -138,37 +105,50 @@ void mexFunction( int num_output, mxArray *output[],
     {
         const mxArray *options_struct = input[3];
 
-        options.is_linear_dependence_tolerance_set = getOptionDouble(   &options.linear_dependence_tolerance, 
-                                                                        options_struct, 
-                                                                        "linear_dependence_tolerance");
 
-        options.is_deactivation_tolerance_set = getOptionDouble(    &options.deactivation_tolerance, 
-                                                                    options_struct, 
-                                                                    "deactivation_tolerance");
+        getOptionDouble(&lexlsi_parameters.tolLinearDependence, 
+                        options_struct, 
+                        "linear_dependence_tolerance");
 
-        if ( (! (options.is_linear_dependence_tolerance_set && options.is_deactivation_tolerance_set) ) &&
-             (options.is_linear_dependence_tolerance_set || options.is_deactivation_tolerance_set) )
-        {
-            mexWarnMsgTxt("Some tolerances are not defined, the default ones are used.");
-        }
+        getOptionDouble(&lexlsi_parameters.tolWrongSignLambda, 
+                        options_struct, 
+                        "tolWrongSignLambda");
+
+        getOptionDouble(&lexlsi_parameters.tolCorrectSignLambda, 
+                        options_struct, 
+                        "tolCorrectSignLambda");
 
 
-        options.is_simple_bounds_handling_enabled = getOptionBool(  options_struct, 
-                                                                    "enable_simple_bounds", 
-                                                                    options.is_simple_bounds_handling_enabled);
 
-        options.is_cycling_handling_enabled = getOptionBool(options_struct, 
-                                                            "cycling_handling", 
-                                                            options.is_cycling_handling_enabled);
+        getOptionInteger(   &lexlsi_parameters.max_number_of_iterations, 
+                            options_struct, 
+                            "max_iterations");
 
-        options.is_max_iterations_set = getOptionInteger(   &options.max_iterations, 
-                                                            options_struct, 
-                                                            "max_iterations");
 
-        options.is_regularization_set = getOptionArray( options.regularization, 
-                                                        mxGetNumberOfElements (input[0]),
-                                                        options_struct, 
-                                                        "regularization");
+
+        getOptionBool(  &lexlsi_parameters.CyclingHandling, 
+                        options_struct, 
+                        "cycling_handling");
+
+        getOptionInteger(   &lexlsi_parameters.cycling_max_counter, 
+                            options_struct, 
+                            "cycling_max_counter");
+
+
+        getOptionDouble(&lexlsi_parameters.cycling_relax_step, 
+                        options_struct, 
+                        "cycling_relax_step");
+
+
+
+        is_regularization_set = getOptionArray( regularization, 
+                                                mxGetNumberOfElements (input[0]),
+                                                options_struct, 
+                                                "regularization");
+
+        getOptionBool(  &is_simple_bounds_handling_enabled,
+                        options_struct, 
+                        "enable_simple_bounds");
     }
 
 
@@ -192,7 +172,7 @@ void mexFunction( int num_output, mxArray *output[],
     int first_normal_obj_index = 0;
 
 
-    if (options.is_simple_bounds_handling_enabled)
+    if (is_simple_bounds_handling_enabled)
     { // simple bounds
 
         mxArray *A = getObjectiveMatrix(objectives, 0, "A");
@@ -313,36 +293,20 @@ void mexFunction( int num_output, mxArray *output[],
 // initialize solver
     try
     {
-        // tolerance
-        if (options.is_linear_dependence_tolerance_set && options.is_deactivation_tolerance_set)
-        {
-            lexlsi.setTolerance(    options.linear_dependence_tolerance,
-                                    options.deactivation_tolerance);
-        }
+        lexlsi.setParameters(lexlsi_parameters);
 
-        // set maximum number of iterations
-        if (options.is_max_iterations_set)
-        {
-            lexlsi.setMaxIter(options.max_iterations);
-        }
-
-        // cycling handling
-        if (options.is_cycling_handling_enabled)
-        {
-            lexlsi.setCyclingHandling(true);
-        }
 
         // regularization
-        if (options.is_regularization_set)
+        if (is_regularization_set)
         {
             for (int i = 0; i < num_obj; ++i)
             {
-                lexlsi.setRegularization(i, options.regularization[i]);
+                lexlsi.setRegularization(i, regularization[i]);
             }
         }
 
         // constraints
-        if (options.is_simple_bounds_handling_enabled)
+        if (is_simple_bounds_handling_enabled)
         {
             lexlsi.setData(
                     0, 

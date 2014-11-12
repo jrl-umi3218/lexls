@@ -8,6 +8,63 @@
 
 namespace LexLS
 {
+    class LexLSIParameters
+    {
+        public:
+            /**
+              \brief Maximum number of iterations
+            */
+            Index max_number_of_iterations;
+
+            /** 
+                \brief Tolerance: linear dependence (used when solving an LexLSE problem)
+            */
+            RealScalar tolLinearDependence;
+
+            /** 
+                \brief Tolerance: absolute value of Lagrange multiplier to be considered with "wrong" sign
+            */
+            RealScalar tolWrongSignLambda;
+
+            /** 
+                \brief Tolerance: absolute value of Lagrange multiplier to be considered with "correct" sign
+            */
+            RealScalar tolCorrectSignLambda;
+
+
+            /** 
+                \brief If CyclingHandling == true, cycling handling is performed
+            */
+            bool CyclingHandling;
+
+
+            Index cycling_max_counter;
+            double cycling_relax_step;
+
+
+
+            LexLSIParameters()
+            {
+                setDefaults();
+            }
+
+
+            void setDefaults()
+            {
+                max_number_of_iterations = 200;
+
+                tolLinearDependence     = 1e-12;
+                tolWrongSignLambda      = 1e-08;
+                tolCorrectSignLambda    = 1e-12;
+
+                CyclingHandling         = false;
+                cycling_max_counter     = 50;
+                cycling_relax_step      = 1e-08;
+            }
+    };
+
+
+
     /** 
         \brief Definition of a lexicographic least-squares problem with inequality constraints
 
@@ -34,14 +91,12 @@ namespace LexLS
             nVar(nVar_), 
             nObj(nObj_),
             iter(0),
-            max_number_of_iterations(200),
-            tolLinearDependence(1e-12),
-            tolWrongSignLambda(1e-08),
-            tolCorrectSignLambda(1e-12),
-            CyclingHandling(false),
             x0_is_initialized(false),
             status(TERMINATION_STATUS_UNKNOWN)
         {           
+            parameters.setDefaults();
+            setParameters(parameters);
+
             resize(ObjDim_,ObjType_);
         }
 
@@ -213,7 +268,7 @@ namespace LexLS
                 }
                 else
                 {
-                    if (getIterationsCount() > max_number_of_iterations)
+                    if (getIterationsCount() > parameters.max_number_of_iterations)
                     {
                         status = MAX_NUMBER_OF_ITERATIONS_EXCEDED;
                         break;
@@ -293,27 +348,23 @@ namespace LexLS
             x0_is_initialized = true;
         }
 
-        /**
-           \brief Sets the maximum number of iterations
-        */
-        void setMaxIter(Index max_number_of_iterations_)
-        {
-            max_number_of_iterations = max_number_of_iterations_;
-        }
 
         /**
-           \brief Sets tolerances
+           \brief Sets parameters
         */
-        void setTolerance(RealScalar tolLinearDependence_, 
-                          RealScalar tolWrongSignLambda_,
-                          RealScalar tolCorrectSignLambda_)
+        void setParameters(const LexLSIParameters &parameters_)
         {
-            tolLinearDependence  = tolLinearDependence_;
-            tolWrongSignLambda   = tolWrongSignLambda_;
-            tolCorrectSignLambda = tolCorrectSignLambda_;
+            parameters = parameters_;
 
-            lexlse.setTolerance(tolLinearDependence);
+            lexlse.setTolerance(parameters.tolLinearDependence);
+
+            if (parameters.CyclingHandling)
+            {
+                cycling_handler.set_max_counter(parameters.cycling_max_counter);
+                cycling_handler.set_relax_step(parameters.cycling_relax_step);
+            }
         }
+
 
         /** 
             \brief Set data of objective ObjIndex (ObjType = DEFAULT_OBJECTIVE is assumed)
@@ -401,15 +452,6 @@ namespace LexLS
         }
 
 
-        /**
-           \brief Sets #CyclingHandling
-        */
-        void setCyclingHandling(bool CyclingHandling_, Index max_counter_ = 50, RealScalar relax_step_ = 1e-08)
-        {
-            CyclingHandling = CyclingHandling_;
-            cycling_handler.set_max_counter(max_counter_);
-            cycling_handler.set_relax_step(relax_step_);
-        }
 
         /** 
             \brief Return the (primal) solution vector
@@ -581,7 +623,10 @@ namespace LexLS
         }
         
     private:
-        
+        /// \brief Parameters of the solver.
+        LexLSIParameters parameters;
+
+
         /** 
             \brief Resize LexLSI problem
 
@@ -703,16 +748,16 @@ namespace LexLS
                 DescentDirectionExists = lexlse.ObjectiveSensitivity(ObjIndex, 
                                                                      CtrIndex2Remove, 
                                                                      ObjIndex2Remove, 
-                                                                     tolWrongSignLambda,
-                                                                     tolCorrectSignLambda,
+                                                                     parameters.tolWrongSignLambda,
+                                                                     parameters.tolCorrectSignLambda,
                                                                      Obj[ObjIndex].getOptimalResidual());
 */
 
                 DescentDirectionExists = lexlse.ObjectiveSensitivity(ObjIndex, 
                                                                      CtrIndex2Remove, 
                                                                      ObjIndex2Remove, 
-                                                                     tolWrongSignLambda,
-                                                                     tolCorrectSignLambda);
+                                                                     parameters.tolWrongSignLambda,
+                                                                     parameters.tolCorrectSignLambda);
 
                 if (DescentDirectionExists)
                     break;
@@ -794,7 +839,7 @@ namespace LexLS
                        Obj[ObjIndex2Manipulate].getActiveCtrCount(), 
                        alpha);
 */
-                if (CyclingHandling)
+                if (parameters.CyclingHandling)
                 {
                     ConstraintIdentifier.set(ObjIndex2Manipulate, CtrIndex2Manipulate, CtrType2Manipulate);
                 }
@@ -816,7 +861,7 @@ namespace LexLS
                                Obj[ObjIndex2Manipulate].getActiveCtrIndex(CtrIndex2Manipulate), 
                                Obj[ObjIndex2Manipulate].getActiveCtrCount()-1); // the constraint is removed below
 */
-                        if (CyclingHandling)
+                        if (parameters.CyclingHandling)
                         {
                             ConstraintIdentifier.set(ObjIndex2Manipulate, 
                                                      Obj[ObjIndex2Manipulate].getActiveCtrIndex(CtrIndex2Manipulate), 
@@ -842,7 +887,7 @@ namespace LexLS
                     Obj[ObjIndex].step(alpha);
             }
 
-            if (CyclingHandling && operation != UNDEFINED)
+            if (parameters.CyclingHandling && operation != UNDEFINED)
                 status = cycling_handler.update(operation, ConstraintIdentifier, Obj, iter, false);
 
             iter++;
@@ -888,30 +933,6 @@ namespace LexLS
         */
         Index iterRemove;
 
-        /*
-          \brief Maximum number of iterations
-        */
-        Index max_number_of_iterations;
-
-        /** 
-            \brief Tolerance: linear dependence (used when solving an LexLSE problem)
-        */
-        RealScalar tolLinearDependence;
-
-        /** 
-            \brief Tolerance: absolute value of Lagrange multiplier to be considered with "wrong" sign
-        */
-        RealScalar tolWrongSignLambda;
-
-        /** 
-            \brief Tolerance: absolute value of Lagrange multiplier to be considered with "correct" sign
-        */
-        RealScalar tolCorrectSignLambda;
-
-        /** 
-            \brief If CyclingHandling == true, cycling handling is performed
-        */
-        bool CyclingHandling;
 
         /** 
             \brief If x0_is_initialized == true, the function set_x0(dVectorType &x0) has been

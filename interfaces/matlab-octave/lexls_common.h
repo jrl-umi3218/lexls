@@ -164,9 +164,9 @@ bool getOptionDouble(double *option_value, const mxArray *option_struct, const c
 }
 
 
-bool getOptionBool(const mxArray *option_struct, const char *option_id, const bool default_value)
+bool getOptionBool(bool *option_value, const mxArray *option_struct, const char *option_id)
 {
-    bool is_option_set = default_value;
+    bool is_parsing_successful = false;
 
 
     mxArray * option = mxGetField (option_struct, 0, option_id);
@@ -176,15 +176,16 @@ bool getOptionBool(const mxArray *option_struct, const char *option_id, const bo
         failIfTrue (!mxIsDouble(option), (std::string("Flag option '") + option_id + "' must be of 'double' type.").c_str());
         if (*mxGetPr(option) != 0)
         {
-            is_option_set = true;
+            *option_value = true;
         }
         else
         {
-            is_option_set = false;
+            *option_value = false;
         }
+        is_parsing_successful = true;
     }
 
-    return (is_option_set);
+    return (is_parsing_successful);
 }
 
 
@@ -202,11 +203,6 @@ bool getOptionInteger(int *option_value, const mxArray *option_struct, const cha
     {
         *option_value = static_cast <int> (round(option_value_double));
     }
-    else
-    {
-        *option_value = 0;
-    }
-
 
     return (is_parsing_successful);
 }
