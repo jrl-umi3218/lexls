@@ -108,7 +108,7 @@ void mexFunction( int num_output, mxArray *output[],
 
         getOptionDouble(&lexlsi_parameters.tolLinearDependence, 
                         options_struct, 
-                        "linear_dependence_tolerance");
+                        "tolLinearDependence");
 
         getOptionDouble(&lexlsi_parameters.tolWrongSignLambda, 
                         options_struct, 

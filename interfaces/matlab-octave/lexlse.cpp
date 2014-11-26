@@ -65,7 +65,7 @@ void mexFunction( int num_output, mxArray *output[],
 
         options.is_linear_dependence_tolerance_set = getOptionDouble(   &options.linear_dependence_tolerance, 
                                                                         options_struct, 
-                                                                        "linear_dependence_tolerance");
+                                                                        "tolLinearDependence");
         
         getOptionBool(&options.is_variables_fixing_enabled,    
                       options_struct, 

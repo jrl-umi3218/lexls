@@ -1,4 +1,4 @@
-// Time-stamp: <2014-10-30 10:51:31 drdv>
+// Time-stamp: <2014-11-26 11:29:12 drdv>
 #ifndef LEXLSI
 #define LEXLSI
 
@@ -31,17 +31,13 @@ namespace LexLS
             */
             RealScalar tolCorrectSignLambda;
 
-
             /** 
                 \brief If CyclingHandling == true, cycling handling is performed
             */
             bool CyclingHandling;
 
-
             Index cycling_max_counter;
             double cycling_relax_step;
-
-
 
             LexLSIParameters()
             {
@@ -215,20 +211,6 @@ namespace LexLS
                 Obj[ObjIndex].formStep(dx);
             // --------------------------------------------------------
 
-/*
-            printf("x = [");
-            for (Index k=0; k<nVar; k++)
-                printf(" %f ",x[k]);
-            printf("]\n\n");
-
-            printf("dx = [");
-            for (Index k=0; k<nVar; k++)
-                printf(" %f ",dx[k]);
-            printf("]\n\n");
-
-            for (Index k=0; k<nObj; k++)
-                Obj[k].print("w");
-*/
         }
         
         /**
@@ -238,32 +220,14 @@ namespace LexLS
         */
         TerminationStatus solve()
         {
-/*
-            {
-                std::ofstream pfile("./debug.dat", std::ios::out);
-                pfile.close();
-            }
-*/
-//            std::ofstream pfile("./debug.dat", std::ios::app);  
-//            pfile.precision(15);
-
             phase1();
 
             while (1)
             {
                 verifyWorkingSet();
-
-//                printf("iter = %d, status = %d \n",iter, status);
-
-//                pfile << "------------------------------------------------------" << "\n";
-//                pfile << "iter = " << iter << "\n";
-//                pfile << "------------------------------------------------------" << "\n";
-//                pfile << getLambda() << "\n\n"; 
-               
+              
                 if ((status == PROBLEM_SOLVED) || (status == PROBLEM_SOLVED_CYCLING_HANDLING))
                 {
-                    //cycling_handler.print_counter();
-
                     break; // we are done ...
                 }
                 else
@@ -275,14 +239,6 @@ namespace LexLS
                     }
                 }
             }
-//            pfile.close();
-
-/*
-            std::ofstream pfile("./debug.dat", std::ios::app);
-            pfile << "solved (iter = " << iter << ")\n";
-            pfile << "===================================================================" << "\n\n";
-            pfile.close();
-*/
             return status;
         }
 
@@ -744,15 +700,6 @@ namespace LexLS
             bool DescentDirectionExists = false;            
             for (Index ObjIndex=0; ObjIndex<nObj-ObjOffset; ObjIndex++) // loop over objectives of LexLSE problem
             {
-/*
-                DescentDirectionExists = lexlse.ObjectiveSensitivity(ObjIndex, 
-                                                                     CtrIndex2Remove, 
-                                                                     ObjIndex2Remove, 
-                                                                     parameters.tolWrongSignLambda,
-                                                                     parameters.tolCorrectSignLambda,
-                                                                     Obj[ObjIndex].getOptimalResidual());
-*/
-
                 DescentDirectionExists = lexlse.ObjectiveSensitivity(ObjIndex, 
                                                                      CtrIndex2Remove, 
                                                                      ObjIndex2Remove, 
@@ -786,28 +733,6 @@ namespace LexLS
             RealScalar alpha;
             // ----------------------------------------------------------------------
 
-/*
-            printf("----------------------------------------------\n\n");
-            printf("iter = %d \n", iter);
-            printf("----------------------------------------------\n\n");
-
-            printf("x = \n");
-            for (Index i=0; i<nVar; i++)
-            {
-                printf("%f \n", x[i]);
-            }
-            printf("\n");
-
-            printf("dx = \n");
-            for (Index i=0; i<nVar; i++)
-            {
-                printf("%f \n", dx[i]);
-            }
-            printf("\n");
-
-            Obj[0].print("w");
-*/
-
             if (iter != 0) // iter == 0 is handled in phase1()
             {
                 formLexLSE();
@@ -822,23 +747,11 @@ namespace LexLS
                 if (x0_is_initialized)
                 {
                     normalIteration = false;
-
-                    /// @todo Commented out.
-                    //printf("\n\nWARNING: normalIteration = false \n\n");
                 }
             }
 
             if (checkBlockingConstraints(ObjIndex2Manipulate, CtrIndex2Manipulate, CtrType2Manipulate, alpha))
             {
-/*
-                printf("(%4d)   ADD(%d): obj = %d, ctr = %3d (dim = %3d, alpha = %+e)\n", 
-                       iter, 
-                       CtrType2Manipulate, 
-                       ObjIndex2Manipulate, 
-                       CtrIndex2Manipulate, 
-                       Obj[ObjIndex2Manipulate].getActiveCtrCount(), 
-                       alpha);
-*/
                 if (parameters.CyclingHandling)
                 {
                     ConstraintIdentifier.set(ObjIndex2Manipulate, CtrIndex2Manipulate, CtrType2Manipulate);
@@ -853,14 +766,6 @@ namespace LexLS
                 {
                     if (findActiveCtr2Remove(ObjIndex2Manipulate, CtrIndex2Manipulate))
                     {
-/*
-                        printf("(%4d)REMOVE(%d): obj = %d, ctr = %3d (dim = %3d)\n", 
-                               iter, 
-                               Obj[ObjIndex2Manipulate].getActiveCtrType(CtrIndex2Manipulate),
-                               ObjIndex2Manipulate, 
-                               Obj[ObjIndex2Manipulate].getActiveCtrIndex(CtrIndex2Manipulate), 
-                               Obj[ObjIndex2Manipulate].getActiveCtrCount()-1); // the constraint is removed below
-*/
                         if (parameters.CyclingHandling)
                         {
                             ConstraintIdentifier.set(ObjIndex2Manipulate, 
@@ -877,8 +782,6 @@ namespace LexLS
                     }
                 }
             }
-
-//            printf("alpha = %f, status = %d\n", alpha, status);
             
             if (alpha > 0) // take a step
             {
