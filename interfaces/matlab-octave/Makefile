@@ -2,7 +2,7 @@ info:
 	@echo "Please use 'make matlab' or 'make octave'."
 
 matlab:
-	matlab -nosplash -nodesktop -nojvm -r 'make_matlab; quit' | tail +10
+	matlab -nosplash -nodesktop -nojvm -r 'make_matlab; quit' | tail +11
 
 octave:
 	octave --no-history --silent make_octave.m

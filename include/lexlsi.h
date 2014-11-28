@@ -1,4 +1,4 @@
-// Time-stamp: <2014-11-26 11:29:12 drdv>
+// Time-stamp: <2014-11-28 13:06:54 drdv>
 #ifndef LEXLSI
 #define LEXLSI
 
@@ -35,6 +35,8 @@ namespace LexLS
                 \brief If CyclingHandling == true, cycling handling is performed
             */
             bool CyclingHandling;
+ 
+            RegularizationType regularizationType;
 
             Index cycling_max_counter;
             double cycling_relax_step;
@@ -56,6 +58,8 @@ namespace LexLS
                 CyclingHandling         = false;
                 cycling_max_counter     = 50;
                 cycling_relax_step      = 1e-08;
+
+                regularizationType      = REGULARIZATION_NONE;
             }
     };
 
@@ -313,6 +317,7 @@ namespace LexLS
             parameters = parameters_;
 
             lexlse.setTolerance(parameters.tolLinearDependence);
+            lexlse.setRegularizationType(parameters.regularizationType);
 
             if (parameters.CyclingHandling)
             {
@@ -406,8 +411,6 @@ namespace LexLS
 
             regularization(ObjIndex) = RegularizationFactor;
         }
-
-
 
         /** 
             \brief Return the (primal) solution vector

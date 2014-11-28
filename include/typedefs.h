@@ -1,4 +1,4 @@
-// Time-stamp: <2014-07-16 21:47:35 drdv>
+// Time-stamp: <2014-11-28 13:09:43 drdv>
 #ifndef TYPEDEFS
 #define TYPEDEFS
 
@@ -30,6 +30,14 @@ namespace LexLS
     
     typedef Eigen::VectorBlock<dVectorType, Eigen::Dynamic>           dVectorBlockType;
     //typedef Eigen::VectorBlock<dVectorType> dVectorBlockType;
+
+    enum RegularizationType
+    {
+        REGULARIZATION_NONE = 0,
+        REGULARIZATION_TIKHONOV = 1,
+        REGULARIZATION_BASIC = 2,
+        REGULARIZATION_BASIC_NO_Z = 3
+    };
     
     /**
        \brief Termination status

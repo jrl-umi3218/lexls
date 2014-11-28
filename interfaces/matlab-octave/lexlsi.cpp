@@ -149,6 +149,13 @@ void mexFunction( int num_output, mxArray *output[],
         getOptionBool(  &is_simple_bounds_handling_enabled,
                         options_struct, 
                         "enable_simple_bounds");
+
+        int regularization_type;
+        getOptionInteger( &regularization_type, 
+                          options_struct, 
+                          "regularizationType");
+
+        lexlsi_parameters.regularizationType = static_cast <LexLS::RegularizationType> (regularization_type);
     }
 
 

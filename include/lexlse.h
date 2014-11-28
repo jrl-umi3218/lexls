@@ -1,4 +1,4 @@
-// Time-stamp: <2014-11-26 11:07:20 drdv>
+// Time-stamp: <2014-11-28 13:22:55 drdv>
 #ifndef LEXLSE
 #define LEXLSE
 
@@ -32,6 +32,7 @@ namespace LexLS
             nVarFixedInit(0),
             LinearDependenceTolerance(1e-12),
             isFactorized(false), 
+            regularizationType(REGULARIZATION_NONE),
             isSolved(false) {}
         
         /** 
@@ -43,6 +44,7 @@ namespace LexLS
             nVarFixed(0),
             nVarFixedInit(0),
             LinearDependenceTolerance(1e-12),
+            regularizationType(REGULARIZATION_NONE),
             isFactorized(false), 
             isSolved(false)
         {
@@ -79,6 +81,8 @@ namespace LexLS
 
             LQR.resize(maxObjDimSum,nVar+1); // store the RHS as well, thus the "+1"
             
+            NullSpace.resize(nVar,nVar+1);
+
             Index dim = std::max(maxObjDimSum,nVar);
             dWorkspace.resize(2*dim + nVar + 1);
             
@@ -200,6 +204,8 @@ namespace LexLS
                         std::swap(ColNorms.coeffRef(ColIndex), ColNorms.coeffRef(maxColNormIndex));
 
                         std::swap(DedicatedVariables.coeffRef(ColIndex), DedicatedVariables.coeffRef(maxColNormIndex)); // DEBUG
+
+                        NullSpace.col(ColIndex).head(FirstColIndex).swap(NullSpace.col(maxColNormIndex).head(FirstColIndex)); // FOR REGULARIZATION
                     }
 
                     // --------------------------------------------------------------------------
@@ -239,7 +245,160 @@ namespace LexLS
                 // -----------------------------------------------------------------------
                 ObjRank = ObjInfo[ObjIndex].rank = ColIndex - FirstColIndex; // store the rank
 
-                // -----------------------------------------------------------------------
+                if ( !isEqual(regularization[ObjIndex],0.0) ) // regularize if not equal to zero
+                {
+                    if (ObjRank > 0)
+                    {
+                        RealScalar mu = regularization[ObjIndex]*regularization[ObjIndex];
+
+                        if (regularizationType == REGULARIZATION_TIKHONOV)
+                        {
+                            // ==============================================================================================
+                            // Tikhonov regularization (using the normal equations)
+                            // ==============================================================================================
+                            dBlockType Rk(LQR, FirstRowIndex,         FirstColIndex, ObjRank,              ObjRank);
+                            dBlockType Tk(LQR, FirstRowIndex, FirstColIndex+ObjRank, ObjRank, RemainingColumns + 1);
+
+                            dBlockType up(NullSpace, 0, FirstColIndex, FirstColIndex, RemainingColumns+ObjRank);
+                            dBlockType eye(NullSpace, FirstColIndex, FirstColIndex, RemainingColumns+ObjRank, RemainingColumns+ObjRank);
+
+                            // just for debugging
+                            //dBlockType LeftBlock_NS(NullSpace, 0, 0, nVar, FirstColIndex);
+                            //LeftBlock_NS.setZero();
+                            //eye.setZero();
+
+                            // evaluate only the lower block (this is what is needed by Eigen::LLT)
+                            //http://eigen.tuxfamily.org/bz/show_bug.cgi?id=879
+                            eye.block(0,0,ObjRank,ObjRank).triangularView<Eigen::Lower>() = 
+                                (Rk.transpose()*Rk.triangularView<Eigen::Upper>()).eval();
+                        
+                            eye.block(ObjRank,ObjRank,RemainingColumns,RemainingColumns).triangularView<Eigen::Lower>() = 
+                                Tk.leftCols(RemainingColumns).transpose()*Tk.leftCols(RemainingColumns);
+                     
+                            eye.block(ObjRank,0,RemainingColumns,ObjRank).noalias() = 
+                                Tk.leftCols(RemainingColumns).transpose()*Rk.triangularView<Eigen::Upper>();
+  
+                            eye.triangularView<Eigen::Lower>() += mu*up.transpose()*up;
+
+                            for (Index i=0; i<RemainingColumns+ObjRank; i++)
+                                eye.coeffRef(i,i) += mu;
+
+                            // ==============================================================================================
+
+                            dVectorType eye_rhs(RemainingColumns+ObjRank);
+
+                            eye_rhs.noalias() = up.transpose() * NullSpace.col(nVar).head(FirstColIndex);
+                            eye_rhs *= mu;
+
+                            eye_rhs.head(ObjRank).noalias() += 
+                                Rk.triangularView<Eigen::Upper>().transpose()*LQR.col(nVar).segment(FirstRowIndex,ObjRank);
+
+                            eye_rhs.segment(ObjRank,RemainingColumns).noalias() += 
+                                Tk.leftCols(RemainingColumns).transpose()*LQR.col(nVar).segment(FirstRowIndex,ObjRank);
+                            // ==============================================================================================
+
+                            Eigen::LLT<MatrixType> chol(eye);
+                            dVectorType sol = chol.solve(eye_rhs);
+                            LQR.col(nVar).segment(FirstRowIndex,ObjRank) = Rk.triangularView<Eigen::Upper>() * 
+                                sol.head(ObjRank) + Tk.leftCols(RemainingColumns)*sol.tail(RemainingColumns);
+                            // ==============================================================================================
+                        }
+                        else if (regularizationType == REGULARIZATION_BASIC)
+                        {
+                            // ==============================================================================================
+                            // Tikhonov regularization of basic variables only (using the normal equations)
+                            // ==============================================================================================
+                            dBlockType  Rk(      LQR, FirstRowIndex, FirstColIndex,       ObjRank, ObjRank);
+                            dBlockType  up(NullSpace,             0, FirstColIndex, FirstColIndex, ObjRank);
+                            dBlockType eye(NullSpace, FirstColIndex, FirstColIndex,       ObjRank, ObjRank);
+
+                            eye.triangularView<Eigen::Lower>()  = (Rk.transpose()*Rk.triangularView<Eigen::Upper>()).eval();
+                            eye.triangularView<Eigen::Lower>() += mu*up.transpose()*up;
+                            for (Index i=0; i<ObjRank; i++)
+                                eye.coeffRef(i,i) += mu;
+                            // ==============================================================================================
+
+                            dVectorType eye_rhs(ObjRank);
+                            eye_rhs.noalias()  = up.transpose() * NullSpace.col(nVar).head(FirstColIndex);
+                            eye_rhs *= mu;
+                            eye_rhs.noalias() += Rk.triangularView<Eigen::Upper>().transpose()*LQR.col(nVar).segment(FirstRowIndex,ObjRank);
+
+                            // ==============================================================================================
+                            Eigen::LLT<MatrixType> chol(eye);
+                            chol.solveInPlace(eye_rhs);
+                            LQR.col(nVar).segment(FirstRowIndex,ObjRank) = Rk.triangularView<Eigen::Upper>() * eye_rhs;
+                            // ==============================================================================================
+                        }
+                        else if (regularizationType == REGULARIZATION_BASIC_NO_Z)
+                        {
+                            // ==============================================================================================
+                            // Tikhonov regularization of basic variables only, without Z (using the normal equations)
+                            // ==============================================================================================
+                            dBlockType  Rk(      LQR, FirstRowIndex, FirstColIndex, ObjRank, ObjRank);
+                            dBlockType eye(NullSpace,             0,             0, ObjRank, ObjRank);
+
+                            eye.triangularView<Eigen::Lower>() = (Rk.transpose()*Rk.triangularView<Eigen::Upper>()).eval();
+                            for (Index i=0; i<ObjRank; i++)
+                                eye.coeffRef(i,i) += mu;
+                            // ==============================================================================================
+
+                            dVectorType eye_rhs(ObjRank);
+                            eye_rhs.noalias() = Rk.triangularView<Eigen::Upper>().transpose()*LQR.col(nVar).segment(FirstRowIndex,ObjRank);
+
+                            // ==============================================================================================
+                            Eigen::LLT<MatrixType> chol(eye);
+                            chol.solveInPlace(eye_rhs);
+                            LQR.col(nVar).segment(FirstRowIndex,ObjRank) = Rk.triangularView<Eigen::Upper>() * eye_rhs;
+                            // ==============================================================================================
+                        }
+                        else
+                        {
+                            // do nothing
+                        }
+
+
+                        // ==============================================================================================
+                        // QR
+                        // ==============================================================================================
+/*
+                        MatrixType T(ObjRank+nVar,RemainingColumns+ObjRank+1);
+                        T.setZero();
+
+                        // accumulated null-space basis 
+                        dBlockType Z(NullSpace, 0, FirstColIndex, nVar, RemainingColumns+ObjRank+1);
+
+                        // set rhs
+                        T.col(RemainingColumns+ObjRank).head(ObjRank) = LQR.col(nVar).segment(FirstRowIndex,ObjRank);
+                
+                        // set lhs
+                        T.block(0,0      , ObjRank, ObjRank).triangularView<Eigen::Upper>() = Rk.triangularView<Eigen::Upper>();
+                        T.block(0,ObjRank, ObjRank, RemainingColumns+1) = Tk;
+                        T.block(ObjRank,0, nVar, RemainingColumns+ObjRank+1) = regularization[ObjIndex]*Z;
+
+                        Eigen::ColPivHouseholderQR<MatrixType> qr(T.leftCols(RemainingColumns+ObjRank));
+                        dVectorType sol = qr.solve(T.col(RemainingColumns+ObjRank));
+
+                        LQR.col(nVar).segment(FirstRowIndex,ObjRank) = Rk.triangularView<Eigen::Upper>() * 
+                            sol.head(ObjRank) + Tk.leftCols(RemainingColumns)*sol.tail(RemainingColumns);
+*/
+
+                        // ===============================================================
+                        // accumulate nullspace bases
+                        // ===============================================================
+                        dBlockType              Rk(      LQR, FirstRowIndex, FirstColIndex,       ObjRank,            ObjRank);
+                        dBlockType         UpBlock(      LQR, FirstRowIndex,      ColIndex,       ObjRank, RemainingColumns+1);
+                        dBlockType     LeftBlock_1(NullSpace,             0, FirstColIndex, FirstColIndex,            ObjRank);
+                        dBlockType     LeftBlock_2(NullSpace, FirstColIndex, FirstColIndex,       ObjRank,            ObjRank);
+                        dBlockType TrailingBlock_1(NullSpace,             0,      ColIndex, FirstColIndex, RemainingColumns+1);
+                        dBlockType TrailingBlock_2(NullSpace, FirstColIndex,      ColIndex,       ObjRank, RemainingColumns+1);
+
+                        Rk.triangularView<Eigen::Upper>().solveInPlace<Eigen::OnTheRight>(LeftBlock_1);
+                        TrailingBlock_1.noalias() -= LeftBlock_1 * UpBlock;
+
+                        TrailingBlock_2 = Rk.triangularView<Eigen::Upper>().solve<Eigen::OnTheLeft>(UpBlock);
+                        // ===============================================================
+                    }
+                }
 
                 if (ObjIndex < nObj-1) // if there are objectives with lower priority
                 {                    
@@ -274,10 +433,9 @@ namespace LexLS
                         {
                             TrailingBlock.noalias() -= LeftBlock * UpBlock;
                         }
-
-                        // ====================================================================================================
                     }
                 }
+
                 // -----------------------------------------------------------------------
 
                 if (RemainingColumns == 0) // ColIndex = nVar
@@ -759,12 +917,17 @@ namespace LexLS
             \brief Set (a non-negative) regularization factor for objective ObjIndex
 
             \note Note that fixed variables are not counted as an objective
-        */        
+        */
         void setRegularization(Index ObjIndex, RealScalar RegularizationFactor)
         {
             // @todo: check whether ObjIndex and RegularizationFactor make sense. 
 
             regularization(ObjIndex) = RegularizationFactor;
+        }
+
+        void setRegularizationType(RegularizationType regularizationType_)
+        {
+            regularizationType = regularizationType_;
         }
         
         /** 
@@ -826,7 +989,7 @@ namespace LexLS
             Index FirstRowIndex = ObjInfo[ObjIndex].FirstRowIndex;
             CtrType[FirstRowIndex + CtrIndex] = type;
         }
-      
+        
         /**
            \brief Form the residuals (A*x-RHS) through the LQR factorizetion. The residual of the
            fixed variables is always zero (and is not included).
@@ -950,6 +1113,8 @@ namespace LexLS
                 ObjInfo[ObjIndex].rank = 0; 
 
             hh_scalars.setZero();
+
+            NullSpace.setIdentity(); //todo: I could set it to 0
 
             P.setIdentity();
             x.tail(nVar-nVarFixed).setZero(); // x.head(nVarFixed) has already been initialized in fixVariable(...)
@@ -1106,6 +1271,13 @@ namespace LexLS
         */
         MatrixType LQR;
 
+        /** 
+            \brief nVar x (nVar+1) matrix containing the remaining null-space + right-hand-side
+
+            \note Used for Tikhonov regularization or terminal objective of the form (x = 0)
+        */        
+        MatrixType NullSpace;
+
         // ==================================================================
         // other
         // ==================================================================
@@ -1129,6 +1301,11 @@ namespace LexLS
             \brief Permutation matrix
         */
         Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> P;
+
+        /** 
+            \brief Type of regularization (Tikhonov, Basic Tikhonov, ...)
+        */
+        RegularizationType regularizationType;
 
     }; // end class LexLSE
 
