@@ -1,4 +1,4 @@
-// Time-stamp: <2014-11-28 13:06:54 drdv>
+// Time-stamp: <2014-12-04 13:44:16 drdv>
 #ifndef LEXLSI
 #define LEXLSI
 
@@ -10,57 +10,61 @@ namespace LexLS
 {
     class LexLSIParameters
     {
-        public:
-            /**
-              \brief Maximum number of iterations
-            */
-            Index max_number_of_iterations;
+    public:
+        /**
+           \brief Maximum number of iterations
+        */
+        Index max_number_of_iterations;
 
-            /** 
-                \brief Tolerance: linear dependence (used when solving an LexLSE problem)
-            */
-            RealScalar tolLinearDependence;
+        /** 
+            \brief Tolerance: linear dependence (used when solving an LexLSE problem)
+        */
+        RealScalar tolLinearDependence;
 
-            /** 
-                \brief Tolerance: absolute value of Lagrange multiplier to be considered with "wrong" sign
-            */
-            RealScalar tolWrongSignLambda;
+        /** 
+            \brief Tolerance: absolute value of Lagrange multiplier to be considered with "wrong" sign
+        */
+        RealScalar tolWrongSignLambda;
 
-            /** 
-                \brief Tolerance: absolute value of Lagrange multiplier to be considered with "correct" sign
-            */
-            RealScalar tolCorrectSignLambda;
+        /** 
+            \brief Tolerance: absolute value of Lagrange multiplier to be considered with "correct" sign
+        */
+        RealScalar tolCorrectSignLambda;
 
-            /** 
-                \brief If CyclingHandling == true, cycling handling is performed
-            */
-            bool CyclingHandling;
+        /** 
+            \brief If CyclingHandling == true, cycling handling is performed
+        */
+        bool CyclingHandling;
  
-            RegularizationType regularizationType;
+        RegularizationType regularizationType;
 
-            Index cycling_max_counter;
-            double cycling_relax_step;
+        Index regularizationMaxIterCG;
 
-            LexLSIParameters()
-            {
-                setDefaults();
-            }
+        Index cycling_max_counter;
+        double cycling_relax_step;
+
+        LexLSIParameters()
+        {
+            setDefaults();
+        }
 
 
-            void setDefaults()
-            {
-                max_number_of_iterations = 200;
+        void setDefaults()
+        {
+            max_number_of_iterations = 200;
 
-                tolLinearDependence     = 1e-12;
-                tolWrongSignLambda      = 1e-08;
-                tolCorrectSignLambda    = 1e-12;
+            tolLinearDependence     = 1e-12;
+            tolWrongSignLambda      = 1e-08;
+            tolCorrectSignLambda    = 1e-12;
 
-                CyclingHandling         = false;
-                cycling_max_counter     = 50;
-                cycling_relax_step      = 1e-08;
+            CyclingHandling         = false;
+            cycling_max_counter     = 50;
+            cycling_relax_step      = 1e-08;
 
-                regularizationType      = REGULARIZATION_NONE;
-            }
+            regularizationType      = REGULARIZATION_NONE;
+
+            regularizationMaxIterCG = 10;
+        }
     };
 
 
@@ -318,6 +322,7 @@ namespace LexLS
 
             lexlse.setTolerance(parameters.tolLinearDependence);
             lexlse.setRegularizationType(parameters.regularizationType);
+            lexlse.setRegularizationMaxIterCG(parameters.regularizationMaxIterCG);
 
             if (parameters.CyclingHandling)
             {
@@ -819,8 +824,8 @@ namespace LexLS
 
         /** 
             \brief When the objective with highest priority of LexLSI has only simple bounds (i.e.,
-         its ObjType = SIMPLE_BOUNDS_OBJECTIVE_HP), the number of objectives in LexLSI and LexLSE differ
-         with 1 because fixed variables are not treated as an objective in LexLSE.
+            its ObjType = SIMPLE_BOUNDS_OBJECTIVE_HP), the number of objectives in LexLSI and LexLSE differ
+            with 1 because fixed variables are not treated as an objective in LexLSE.
         */
         Index ObjOffset;
 

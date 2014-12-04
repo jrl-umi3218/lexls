@@ -156,6 +156,11 @@ void mexFunction( int num_output, mxArray *output[],
                           "regularizationType");
 
         lexlsi_parameters.regularizationType = static_cast <LexLS::RegularizationType> (regularization_type);
+
+
+        getOptionInteger(   &lexlsi_parameters.regularizationMaxIterCG, 
+                            options_struct, 
+                            "regularizationMaxIterCG");
     }
 
 
