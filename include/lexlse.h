@@ -1,4 +1,4 @@
-// Time-stamp: <2014-12-04 18:39:57 drdv>
+// Time-stamp: <2014-12-05 10:46:48 drdv>
 #ifndef LEXLSE
 #define LEXLSE
 
@@ -1119,8 +1119,8 @@ namespace LexLS
 
             Eigen::LLT<MatrixType> chol(eye);
             dVectorType sol = chol.solve(eye_rhs);
-            LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias()  = Tk*sol.tail(RemainingColumns);
-            LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias() += Rk.triangularView<Eigen::Upper>()*sol.head(ObjRank);
+            LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias()  = Rk.triangularView<Eigen::Upper>()*sol.head(ObjRank);
+            LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias() += Tk*sol.tail(RemainingColumns);
         }
 
         /** 
@@ -1256,8 +1256,8 @@ namespace LexLS
 
             cg_tikhonov(sol_x, ObjIndex, FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
 
-            LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias()  = Tk*sol_x.tail(RemainingColumns);
-            LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias() += Rk.triangularView<Eigen::Upper>()*sol_x.head(ObjRank);
+            LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias()  = Rk.triangularView<Eigen::Upper>()*sol_x.head(ObjRank);
+            LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias() += Tk*sol_x.tail(RemainingColumns);
         }
 
         /** 
@@ -1293,8 +1293,8 @@ namespace LexLS
 
             cg_tikhonov(sol_x, ObjIndex, FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
 
-            LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias()  = Tk*sol_x.tail(RemainingColumns);
-            LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias() += Rk.triangularView<Eigen::Upper>()*sol_x.head(ObjRank);
+            LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias()  = Rk.triangularView<Eigen::Upper>()*sol_x.head(ObjRank);
+            LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias() += Tk*sol_x.tail(RemainingColumns);
         }
 
         /** 
@@ -1314,31 +1314,11 @@ namespace LexLS
 
             cg_RT(sol_x, ObjIndex, FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
 
-            LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias()  = Tk*sol_x.tail(RemainingColumns);
-            LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias() += Rk.triangularView<Eigen::Upper>()*sol_x.head(ObjRank);
+            LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias()  = Rk.triangularView<Eigen::Upper>()*sol_x.head(ObjRank);
+            LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias() += Tk*sol_x.tail(RemainingColumns);
         }
 
         /*
-         --------------------------------------------------------------------------
-          ObjIndex = 0 (col_dim: r0 + RemainingColumns)
-         --------------------------------------------------------------------------
-         | R0 T0 | y0 | row_dim: r0
-         |  S0   | s0 | row_dim: FirstColIndex = nVar - RemainingColumns = 0
-         |  I0   | 0  | row_dim: r0 + RemainingColumns
-         --------------------------------------------------------------------------
-          ObjIndex = 1 (col_dim: r1 + RemainingColumns)
-         --------------------------------------------------------------------------
-         | R1 T1 | y1 | row_dim: r1
-         |  S1   | s1 | row_dim: FirstColIndex = nVar - RemainingColumns = r0
-         |  I1   | 0  | row_dim: r1 + RemainingColumns
-         --------------------------------------------------------------------------
-          ObjIndex = 2 (col_dim: r2 + RemainingColumns)
-         --------------------------------------------------------------------------
-         | R2 T2 | y2 | row_dim: r2
-         |  S2   | s2 | row_dim: FirstColIndex = nVar - RemainingColumns = r0+r1
-         |  I2   | 0  | row_dim: r2 + RemainingColumns
-         --------------------------------------------------------------------------
-         ...
          --------------------------------------------------------------------------
           ObjIndex = k (col_dim: rk + RemainingColumns)
          --------------------------------------------------------------------------
@@ -1442,23 +1422,6 @@ namespace LexLS
         }
 
         /*
-         --------------------------------------------------------------------------
-          ObjIndex = 0 (col_dim: r0 + RemainingColumns)
-         --------------------------------------------------------------------------
-         | R0 T0 | y0 | row_dim: r0
-         |  I0   | 0  | row_dim: r0 + RemainingColumns
-         --------------------------------------------------------------------------
-          ObjIndex = 1 (col_dim: r1 + RemainingColumns)
-         --------------------------------------------------------------------------
-         | R1 T1 | y1 | row_dim: r1
-         |  I1   | 0  | row_dim: r1 + RemainingColumns
-         --------------------------------------------------------------------------
-          ObjIndex = 2 (col_dim: r2 + RemainingColumns)
-         --------------------------------------------------------------------------
-         | R2 T2 | y2 | row_dim: r2
-         |  I2   | 0  | row_dim: r2 + RemainingColumns
-         --------------------------------------------------------------------------
-         ...
          --------------------------------------------------------------------------
           ObjIndex = k (col_dim: rk + RemainingColumns)
          --------------------------------------------------------------------------
