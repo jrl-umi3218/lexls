@@ -1,4 +1,4 @@
-// Time-stamp: <2014-11-30 15:20:26 drdv>
+// Time-stamp: <2014-12-06 00:28:21 drdv>
 #ifndef UTILITY
 #define UTILITY
 
@@ -283,7 +283,7 @@ namespace LexLS
         {
             for (Index d2=0; d2<M.cols(); d2++)
             {
-                printf(" % .10f ",M(d1,d2));
+                printf(" % .16f ",M(d1,d2));
             }
             printf("\n");
         }

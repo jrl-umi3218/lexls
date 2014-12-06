@@ -1,4 +1,4 @@
-// Time-stamp: <2014-12-05 10:46:48 drdv>
+// Time-stamp: <2014-12-06 11:20:31 drdv>
 #ifndef LEXLSE
 #define LEXLSE
 
@@ -254,95 +254,141 @@ namespace LexLS
                 // -----------------------------------------------------------------------
                 // Regularization
                 // -----------------------------------------------------------------------
-  
-                if ( !isEqual(regularization[ObjIndex],0.0) ) 
+                RealScalar conditioning_estimate;
+
+                if (1) // constant damping factor
                 {
-                    //printf("regularize (ObjIndex = %d, mu = %f) \n",ObjIndex, regularization[ObjIndex]);
-
+                    damp_factor = regularization[ObjIndex];
+                }
+                else // variable damping factor (JUST TESTING)
+                {
+                    damp_factor = 0.0;
                     if (ObjRank > 0)
-                    {
-                        switch(regularizationType){
+                    {                        
+                        // -----------------------------------------------------------------------
+                        // conditioninig estimation
+                        // -----------------------------------------------------------------------
+                        dVectorType rhs_tmp = LQR.col(nVar).segment(FirstRowIndex,ObjRank);
 
-                        case REGULARIZATION_TIKHONOV:
+                        //print_eigen_matrix(rhs_tmp, "rhs");
 
-                            //printf("REGULARIZATION_TIKHONOV \n");
+                        conditioning_estimate = rhs_tmp.squaredNorm();
+                        LQR.block(FirstRowIndex, FirstColIndex, ObjRank, ObjRank).
+                            triangularView<Eigen::Upper>().solveInPlace<Eigen::OnTheLeft>(rhs_tmp);
 
+                        //print_eigen_matrix(rhs_tmp, "x");
+
+                        conditioning_estimate /= rhs_tmp.squaredNorm();
+                        // -----------------------------------------------------------------------
+                    }
+                }
+                
+                if (ObjRank > 0)
+                {
+                    switch(regularizationType){
+
+                    case REGULARIZATION_TIKHONOV:
+
+                        //printf("REGULARIZATION_TIKHONOV \n");
+
+                        if ( !isEqual(damp_factor,0.0) ) 
+                        {
                             if (FirstColIndex + ObjRank <= RemainingColumns)
-                                regularize_tikhonov_2(ObjIndex, FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
+                                regularize_tikhonov_2(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
                             else
-                                regularize_tikhonov_1(ObjIndex, FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
-                            
-                            accumulate_nullspace_basis(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
-                            break;
+                                regularize_tikhonov_1(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
+                        }            
+                        accumulate_nullspace_basis(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
+                        break;
 
-                        case REGULARIZATION_TIKHONOV_CG:
+                    case REGULARIZATION_TIKHONOV_CG:
 
-                            //printf("REGULARIZATION_TIKHONOV_CG(%d) \n", regularizationMaxIterCG);
+                        //printf("REGULARIZATION_TIKHONOV_CG(%d) \n", regularizationMaxIterCG);
 
-                            regularize_tikhonov_CG(ObjIndex, FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
-                            //regularize_tikhonov_CG_x0(ObjIndex, FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
-                            accumulate_nullspace_basis(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
-                            break;
-                            
-                        case REGULARIZATION_R:
-
-                            //printf("REGULARIZATION_TIKHONOV_R \n");
-
-                            regularize_R(ObjIndex, FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
-                            accumulate_nullspace_basis(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
-                            break;
-
-                        case REGULARIZATION_R_NO_Z:
-
-                            //printf("REGULARIZATION_TIKHONOV_R_NO_Z \n");
-
-                            regularize_R_NO_Z(ObjIndex, FirstRowIndex, FirstColIndex, ObjRank);
-                            break;
-
-                        case REGULARIZATION_RT_NO_Z:
-
-                            //printf("REGULARIZATION_TIKHONOV_RT_NO_Z \n");
-
-                            regularize_RT_NO_Z(ObjIndex, FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
-                            break;
-
-                        case REGULARIZATION_RT_NO_Z_CG:
-
-                            //printf("REGULARIZATION_RT_NO_Z_CG(%d) \n", regularizationMaxIterCG);
-
-                            regularize_RT_NO_Z_CG(ObjIndex, FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
-                            break;
-
-                        case REGULARIZATION_TIKHONOV_1:
-
-                            //printf("REGULARIZATION_TIKHONOV_1 \n");
-
-                            regularize_tikhonov_1(ObjIndex, FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
-                            accumulate_nullspace_basis(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
-                            break;
-
-                        case REGULARIZATION_TIKHONOV_2:
-
-                            //printf("REGULARIZATION_TIKHONOV_2 \n");
-
-                            regularize_tikhonov_2(ObjIndex, FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
-                            accumulate_nullspace_basis(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
-                            break;                            
-
-                        case REGULARIZATION_TEST:
-
-                            //printf("REGULARIZATION_TEST \n");
-
-                            // nothing to test
-                            break;
-
-                        case REGULARIZATION_NONE:
-
-                            //printf("REGULARIZATION_NONE \n");
-
-                            // do nothing
-                            break;
+                        if ( !isEqual(damp_factor,0.0) ) 
+                        {
+                            regularize_tikhonov_CG(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
+                            //regularize_tikhonov_CG_x0(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
                         }
+                        accumulate_nullspace_basis(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
+                        break;
+                            
+                    case REGULARIZATION_R:
+
+                        //printf("REGULARIZATION_TIKHONOV_R \n");
+
+                        if ( !isEqual(damp_factor,0.0) ) 
+                        {
+                            regularize_R(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
+                        }
+                        accumulate_nullspace_basis(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
+                        break;
+
+                    case REGULARIZATION_R_NO_Z:
+
+                        //printf("REGULARIZATION_TIKHONOV_R_NO_Z \n");
+
+                        if ( !isEqual(damp_factor,0.0) ) 
+                        {
+                            regularize_R_NO_Z(FirstRowIndex, FirstColIndex, ObjRank);
+                        }
+                        break;
+
+                    case REGULARIZATION_RT_NO_Z:
+
+                        //printf("REGULARIZATION_TIKHONOV_RT_NO_Z \n");
+
+                        if ( !isEqual(damp_factor,0.0) ) 
+                        {
+                            regularize_RT_NO_Z(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
+                        }
+                        break;
+
+                    case REGULARIZATION_RT_NO_Z_CG:
+
+                        //printf("REGULARIZATION_RT_NO_Z_CG(%d) \n", regularizationMaxIterCG);
+
+                        if ( !isEqual(damp_factor,0.0) ) 
+                        {
+                            regularize_RT_NO_Z_CG(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
+                        }
+                        break;
+
+                    case REGULARIZATION_TIKHONOV_1:
+
+                        //printf("REGULARIZATION_TIKHONOV_1 \n");
+
+                        if ( !isEqual(damp_factor,0.0) ) 
+                        {
+                            regularize_tikhonov_1(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
+                        }
+                        accumulate_nullspace_basis(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
+                        break;
+
+                    case REGULARIZATION_TIKHONOV_2:
+
+                        //printf("REGULARIZATION_TIKHONOV_2 \n");
+
+                        if ( !isEqual(damp_factor,0.0) ) 
+                        {
+                            regularize_tikhonov_2(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
+                        }
+                        accumulate_nullspace_basis(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
+                        break;                            
+
+                    case REGULARIZATION_TEST:
+
+                        //printf("REGULARIZATION_TEST \n");
+
+                        // nothing to test
+                        break;
+
+                    case REGULARIZATION_NONE:
+
+                        //printf("REGULARIZATION_NONE \n");
+
+                        // do nothing
+                        break;
                     }
                 }
 
@@ -1085,9 +1131,9 @@ namespace LexLS
 
             todo: maybe use "array" instaed of NullSpace for temporary storage (this would impact accumulate_nullspace_basis)
         */        
-        void regularize_tikhonov_1(Index ObjIndex, Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
+        void regularize_tikhonov_1(Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
         {
-            RealScalar mu = regularization[ObjIndex]*regularization[ObjIndex];
+            RealScalar mu = damp_factor*damp_factor;
 
             dBlockType Rk(LQR, FirstRowIndex,         FirstColIndex, ObjRank,          ObjRank);
             dBlockType Tk(LQR, FirstRowIndex, FirstColIndex+ObjRank, ObjRank, RemainingColumns);
@@ -1128,9 +1174,9 @@ namespace LexLS
 
             \note fast when row-dimension is small
         */        
-        void regularize_tikhonov_2(Index ObjIndex, Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
+        void regularize_tikhonov_2(Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
         {
-            RealScalar mu = regularization[ObjIndex]*regularization[ObjIndex];
+            RealScalar mu = damp_factor*damp_factor;
 
             dBlockType Rk(      LQR, FirstRowIndex,         FirstColIndex,               ObjRank,                    ObjRank);
             dBlockType Tk(      LQR, FirstRowIndex, FirstColIndex+ObjRank,               ObjRank,           RemainingColumns);
@@ -1144,17 +1190,17 @@ namespace LexLS
             D.block(ObjRank,ObjRank,FirstColIndex,FirstColIndex).triangularView<Eigen::Lower>() = mu*up*up.transpose();
 
             D.block(ObjRank, 0, FirstColIndex, ObjRank).noalias()  = 
-                regularization[ObjIndex]*up.leftCols(ObjRank)*Rk.triangularView<Eigen::Upper>().transpose();
+                damp_factor*up.leftCols(ObjRank)*Rk.triangularView<Eigen::Upper>().transpose();
             
             D.block(ObjRank, 0, FirstColIndex, ObjRank).noalias() += 
-                regularization[ObjIndex]*up.rightCols(RemainingColumns)*Tk.transpose();
+                damp_factor*up.rightCols(RemainingColumns)*Tk.transpose();
             
             for (Index i=0; i<FirstColIndex+ObjRank; i++)
                 D.coeffRef(i,i) += mu;
 
             // rhs
             array.col(nVar).head(ObjRank) = LQR.col(nVar).segment(FirstRowIndex,ObjRank);
-            array.col(nVar).segment(ObjRank,FirstColIndex) = regularization[ObjIndex]*NullSpace.col(nVar).head(FirstColIndex);
+            array.col(nVar).segment(ObjRank,FirstColIndex) = damp_factor*NullSpace.col(nVar).head(FirstColIndex);
 
             Eigen::LLT<MatrixType> chol(D);
             dVectorType sol = chol.solve(array.col(nVar).segment(0,FirstColIndex+ObjRank));
@@ -1169,9 +1215,9 @@ namespace LexLS
         /** 
             \brief Tikhonov regularization (basic variables)
         */        
-        void regularize_R(Index ObjIndex, Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
+        void regularize_R(Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
         {
-            RealScalar mu = regularization[ObjIndex]*regularization[ObjIndex];
+            RealScalar mu = damp_factor*damp_factor;
 
             dBlockType  Rk(      LQR, FirstRowIndex, FirstColIndex,       ObjRank, ObjRank);
             dBlockType  up(NullSpace,             0, FirstColIndex, FirstColIndex, ObjRank);
@@ -1195,9 +1241,9 @@ namespace LexLS
         /** 
             \brief Tikhonov regularization (basic variables no Z)
         */        
-        void regularize_R_NO_Z(Index ObjIndex, Index FirstRowIndex, Index FirstColIndex, Index ObjRank)
+        void regularize_R_NO_Z(Index FirstRowIndex, Index FirstColIndex, Index ObjRank)
         {
-            RealScalar mu = regularization[ObjIndex]*regularization[ObjIndex];
+            RealScalar mu = damp_factor*damp_factor;
 
             dBlockType  Rk(      LQR, FirstRowIndex, FirstColIndex, ObjRank, ObjRank);
             dBlockType eye(NullSpace,             0,             0, ObjRank, ObjRank);
@@ -1217,9 +1263,9 @@ namespace LexLS
         /** 
             \brief RT regularization (no Z): [R,T;I]*x = [b;0]
         */        
-        void regularize_RT_NO_Z(Index ObjIndex, Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
+        void regularize_RT_NO_Z(Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
         {
-            RealScalar mu = regularization[ObjIndex]*regularization[ObjIndex];
+            RealScalar mu = damp_factor*damp_factor;
 
             dBlockType Rk(LQR, FirstRowIndex,         FirstColIndex, ObjRank,          ObjRank);
             dBlockType Tk(LQR, FirstRowIndex, FirstColIndex+ObjRank, ObjRank, RemainingColumns);
@@ -1242,7 +1288,7 @@ namespace LexLS
         /** 
             \brief Tikhonov regularization using CGLS
         */        
-        void regularize_tikhonov_CG(Index ObjIndex, Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
+        void regularize_tikhonov_CG(Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
         {
             dBlockType Rk(LQR, FirstRowIndex,         FirstColIndex, ObjRank,          ObjRank);
             dBlockType Tk(LQR, FirstRowIndex, FirstColIndex+ObjRank, ObjRank, RemainingColumns);
@@ -1254,7 +1300,7 @@ namespace LexLS
             sol_x.setZero();
             // ----------------------------------------------------------------------------------------------
 
-            cg_tikhonov(sol_x, ObjIndex, FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
+            cg_tikhonov(sol_x, FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
 
             LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias()  = Rk.triangularView<Eigen::Upper>()*sol_x.head(ObjRank);
             LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias() += Tk*sol_x.tail(RemainingColumns);
@@ -1265,7 +1311,7 @@ namespace LexLS
 
             \note hot-start from RT_NO_Z
         */        
-        void regularize_tikhonov_CG_x0(Index ObjIndex, Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
+        void regularize_tikhonov_CG_x0(Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
         {
             dBlockType Rk(LQR, FirstRowIndex,         FirstColIndex, ObjRank,          ObjRank);
             dBlockType Tk(LQR, FirstRowIndex, FirstColIndex+ObjRank, ObjRank, RemainingColumns);
@@ -1275,7 +1321,7 @@ namespace LexLS
             // ----------------------------------------------------------------------------------------------
             dBlockType D(NullSpace, FirstColIndex, FirstColIndex, ObjRank, ObjRank);
 
-            RealScalar mu = regularization[ObjIndex]*regularization[ObjIndex];
+            RealScalar mu = damp_factor*damp_factor;
     
             D.triangularView<Eigen::Lower>() = (Rk.triangularView<Eigen::Upper>()*Rk.transpose()).eval();
             D.triangularView<Eigen::Lower>() += Tk*Tk.transpose();
@@ -1291,7 +1337,7 @@ namespace LexLS
             sol_x.tail(RemainingColumns) = Tk.transpose()*sol;             
             // ----------------------------------------------------------------------------------------------
 
-            cg_tikhonov(sol_x, ObjIndex, FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
+            cg_tikhonov(sol_x, FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
 
             LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias()  = Rk.triangularView<Eigen::Upper>()*sol_x.head(ObjRank);
             LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias() += Tk*sol_x.tail(RemainingColumns);
@@ -1300,7 +1346,7 @@ namespace LexLS
         /** 
             \brief RT_NO_Z regularization using CGLS
         */        
-        void regularize_RT_NO_Z_CG(Index ObjIndex, Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
+        void regularize_RT_NO_Z_CG(Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
         {
             dBlockType Rk(LQR, FirstRowIndex,         FirstColIndex, ObjRank,          ObjRank);
             dBlockType Tk(LQR, FirstRowIndex, FirstColIndex+ObjRank, ObjRank, RemainingColumns);
@@ -1312,7 +1358,7 @@ namespace LexLS
             sol_x.setZero();
             // ----------------------------------------------------------------------------------------------
 
-            cg_RT(sol_x, ObjIndex, FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
+            cg_RT(sol_x, FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
 
             LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias()  = Rk.triangularView<Eigen::Upper>()*sol_x.head(ObjRank);
             LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias() += Tk*sol_x.tail(RemainingColumns);
@@ -1327,7 +1373,7 @@ namespace LexLS
          |  Ik   | 0  | row_dim: rk + RemainingColumns
          --------------------------------------------------------------------------
         */
-        Index cg_tikhonov(dVectorType &sol_x, Index ObjIndex, 
+        Index cg_tikhonov(dVectorType &sol_x,
                           Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
         {
             RealScalar alpha, beta, gamma, gamma_previous;
@@ -1363,9 +1409,9 @@ namespace LexLS
             r.head(ObjRank).noalias() -= Rk.triangularView<Eigen::Upper>()*sol_x.head(ObjRank);
 
             r.segment(ObjRank,FirstColIndex).noalias() = NullSpace.col(nVar).head(FirstColIndex) - Sk * sol_x;
-            r.segment(ObjRank,FirstColIndex)          *= regularization[ObjIndex];
+            r.segment(ObjRank,FirstColIndex)          *= damp_factor;
 
-            r.tail(ObjRank+RemainingColumns).noalias() = -regularization[ObjIndex]*sol_x;
+            r.tail(ObjRank+RemainingColumns).noalias() = -damp_factor*sol_x;
             // ------------------------------------------------------------------------------------------------
             /*
                   | Rk'       |   | r1 |
@@ -1374,7 +1420,7 @@ namespace LexLS
             */
             // ------------------------------------------------------------------------------------------------
             s.noalias() = Sk.transpose() * r.segment(ObjRank,FirstColIndex) + r.tail(ObjRank+RemainingColumns);
-            s *= regularization[ObjIndex];
+            s *= damp_factor;
 
             s.head(ObjRank).noalias()          += Rk.triangularView<Eigen::Upper>().transpose() * r.head(ObjRank);
             s.tail(RemainingColumns).noalias() += Tk.transpose() * r.head(ObjRank);
@@ -1394,9 +1440,9 @@ namespace LexLS
                 q.head(ObjRank).noalias() += Rk.triangularView<Eigen::Upper>()*p.head(ObjRank);
 
                 q.segment(ObjRank,FirstColIndex).noalias() = Sk * p;
-                q.segment(ObjRank,FirstColIndex) *= regularization[ObjIndex];
+                q.segment(ObjRank,FirstColIndex) *= damp_factor;
 
-                q.tail(ObjRank+RemainingColumns).noalias() = regularization[ObjIndex]*p;
+                q.tail(ObjRank+RemainingColumns).noalias() = damp_factor*p;
                 // ------------------------------------------------------------------------------------------------
                 alpha = gamma/q.squaredNorm();
                 sol_x += alpha*p;
@@ -1405,7 +1451,7 @@ namespace LexLS
                 // S = [Rk Tk; Sk ; Ik]'*r
                 // ------------------------------------------------------------------------------------------------
                 s.noalias() = Sk.transpose() * r.segment(ObjRank,FirstColIndex) + r.tail(ObjRank+RemainingColumns);
-                s *= regularization[ObjIndex];
+                s *= damp_factor;
 
                 s.head(ObjRank).noalias()          += Rk.triangularView<Eigen::Upper>().transpose() * r.head(ObjRank);
                 s.tail(RemainingColumns).noalias() += Tk.transpose() * r.head(ObjRank);
@@ -1429,7 +1475,7 @@ namespace LexLS
          |  Ik   | 0  | row_dim: rk + RemainingColumns
          --------------------------------------------------------------------------
         */
-        Index cg_RT(dVectorType &sol_x, Index ObjIndex, 
+        Index cg_RT(dVectorType &sol_x, 
                     Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
         {
             RealScalar alpha, beta, gamma, gamma_previous;
@@ -1454,7 +1500,7 @@ namespace LexLS
             r.head(ObjRank).noalias()  = LQR.col(nVar).segment(FirstRowIndex,ObjRank) - Tk*sol_x.tail(RemainingColumns);
             r.head(ObjRank).noalias() -= Rk.triangularView<Eigen::Upper>()*sol_x.head(ObjRank);
 
-            r.tail(ObjRank+RemainingColumns).noalias() = -regularization[ObjIndex]*sol_x;
+            r.tail(ObjRank+RemainingColumns).noalias() = -damp_factor*sol_x;
             // ------------------------------------------------------------------------------------------------
             /*
                   | Rk'   |   | r1 |
@@ -1462,7 +1508,7 @@ namespace LexLS
                   | Tk'   |
             */
             // ------------------------------------------------------------------------------------------------
-            s.noalias() = regularization[ObjIndex] * r.tail(ObjRank+RemainingColumns);
+            s.noalias() = damp_factor * r.tail(ObjRank+RemainingColumns);
 
             s.head(ObjRank).noalias()          += Rk.triangularView<Eigen::Upper>().transpose() * r.head(ObjRank);
             s.tail(RemainingColumns).noalias() += Tk.transpose() * r.head(ObjRank);
@@ -1481,7 +1527,7 @@ namespace LexLS
                 q.head(ObjRank).noalias()  = Tk*p.tail(RemainingColumns);
                 q.head(ObjRank).noalias() += Rk.triangularView<Eigen::Upper>()*p.head(ObjRank);
 
-                q.tail(ObjRank+RemainingColumns).noalias() = regularization[ObjIndex]*p;
+                q.tail(ObjRank+RemainingColumns).noalias() = damp_factor*p;
                 // ------------------------------------------------------------------------------------------------
                 alpha = gamma/q.squaredNorm();
                 sol_x += alpha*p;
@@ -1489,7 +1535,7 @@ namespace LexLS
                 // ------------------------------------------------------------------------------------------------
                 // S = [Rk Tk; Ik]'*r
                 // ------------------------------------------------------------------------------------------------
-                s.noalias() = regularization[ObjIndex] * r.tail(ObjRank+RemainingColumns);
+                s.noalias() = damp_factor * r.tail(ObjRank+RemainingColumns);
 
                 s.head(ObjRank).noalias()          += Rk.triangularView<Eigen::Upper>().transpose() * r.head(ObjRank);
                 s.tail(RemainingColumns).noalias() += Tk.transpose() * r.head(ObjRank);
@@ -1579,6 +1625,13 @@ namespace LexLS
             \brief Linear dependence tolerance
         */
         RealScalar LinearDependenceTolerance;
+
+        /** 
+            \brief Regularization factor used at the current level
+
+            \note determined as a function of regularization[ObjIndex] and the smallest pivot
+        */
+        RealScalar damp_factor;
 
         // ==================================================================
         // bool
