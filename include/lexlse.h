@@ -1,4 +1,4 @@
-// Time-stamp: <2014-12-06 11:20:31 drdv>
+// Time-stamp: <2014-12-08 10:42:58 drdv>
 #ifndef LEXLSE
 #define LEXLSE
 
@@ -34,6 +34,7 @@ namespace LexLS
             isFactorized(false), 
             regularizationType(REGULARIZATION_NONE),
             regularizationMaxIterCG(10),
+            realSensitivityResidual(false),
             isSolved(false) {}
         
         /** 
@@ -47,6 +48,7 @@ namespace LexLS
             LinearDependenceTolerance(1e-12),
             regularizationType(REGULARIZATION_NONE),
             regularizationMaxIterCG(10),
+            realSensitivityResidual(false),
             isFactorized(false), 
             isSolved(false)
         {
@@ -260,7 +262,7 @@ namespace LexLS
                 {
                     damp_factor = regularization[ObjIndex];
                 }
-                else // variable damping factor (JUST TESTING)
+                else // variable damping factor (JUST TESTING, NOT READY YET)
                 {
                     damp_factor = 0.0;
                     if (ObjRank > 0)
@@ -307,8 +309,8 @@ namespace LexLS
 
                         if ( !isEqual(damp_factor,0.0) ) 
                         {
-                            regularize_tikhonov_CG(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
-                            //regularize_tikhonov_CG_x0(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
+                            //regularize_tikhonov_CG(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
+                            regularize_tikhonov_CG_x0(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
                         }
                         accumulate_nullspace_basis(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
                         break;
@@ -468,7 +470,8 @@ namespace LexLS
         */
         bool ObjectiveSensitivity(Index ObjIndex, 
                                   Index &CtrIndex2Remove, Index &ObjIndex2Remove, 
-                                  RealScalar tolWrongSignLambda, RealScalar tolCorrectSignLambda)
+                                  RealScalar tolWrongSignLambda, RealScalar tolCorrectSignLambda,
+                                  dVectorType &residual)
         {
             RealScalar maxAbsValue = 0.0;
             bool tmp_bool, FoundBetterDescentDirection = false;
@@ -498,19 +501,26 @@ namespace LexLS
             ObjRank       = ObjInfo[ObjIndex].rank;
 
             // Lambda.segment(FirstRowIndex, ObjRank).setZero(); assumed
-  
-            // copy only what is needed to compute the residual w = A*x-b (i.e., -y_hat)
-            Lambda.segment(FirstRowIndex+ObjRank, ObjDim-ObjRank) =     \
-                -LQR.col(nVar).segment(FirstRowIndex+ObjRank, ObjDim-ObjRank);
-            
-            // compute the optimal residual associated with objective ObjIndex (apply Q_{ObjIndex} on the left)
-            Lambda.segment(FirstRowIndex, ObjDim)
-                .applyOnTheLeft(householderSequence(LQR.block(FirstRowIndex, 
-                                                              FirstColIndex, 
-                                                              ObjDim, 
-                                                              ObjRank),
-                                                    hh_scalars.segment(FirstRowIndex,ObjDim))); 
 
+            if (realSensitivityResidual) // use the real residual (not recommended)
+            {
+                Lambda.segment(FirstRowIndex, ObjDim) = residual.head(ObjDim);
+            }
+            else // compute the residual from the factorization
+            {
+                // copy only what is needed to compute the residual w = A*x-b (i.e., -y_hat)
+                Lambda.segment(FirstRowIndex+ObjRank, ObjDim-ObjRank) = \
+                    -LQR.col(nVar).segment(FirstRowIndex+ObjRank, ObjDim-ObjRank);
+                
+                // compute the optimal residual associated with objective ObjIndex (apply Q_{ObjIndex} on the left)
+                Lambda.segment(FirstRowIndex, ObjDim)
+                    .applyOnTheLeft(householderSequence(LQR.block(FirstRowIndex, 
+                                                                  FirstColIndex, 
+                                                                  ObjDim, 
+                                                                  ObjRank),
+                                                        hh_scalars.segment(FirstRowIndex,ObjDim))); 
+            }
+            
             // check for wrong sign of the Lagrange multipliers
             FoundBetterDescentDirection = findDescentDirection(FirstRowIndex,
                                                                ObjDim,
@@ -598,6 +608,9 @@ namespace LexLS
 
         /** 
             \brief Can be used to form the matrix of Lagrange multipliers (for debugging purposes).
+
+            \note In the main ObjectiveSensitivity(...) function the real residual might be used. Here
+            only the residual based on the factorization is used. 
         */
         void ObjectiveSensitivity(Index ObjIndex)
         {
@@ -814,6 +827,230 @@ namespace LexLS
             isSolved = true;
         }      
 
+        /**
+           \brief Compute the least-norm solution.
+
+           \note using Givens rotations
+        */
+        void solveLeastNorm_1()
+        {
+            Index FirstRowIndex, FirstColIndex, ObjRank, counter = 0;
+            Index nVarRank = 0; // number of variables determined by rank([R,T])
+
+            // -------------------------------------------------------------------------
+            // determine dimensions
+            // -------------------------------------------------------------------------
+            for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
+                nVarRank += ObjInfo[ObjIndex].rank;           
+
+            Index nVarFree = nVar - (nVarRank + nVarFixed);
+            Index DoF      = nVarRank + nVarFree;
+
+            // -------------------------------------------------------------------------
+            // allocate memory 
+            // -------------------------------------------------------------------------
+            MatrixType  LHS(nVarRank,DoF);
+            dVectorType RHS(DoF);
+            RHS.tail(nVarFree).setZero(); // important
+
+            // -------------------------------------------------------------------------
+            // copy stuff
+            // -------------------------------------------------------------------------
+            Index col_dim = DoF;
+            for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
+            {
+                FirstRowIndex = ObjInfo[ObjIndex].FirstRowIndex;
+                FirstColIndex = ObjInfo[ObjIndex].FirstColIndex;
+                ObjRank       = ObjInfo[ObjIndex].rank;
+              
+                LHS.block(counter, counter, ObjRank, col_dim)
+                    .triangularView<Eigen::Upper>() = LQR.block(FirstRowIndex,FirstColIndex,ObjRank,col_dim);
+
+                RHS.segment(counter,ObjRank) = LQR.col(nVar).segment(FirstRowIndex,ObjRank);
+
+                counter += ObjRank;
+                col_dim -= ObjRank;
+            }
+
+            // -------------------------------------------------------------------------
+            // zero-out the redundant part (by applying Givens rotations on the right)
+            // -------------------------------------------------------------------------
+            GivensRotationSequence gs(nVarFree*nVarRank);
+            for (Index i=0; i<nVarFree; i++)
+            {
+                for (Index j=nVarRank-1; j>=0; j--)
+                {
+                    GivensRotation GR(LHS.coeffRef(j,j),LHS.coeffRef(j,nVarRank+i),j,nVarRank+i);
+                    LHS.topRows(j+1).applyOnTheRight(GR.i,GR.j,GR.G);
+
+                    gs.push(GR);
+                }
+            }
+
+            // -------------------------------------------------------------------------
+            // backward substitution
+            // -------------------------------------------------------------------------
+            LHS.block(0,0,nVarRank,nVarRank)
+                .triangularView<Eigen::Upper>()
+                .solveInPlace<Eigen::OnTheLeft>(RHS.head(nVarRank));
+
+            // -------------------------------------------------------------------------
+            // apply sequence of Givens rotations on the RHS vector
+            // -------------------------------------------------------------------------
+            for (Index i=gs.size()-1; i>=0; i--)
+                RHS.applyOnTheLeft(gs.get_i(i), gs.get_j(i), gs.get(i));
+
+            // -------------------------------------------------------------------------
+            // Apply permutation
+            // -------------------------------------------------------------------------
+            x.tail(DoF) = RHS; // x.head(nVarFixed) contain the fixed variables
+            x = P*x;
+
+            // Problem solved
+            isSolved = true;
+        }
+
+        /**
+           \brief Compute the least-norm solution.
+
+           \note using the normal equations
+        */
+        void solveLeastNorm_2()
+        {
+            Index FirstRowIndex, FirstColIndex, ObjRank, counter = 0;
+            Index nVarRank = 0; // number of variables determined by rank([R,T])
+
+            // -------------------------------------------------------------------------
+            // determine dimensions
+            // -------------------------------------------------------------------------
+            for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
+                nVarRank += ObjInfo[ObjIndex].rank;           
+
+            Index nVarFree = nVar - (nVarRank + nVarFixed);
+            Index DoF      = nVarRank + nVarFree;
+
+            // -------------------------------------------------------------------------
+            // allocate memory 
+            // -------------------------------------------------------------------------
+            MatrixType  LHS(nVarRank,DoF+1);
+
+            dBlockType  R(  LHS, 0,        0, nVarRank, nVarRank);
+            dBlockType  T(  LHS, 0, nVarRank, nVarRank, nVarFree+1);
+            dBlockType  D(array, 0,        0, nVarFree, nVarFree);
+
+            // -------------------------------------------------------------------------
+            // copy stuff
+            // -------------------------------------------------------------------------
+            Index col_dim = DoF;
+            for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
+            {
+                FirstRowIndex = ObjInfo[ObjIndex].FirstRowIndex;
+                FirstColIndex = ObjInfo[ObjIndex].FirstColIndex;
+                ObjRank       = ObjInfo[ObjIndex].rank;
+              
+                LHS.block(counter, counter, ObjRank, col_dim+1)
+                    .triangularView<Eigen::Upper>() = LQR.block(FirstRowIndex,FirstColIndex,ObjRank,col_dim+1);
+
+                counter += ObjRank;
+                col_dim -= ObjRank;
+            }
+
+            // no need to negate
+            R.triangularView<Eigen::Upper>().solveInPlace<Eigen::OnTheLeft>(T);
+
+            // todo: form only the lower triangular part
+            D.noalias() = T.leftCols(nVarFree).transpose()*T.leftCols(nVarFree);
+            for (Index i=0; i<nVarFree; i++)
+                D.coeffRef(i,i) += 1.0;
+
+            Eigen::LLT<MatrixType> chol(D);
+            x.tail(nVarFree) = chol.solve(T.leftCols(nVarFree).transpose() * T.col(nVarFree));
+
+            counter = 0;
+            for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
+            {
+                FirstRowIndex = ObjInfo[ObjIndex].FirstRowIndex;
+                FirstColIndex = ObjInfo[ObjIndex].FirstColIndex;
+                ObjRank       = ObjInfo[ObjIndex].rank;
+
+                x.segment(nVarFixed+counter,ObjRank) = LQR.col(nVar).segment(FirstRowIndex,ObjRank) - 
+                    LQR.block(FirstRowIndex,nVarRank+nVarFixed,ObjRank,nVarFree)*x.tail(nVarFree);
+                                            
+                counter += ObjRank;
+            }
+            R.triangularView<Eigen::Upper>().solveInPlace<Eigen::OnTheLeft>(x.segment(nVarFixed,nVarRank));
+
+            // -------------------------------------------------------------------------
+            // Apply permutation
+            // -------------------------------------------------------------------------
+            x = P*x;
+
+            // Problem solved
+            isSolved = true;
+        }        
+
+        /**
+           \brief Compute the least-norm solution.
+
+           \note using the normal equations (and reusing the basis constructed for Tikhonov
+           regularization). Hence in order to use this, one has to set regularizationType =
+           REGULARIZATION_TIKHONOV and regularization = zeros(1,nObj);
+        */
+        void solveLeastNorm_3()
+        {
+            Index FirstRowIndex, FirstColIndex, ObjRank, counter = 0;
+            Index nVarRank = 0; // number of variables determined by rank([R,T])
+
+            // -------------------------------------------------------------------------
+            // determine dimensions
+            // -------------------------------------------------------------------------
+            for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
+                nVarRank += ObjInfo[ObjIndex].rank;           
+
+            Index nVarFree = nVar - (nVarRank + nVarFixed);
+            Index DoF      = nVarRank + nVarFree;
+
+            // -------------------------------------------------------------------------
+            // allocate memory 
+            // -------------------------------------------------------------------------
+            dBlockType iR(NullSpace, nVarFixed, nVarFixed, nVarRank, nVarRank);            // inv(R)
+            dBlockType  T(NullSpace, nVarFixed, nVarFixed+nVarRank, nVarRank, nVarFree+1); // inv(R)*T
+            dBlockType  D(    array, 0,                  0, nVarFree, nVarFree);
+
+            //printf("nObj = %d, nVarFixed = %d \n", nObj, nVarFixed);
+            //print_eigen_matrix(NullSpace,"NullSpace");
+
+            // todo: form only the lower triangular part
+            D.noalias() = T.leftCols(nVarFree).transpose()*T.leftCols(nVarFree);
+            for (Index i=0; i<nVarFree; i++)
+                D.coeffRef(i,i) += 1.0;
+
+            Eigen::LLT<MatrixType> chol(D);
+            x.tail(nVarFree) = chol.solve(T.leftCols(nVarFree).transpose() * T.col(nVarFree));
+
+            counter = 0;
+            for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
+            {
+                FirstRowIndex = ObjInfo[ObjIndex].FirstRowIndex;
+                FirstColIndex = ObjInfo[ObjIndex].FirstColIndex;
+                ObjRank       = ObjInfo[ObjIndex].rank;
+
+                x.segment(nVarFixed+counter,ObjRank) = LQR.col(nVar).segment(FirstRowIndex,ObjRank) - 
+                    LQR.block(FirstRowIndex,nVarRank+nVarFixed,ObjRank,nVarFree)*x.tail(nVarFree);
+                                            
+                counter += ObjRank;
+            }
+            x.segment(nVarFixed,nVarRank) = iR.triangularView<Eigen::Upper>() * x.segment(nVarFixed,nVarRank);
+
+            // -------------------------------------------------------------------------
+            // Apply permutation
+            // -------------------------------------------------------------------------
+            x = P*x;
+
+            // Problem solved
+            isSolved = true;
+        }
+
         // =================================================================================================
         // set & get
         // =================================================================================================
@@ -931,6 +1168,11 @@ namespace LexLS
             regularizationMaxIterCG = regularizationMaxIterCG_;
         }
         
+        void setRealSensitivityResidual(bool realSensitivityResidual_)
+        {
+            realSensitivityResidual = realSensitivityResidual_;
+        }
+
         /** 
             \brief Get number of fixed variables
         */        
@@ -1334,7 +1576,7 @@ namespace LexLS
 
             dVectorType sol_x(ObjRank+RemainingColumns);
             sol_x.head(ObjRank).noalias() = Rk.triangularView<Eigen::Upper>().transpose()*sol;
-            sol_x.tail(RemainingColumns) = Tk.transpose()*sol;             
+            sol_x.tail(RemainingColumns) = Tk.transpose()*sol;
             // ----------------------------------------------------------------------------------------------
 
             cg_tikhonov(sol_x, FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
@@ -1561,6 +1803,15 @@ namespace LexLS
             dBlockType     LeftBlock(NullSpace,             0,           FirstColIndex, FirstColIndex+ObjRank,            ObjRank);
             dBlockType TrailingBlock(NullSpace,             0, FirstColIndex + ObjRank, FirstColIndex+ObjRank, RemainingColumns+1);
 
+/*
+            printf("nVar = %d, FirstRowIndex = %d, FirstColIndex = %d, ObjRank = %d, RemainingColumns = %d \n", nVar, FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
+
+            print_eigen_matrix(           Rk.triangularView<Eigen::Upper>(),           "Rk");
+            print_eigen_matrix(      UpBlock,      "UpBlock");
+            print_eigen_matrix(    LeftBlock,    "LeftBlock");
+            print_eigen_matrix(TrailingBlock,"TrailingBlock");
+*/
+
             // I have to do this because in regularize_tikhonov_1(...) I use NullSpace as a temporary storage
             LeftBlock.block(FirstColIndex,0,ObjRank,ObjRank).setIdentity();
 
@@ -1579,6 +1830,10 @@ namespace LexLS
             {
                 TrailingBlock.noalias() -= LeftBlock * UpBlock;
             }
+
+//            print_eigen_matrix(NullSpace, "NullSpace");
+//            printf("==============================================================================\n");
+
         }
 
         // ==================================================================
@@ -1646,6 +1901,11 @@ namespace LexLS
             \brief isSolved = false while the problem has not been solved
         */
         bool isSolved;
+
+        /** 
+            \brief use the real residual when computing sensitivity (or not)
+        */
+        bool realSensitivityResidual;
 
         // ==================================================================
         // definition of vectors of integers

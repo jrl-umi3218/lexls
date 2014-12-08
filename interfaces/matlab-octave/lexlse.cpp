@@ -20,25 +20,33 @@ const int MIN_NUMBER_OF_FIELDS_IN_OBJ = 2;
 
 class LexlseOptions
 {
-    public:
-        bool    is_linear_dependence_tolerance_set;
-        double  linear_dependence_tolerance;
+public:
+    bool is_linear_dependence_tolerance_set;
+    double linear_dependence_tolerance;
 
-        bool is_variables_fixing_enabled;
+    bool is_variables_fixing_enabled;
 
-        bool                is_regularization_set;
-        std::vector<double> regularization;
+    int get_least_norm_solution;
 
+    bool is_regularization_set;
+    std::vector<double> regularization;
 
-        LexlseOptions()
-        {
-            is_linear_dependence_tolerance_set = false;
-            linear_dependence_tolerance = 0.0;
+    bool is_regularization_type_set;
+    LexLS::RegularizationType regularizationType;
 
-            is_variables_fixing_enabled = false;
+    LexlseOptions()
+    {
+        is_linear_dependence_tolerance_set = false;
+        linear_dependence_tolerance = 0.0;
 
-            is_regularization_set = false;
-        }
+        is_variables_fixing_enabled = false;
+
+        is_regularization_set = false;
+
+        is_regularization_type_set = false;
+
+        get_least_norm_solution = 0;
+    }
 };
 
 
@@ -50,8 +58,8 @@ void mexFunction( int num_output, mxArray *output[],
                   int num_input, const mxArray *input[])
 {
     checkInputOutput(num_output, output, num_input, input, 
-                    MIN_OUTPUTS, MAX_OUTPUTS, MIN_INPUTS, MAX_INPUTS,
-                    MIN_NUMBER_OF_FIELDS_IN_OBJ);
+                     MIN_OUTPUTS, MAX_OUTPUTS, MIN_INPUTS, MAX_INPUTS,
+                     MIN_NUMBER_OF_FIELDS_IN_OBJ);
 
 // parameters of the solver
     LexlseOptions options;
@@ -63,9 +71,9 @@ void mexFunction( int num_output, mxArray *output[],
     {
         const mxArray *options_struct = input[1];
 
-        options.is_linear_dependence_tolerance_set = getOptionDouble(   &options.linear_dependence_tolerance, 
-                                                                        options_struct, 
-                                                                        "tolLinearDependence");
+        options.is_linear_dependence_tolerance_set = getOptionDouble( &options.linear_dependence_tolerance, 
+                                                                      options_struct, 
+                                                                      "tolLinearDependence");
         
         getOptionBool(&options.is_variables_fixing_enabled,    
                       options_struct, 
@@ -75,6 +83,18 @@ void mexFunction( int num_output, mxArray *output[],
                                                         mxGetNumberOfElements (input[0]),
                                                         options_struct, 
                                                         "regularization");
+
+        getOptionInteger(   &options.get_least_norm_solution, 
+                            options_struct, 
+                            "get_least_norm_solution");
+
+        int regularization_type;
+        options.is_regularization_type_set = getOptionInteger( &regularization_type, 
+                                                               options_struct, 
+                                                               "regularizationType");
+        
+        options.regularizationType = static_cast <LexLS::RegularizationType> (regularization_type);
+
     }
 
 // parse objectives
@@ -94,7 +114,7 @@ void mexFunction( int num_output, mxArray *output[],
         mxArray *b = getObjectiveMatrix(objectives, 0, "b");
             
 
-    // check A and b
+        // check A and b
         int num_rows = mxGetM(A);
         checkInputMatrixSize(A, num_rows, 1, 0, "A");
         checkInputMatrixSize(b, num_rows, 1, 0, "b");
@@ -117,13 +137,13 @@ void mexFunction( int num_output, mxArray *output[],
 
 
     for (int i = index_first_normal_obj, index_obj = 0; 
-            index_obj < num_obj; 
-            ++index_obj, ++i)
+         index_obj < num_obj; 
+         ++index_obj, ++i)
     {
         mxArray *A = getObjectiveMatrix(objectives, i, "A");
         mxArray *b = getObjectiveMatrix(objectives, i, "b");
 
-    // check A and b
+        // check A and b
         num_constr[index_obj] = mxGetM(A);
         total_num_constr += num_constr[index_obj];
 
@@ -136,8 +156,8 @@ void mexFunction( int num_output, mxArray *output[],
         checkInputMatrixSize(b, num_constr[index_obj], 1, i, "b");
 
 
-    // form Ab = [A, b]
-    // remember objective
+        // form Ab = [A, b]
+        // remember objective
         constraints[index_obj] = catenateMatrices(A, b);
     }
 
@@ -178,24 +198,44 @@ void mexFunction( int num_output, mxArray *output[],
             }
         }
 
+        if (options.is_regularization_type_set)
+        {
+            lexlse.setRegularizationType(options.regularizationType);
+        }
+
         // constraints
         for (int i = 0; i < num_obj; ++i)
         {
             lexlse.setData(
-                    i, 
-                    Eigen::Map<LexLS::MatrixType>(
-                        mxGetPr(constraints[i]), 
-                        num_constr[i], 
-                        num_var + 1));
+                i, 
+                Eigen::Map<LexLS::MatrixType>(
+                    mxGetPr(constraints[i]), 
+                    num_constr[i], 
+                    num_var + 1));
         }
 
 
-    // solve the problem
+        // solve the problem
         lexlse.factorize();
-        lexlse.solve();
-    
 
-    // output solution
+        if (options.get_least_norm_solution == 1) 
+        {
+            lexlse.solveLeastNorm_1();
+        }
+        else if (options.get_least_norm_solution == 2) 
+        {
+            lexlse.solveLeastNorm_2();
+        }        
+        else if (options.get_least_norm_solution == 3) 
+        {
+            lexlse.solveLeastNorm_3();
+        }        
+        else
+        {
+            lexlse.solve();
+        }
+        
+        // output solution
         LexLS::dVectorType& x = lexlse.get_x();
         output[0] = mxCreateDoubleMatrix(num_var, 1, mxREAL);
         double *x_out = mxGetPr(output[0]);
@@ -204,7 +244,7 @@ void mexFunction( int num_output, mxArray *output[],
             x_out[i] = x(i);
         }
 
-    // output additional information
+        // output additional information
         if (num_output >= 2)
         {
             int num_info_fields = 1; 
@@ -218,7 +258,7 @@ void mexFunction( int num_output, mxArray *output[],
             mxSetField (output[1], 0, "status", info_status);
         }
 
-    // output residual
+        // output residual
         if (num_output >= 3)
         {
             LexLS::dVectorType& w = lexlse.getResidual();

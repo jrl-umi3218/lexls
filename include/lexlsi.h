@@ -1,4 +1,4 @@
-// Time-stamp: <2014-12-04 13:44:16 drdv>
+// Time-stamp: <2014-12-06 23:16:28 drdv>
 #ifndef LEXLSI
 #define LEXLSI
 
@@ -43,6 +43,9 @@ namespace LexLS
         Index cycling_max_counter;
         double cycling_relax_step;
 
+        // use the real residual when computing sensitivity
+        bool realSensitivityResidual;
+
         LexLSIParameters()
         {
             setDefaults();
@@ -64,6 +67,8 @@ namespace LexLS
             regularizationType      = REGULARIZATION_NONE;
 
             regularizationMaxIterCG = 10;
+
+            realSensitivityResidual = false;
         }
     };
 
@@ -323,6 +328,7 @@ namespace LexLS
             lexlse.setTolerance(parameters.tolLinearDependence);
             lexlse.setRegularizationType(parameters.regularizationType);
             lexlse.setRegularizationMaxIterCG(parameters.regularizationMaxIterCG);
+            lexlse.setRealSensitivityResidual(parameters.realSensitivityResidual);
 
             if (parameters.CyclingHandling)
             {
@@ -708,11 +714,16 @@ namespace LexLS
             bool DescentDirectionExists = false;            
             for (Index ObjIndex=0; ObjIndex<nObj-ObjOffset; ObjIndex++) // loop over objectives of LexLSE problem
             {
+                // The real residual Obj[ObjIndex].getOptimalResidual() is an input but it might not be used inside the function. 
+                // In fact it is better to use the residual computed from the factorization in lexlse because 
+                // I have observed less cycling. I am just testing some stuff with the the real residual 
+                // (don't use it if you don't know what you are doing!)
                 DescentDirectionExists = lexlse.ObjectiveSensitivity(ObjIndex, 
                                                                      CtrIndex2Remove, 
                                                                      ObjIndex2Remove, 
                                                                      parameters.tolWrongSignLambda,
-                                                                     parameters.tolCorrectSignLambda);
+                                                                     parameters.tolCorrectSignLambda,
+                                                                     Obj[ObjIndex].getOptimalResidual());
 
                 if (DescentDirectionExists)
                     break;

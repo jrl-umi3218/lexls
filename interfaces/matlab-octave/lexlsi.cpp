@@ -161,6 +161,10 @@ void mexFunction( int num_output, mxArray *output[],
         getOptionInteger(   &lexlsi_parameters.regularizationMaxIterCG, 
                             options_struct, 
                             "regularizationMaxIterCG");
+
+        getOptionBool(  &lexlsi_parameters.realSensitivityResidual, 
+                        options_struct, 
+                        "realSensitivityResidual");
     }
 
 
