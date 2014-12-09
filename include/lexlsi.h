@@ -1,4 +1,4 @@
-// Time-stamp: <2014-12-06 23:16:28 drdv>
+// Time-stamp: <2014-12-09 15:38:36 drdv>
 #ifndef LEXLSI
 #define LEXLSI
 
@@ -317,6 +317,13 @@ namespace LexLS
             x0_is_initialized = true;
         }
 
+        /**
+           \brief Sets the residual for objective k
+        */
+        void set_w(Index ObjIndex, dVectorType &w)
+        {
+            Obj[ObjIndex].set_w(w);
+        }
 
         /**
            \brief Sets parameters
@@ -855,7 +862,6 @@ namespace LexLS
         */
         Index iterRemove;
 
-
         /** 
             \brief If x0_is_initialized == true, the function set_x0(dVectorType &x0) has been
             called and x0 has been initialized.
@@ -920,19 +926,6 @@ namespace LexLS
             \brief Handle cycling
         */       
         CyclingHandlerType cycling_handler;
-
-        /** 
-            \brief Vector used to store constraints that have been added to the working set since
-            the last time the step alpha = 0.
-        */       
-        //std::vector<ConstraintIdentifierType> CyclingArray;
-
-        /** 
-            \brief The same as CyclingArray but for the previous series of constraint additions.
-
-            \note Essentially CyclingArrayPrevious stores CyclingArray before it is cleared
-        */       
-        //std::vector<ConstraintIdentifierType> CyclingArrayPrevious;
 
     }; // END class LexLSI 
 

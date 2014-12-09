@@ -1,4 +1,4 @@
-// Time-stamp: <2014-10-18 23:50:42 drdv>
+// Time-stamp: <2014-12-09 15:36:16 drdv>
 #ifndef OBJECTIVE
 #define OBJECTIVE
 
@@ -22,6 +22,7 @@ namespace LexLS
         */
         Objective(): 
             nCtr(0),
+            w_is_initialized(false),
             ObjType(DEFAULT_OBJECTIVE) {}
 
         /**
@@ -560,6 +561,15 @@ namespace LexLS
         }
 
         /**
+           \brief Set w
+        */
+        void set_w(const dVectorType& w_)
+        {
+            w = w_;
+            w_is_initialized = true;
+        }
+
+        /**
            \brief Modify upper or lower bound
         */
         void relax_bounds(Index CtrIndex, ConstraintType CtrType, RealScalar p)
@@ -721,6 +731,11 @@ namespace LexLS
            \brief Squared norm of #dw
         */
         RealScalar dwSquaredNorm;
+
+        /** 
+            \brief If w_is_initialized == true, the function set_w(w) has been called.
+        */
+        bool w_is_initialized;
     };
 
 } // END namespace LexLS
