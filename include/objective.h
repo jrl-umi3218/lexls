@@ -1,4 +1,4 @@
-// Time-stamp: <2014-12-09 15:36:16 drdv>
+// Time-stamp: <2014-12-09 15:49:20 drdv>
 #ifndef OBJECTIVE
 #define OBJECTIVE
 
@@ -96,18 +96,21 @@ namespace LexLS
                 throw Exception("Unknown objective type");
             }
 
-            w  = Ax - 0.5*(data.col(lbIndex)+data.col(ubIndex)); 
-            
-            // overwrite the residual of the active constraints
-            for (Index CtrIndexActive=0; CtrIndexActive<getActiveCtrCount(); CtrIndexActive++)
+            if (!w_is_initialized)
             {
-                CtrIndex = getActiveCtrIndex(CtrIndexActive); // CtrIndexActive --> CtrIndex
-                CtrType  = getActiveCtrType(CtrIndexActive);
+                w  = Ax - 0.5*(data.col(lbIndex)+data.col(ubIndex)); 
+            
+                // overwrite the residual of the active constraints
+                for (Index CtrIndexActive=0; CtrIndexActive<getActiveCtrCount(); CtrIndexActive++)
+                {
+                    CtrIndex = getActiveCtrIndex(CtrIndexActive); // CtrIndexActive --> CtrIndex
+                    CtrType  = getActiveCtrType(CtrIndexActive);
 
-                if (CtrType == LOWER_BOUND)
-                    w.coeffRef(CtrIndex) = Ax.coeffRef(CtrIndex) - data.coeffRef(CtrIndex,lbIndex);
-                else if (CtrType == UPPER_BOUND)
-                    w.coeffRef(CtrIndex) = Ax.coeffRef(CtrIndex) - data.coeffRef(CtrIndex,ubIndex);
+                    if (CtrType == LOWER_BOUND)
+                        w.coeffRef(CtrIndex) = Ax.coeffRef(CtrIndex) - data.coeffRef(CtrIndex,lbIndex);
+                    else if (CtrType == UPPER_BOUND)
+                        w.coeffRef(CtrIndex) = Ax.coeffRef(CtrIndex) - data.coeffRef(CtrIndex,ubIndex);
+                }
             }
 
             // FIXME: Temporary hack (TO RECODE THIS FUNCTION)
