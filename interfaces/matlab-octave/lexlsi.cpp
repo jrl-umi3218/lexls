@@ -106,6 +106,9 @@ void mexFunction( int num_output, mxArray *output[],
         const mxArray *options_struct = input[3];
 
 
+        // ================================================
+        // parse options
+
         getOptionDouble(&lexlsi_parameters.tolLinearDependence, 
                         options_struct, 
                         "tolLinearDependence");
@@ -162,9 +165,23 @@ void mexFunction( int num_output, mxArray *output[],
                             options_struct, 
                             "regularizationMaxIterCG");
 
+
         getOptionBool(  &lexlsi_parameters.realSensitivityResidual, 
                         options_struct, 
                         "realSensitivityResidual");
+
+
+        // ================================================
+        // check provided options
+
+        /// @todo This check should probably go to the solver interface
+        if ( 
+                ((lexlsi_parameters.regularizationType == LexLS::REGULARIZATION_NONE) && (is_regularization_set)) ||
+                ((lexlsi_parameters.regularizationType != LexLS::REGULARIZATION_NONE) && (!is_regularization_set))
+           )
+        {
+            mexErrMsgTxt("Both regularization type and regularization factors must be specified.");
+        }
     }
 
 

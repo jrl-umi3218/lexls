@@ -76,6 +76,10 @@ void mexFunction( int num_output, mxArray *output[],
     {
         const mxArray *options_struct = input[1];
 
+
+        // ================================================
+        // parse options
+
         options.is_linear_dependence_tolerance_set = getOptionDouble( &options.linear_dependence_tolerance, 
                                                                       options_struct, 
                                                                       "tolLinearDependence");
@@ -103,6 +107,18 @@ void mexFunction( int num_output, mxArray *output[],
         options.is_regularizationMaxIterCG_set = getOptionInteger(   &options.regularizationMaxIterCG, 
                                                                      options_struct, 
                                                                      "regularizationMaxIterCG");
+
+        // ================================================
+        // check provided options
+
+        /// @todo This check should probably go to the solver interface
+        if ( 
+                ((options.regularizationType == LexLS::REGULARIZATION_NONE) && (options.is_regularization_set)) ||
+                ((options.regularizationType != LexLS::REGULARIZATION_NONE) && (!options.is_regularization_set))
+           )
+        {
+            mexErrMsgTxt("Both regularization type and regularization factors must be specified.");
+        }
     }
 
 // parse objectives
@@ -110,6 +126,7 @@ void mexFunction( int num_output, mxArray *output[],
     const mxArray *objectives = input[0];
 
     LexLS::Index num_obj = mxGetNumberOfElements (objectives);
+    LexLS::Index number_of_normal_objectives = num_obj;
     int index_first_normal_obj = 0;
 
     mxArray *fixed_var_i = NULL;
@@ -131,7 +148,7 @@ void mexFunction( int num_output, mxArray *output[],
         fixed_var_b = b;
 
         index_first_normal_obj = 1;
-        --num_obj;
+        --number_of_normal_objectives;
     }
 
 
@@ -140,12 +157,12 @@ void mexFunction( int num_output, mxArray *output[],
 
     std::vector<mxArray *> constraints;
     std::vector<LexLS::Index> num_constr;
-    num_constr.resize(num_obj);
-    constraints.resize(num_obj);
+    num_constr.resize(number_of_normal_objectives);
+    constraints.resize(number_of_normal_objectives);
 
 
     for (int i = index_first_normal_obj, index_obj = 0; 
-         index_obj < num_obj; 
+         index_obj < number_of_normal_objectives; 
          ++index_obj, ++i)
     {
         mxArray *A = getObjectiveMatrix(objectives, i, "A");
@@ -173,7 +190,7 @@ void mexFunction( int num_output, mxArray *output[],
 // initialize solver
     try
     { 
-        LexLS::LexLSE lexlse(num_var, num_obj, num_constr.data());
+        LexLS::LexLSE lexlse(num_var, number_of_normal_objectives, num_constr.data());
 
         // tolerance
         if (options.is_linear_dependence_tolerance_set)
@@ -200,9 +217,9 @@ void mexFunction( int num_output, mxArray *output[],
 
         if (options.is_regularization_set)
         {
-            for (int i = 0; i < num_obj; ++i)
+            for (int i = index_first_normal_obj, j = 0; i < num_obj; ++i, ++j)
             {
-                lexlse.setRegularization(i, options.regularization[i]);
+                lexlse.setRegularization(j, options.regularization[i]);
             }
         }
 
@@ -217,7 +234,7 @@ void mexFunction( int num_output, mxArray *output[],
         }
 
         // constraints
-        for (int i = 0; i < num_obj; ++i)
+        for (int i = 0; i < number_of_normal_objectives; ++i)
         {
             lexlse.setData(
                 i, 
@@ -276,9 +293,9 @@ void mexFunction( int num_output, mxArray *output[],
         {
             LexLS::dVectorType& w = lexlse.getResidual();
 
-            output[2] = mxCreateCellMatrix(num_obj, 1);
+            output[2] = mxCreateCellMatrix(number_of_normal_objectives, 1);
             int index_w = 0;
-            for (int i = 0; i < num_obj; ++i)
+            for (int i = 0; i < number_of_normal_objectives; ++i)
             {
                 mxArray * wi = mxCreateDoubleMatrix(num_constr[i], 1, mxREAL);
                 for (int j = 0; j < num_constr[i]; ++j)
