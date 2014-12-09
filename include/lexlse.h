@@ -1,4 +1,4 @@
-// Time-stamp: <2014-12-09 13:03:18 drdv>
+// Time-stamp: <2014-12-09 22:38:48 drdv>
 #ifndef LEXLSE
 #define LEXLSE
 
@@ -1580,7 +1580,7 @@ namespace LexLS
 
             // -------------------------------------------------------------------------
 
-            Eigen::LLT<MatrixType> chol(d);
+            Eigen::LLT<MatrixType> chol(D);
             chol.solveInPlace(d);
             LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias() = Rk.triangularView<Eigen::Upper>() * d;
         }
