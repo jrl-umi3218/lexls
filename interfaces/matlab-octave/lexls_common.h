@@ -109,9 +109,9 @@ void checkInputOutput(  const int num_output, mxArray *output[],
     }
     else
     {
-        if ((num_input == max_inputs) && (!mxIsStruct(input[max_inputs - 1])))
+        if ((num_input >= 2) && (!mxIsEmpty(input[1])) && (!mxIsStruct(input[1])))
         {
-            mexErrMsgTxt("Last input parameter is not a structure.");
+            mexErrMsgTxt("Second input parameter is not a structure.");
         }
     }
 

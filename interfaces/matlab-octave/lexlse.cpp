@@ -20,38 +20,40 @@ const int MIN_NUMBER_OF_FIELDS_IN_OBJ = 2;
 
 class LexlseOptions
 {
-public:
-    bool is_linear_dependence_tolerance_set;
-    double linear_dependence_tolerance;
+    public:
+        bool is_linear_dependence_tolerance_set;
+        double linear_dependence_tolerance;
 
-    bool is_variables_fixing_enabled;
+        bool is_variables_fixing_enabled;
 
-    int get_least_norm_solution;
+        int get_least_norm_solution;
 
-    bool is_regularization_set;
-    std::vector<double> regularization;
+        bool is_regularization_set;
+        std::vector<double> regularization;
 
-    bool is_regularization_type_set;
-    LexLS::RegularizationType regularizationType;
+        bool is_regularization_type_set;
+        LexLS::RegularizationType regularizationType;
 
-    bool is_regularizationMaxIterCG_set;
-    int regularizationMaxIterCG;
+        bool is_regularizationMaxIterCG_set;
+        int regularizationMaxIterCG;
 
-    LexlseOptions()
-    {
-        is_linear_dependence_tolerance_set = false;
-        linear_dependence_tolerance = 0.0;
+        LexlseOptions()
+        {
+            is_linear_dependence_tolerance_set = false;
+            linear_dependence_tolerance = 0.0;
 
-        is_variables_fixing_enabled = false;
+            is_variables_fixing_enabled = false;
 
-        is_regularization_set = false;
+            is_regularization_set = false;
 
-        is_regularization_type_set = false;
+            is_regularization_type_set = false;
 
-        get_least_norm_solution = 0;
+            get_least_norm_solution = 0;
 
-        regularizationMaxIterCG = 10;
-    }
+            regularizationMaxIterCG = 10;
+
+            regularizationType = LexLS::REGULARIZATION_NONE;
+        }
 };
 
 
@@ -97,12 +99,14 @@ void mexFunction( int num_output, mxArray *output[],
                             options_struct, 
                             "get_least_norm_solution");
 
-        int regularization_type;
+        int regularization_type = 0;
         options.is_regularization_type_set = getOptionInteger( &regularization_type, 
                                                                options_struct, 
                                                                "regularizationType");
-        
-        options.regularizationType = static_cast <LexLS::RegularizationType> (regularization_type);
+        if (options.is_regularization_type_set)
+        {
+            options.regularizationType = static_cast <LexLS::RegularizationType> (regularization_type);
+        }
 
         options.is_regularizationMaxIterCG_set = getOptionInteger(   &options.regularizationMaxIterCG, 
                                                                      options_struct, 
@@ -149,6 +153,8 @@ void mexFunction( int num_output, mxArray *output[],
 
         index_first_normal_obj = 1;
         --number_of_normal_objectives;
+
+        failIfTrue(num_obj == 1, "Problems consisting of one level of fixed variables are not supported.");
     }
 
 

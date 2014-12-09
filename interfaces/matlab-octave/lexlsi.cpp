@@ -10,7 +10,7 @@
 #include "lexls_common.h"
 
 const int MIN_INPUTS = 1;
-const int MAX_INPUTS = 4;
+const int MAX_INPUTS = 5;
 const int MIN_OUTPUTS = 1;
 const int MAX_OUTPUTS = 4;
 const int MIN_NUMBER_OF_FIELDS_IN_OBJ = 3;
@@ -101,86 +101,91 @@ void mexFunction( int num_output, mxArray *output[],
 
 // parse parameters
 
-    if (num_input == 4)
+    if (num_input >= 2)
     {
-        const mxArray *options_struct = input[3];
+        const mxArray *options_struct = input[1];
 
-
-        // ================================================
-        // parse options
-
-        getOptionDouble(&lexlsi_parameters.tolLinearDependence, 
-                        options_struct, 
-                        "tolLinearDependence");
-
-        getOptionDouble(&lexlsi_parameters.tolWrongSignLambda, 
-                        options_struct, 
-                        "tolWrongSignLambda");
-
-        getOptionDouble(&lexlsi_parameters.tolCorrectSignLambda, 
-                        options_struct, 
-                        "tolCorrectSignLambda");
-
-
-
-        getOptionInteger(   &lexlsi_parameters.max_number_of_iterations, 
-                            options_struct, 
-                            "max_iterations");
-
-
-
-        getOptionBool(  &lexlsi_parameters.CyclingHandling, 
-                        options_struct, 
-                        "cycling_handling");
-
-        getOptionInteger(   &lexlsi_parameters.cycling_max_counter, 
-                            options_struct, 
-                            "cycling_max_counter");
-
-
-        getOptionDouble(&lexlsi_parameters.cycling_relax_step, 
-                        options_struct, 
-                        "cycling_relax_step");
-
-
-
-        is_regularization_set = getOptionArray( regularization, 
-                                                mxGetNumberOfElements (input[0]),
-                                                options_struct, 
-                                                "regularization");
-
-        getOptionBool(  &is_simple_bounds_handling_enabled,
-                        options_struct, 
-                        "enable_simple_bounds");
-
-        int regularization_type;
-        getOptionInteger( &regularization_type, 
-                          options_struct, 
-                          "regularizationType");
-
-        lexlsi_parameters.regularizationType = static_cast <LexLS::RegularizationType> (regularization_type);
-
-
-        getOptionInteger(   &lexlsi_parameters.regularizationMaxIterCG, 
-                            options_struct, 
-                            "regularizationMaxIterCG");
-
-
-        getOptionBool(  &lexlsi_parameters.realSensitivityResidual, 
-                        options_struct, 
-                        "realSensitivityResidual");
-
-
-        // ================================================
-        // check provided options
-
-        /// @todo This check should probably go to the solver interface
-        if ( 
-                ((lexlsi_parameters.regularizationType == LexLS::REGULARIZATION_NONE) && (is_regularization_set)) ||
-                ((lexlsi_parameters.regularizationType != LexLS::REGULARIZATION_NONE) && (!is_regularization_set))
-           )
+        if ((options_struct != NULL) && (!mxIsEmpty (options_struct)))
         {
-            mexErrMsgTxt("Both regularization type and regularization factors must be specified.");
+            // ================================================
+            // parse options
+
+            getOptionDouble(&lexlsi_parameters.tolLinearDependence, 
+                            options_struct, 
+                            "tolLinearDependence");
+
+            getOptionDouble(&lexlsi_parameters.tolWrongSignLambda, 
+                            options_struct, 
+                            "tolWrongSignLambda");
+
+            getOptionDouble(&lexlsi_parameters.tolCorrectSignLambda, 
+                            options_struct, 
+                            "tolCorrectSignLambda");
+
+
+
+            getOptionInteger(   &lexlsi_parameters.max_number_of_iterations, 
+                                options_struct, 
+                                "max_iterations");
+
+
+
+            getOptionBool(  &lexlsi_parameters.CyclingHandling, 
+                            options_struct, 
+                            "cycling_handling");
+
+            getOptionInteger(   &lexlsi_parameters.cycling_max_counter, 
+                                options_struct, 
+                                "cycling_max_counter");
+
+
+            getOptionDouble(&lexlsi_parameters.cycling_relax_step, 
+                            options_struct, 
+                            "cycling_relax_step");
+
+
+
+            is_regularization_set = getOptionArray( regularization, 
+                                                    mxGetNumberOfElements (input[0]),
+                                                    options_struct, 
+                                                    "regularization");
+
+            getOptionBool(  &is_simple_bounds_handling_enabled,
+                            options_struct, 
+                            "enable_simple_bounds");
+
+            int regularization_type = 0;
+            if (getOptionInteger( &regularization_type, 
+                              options_struct, 
+                              "regularizationType"))
+            {
+                lexlsi_parameters.regularizationType = static_cast <LexLS::RegularizationType> (regularization_type);
+            }
+
+
+            getOptionInteger(   &lexlsi_parameters.regularizationMaxIterCG, 
+                                options_struct, 
+                                "regularizationMaxIterCG");
+
+
+            getOptionBool(  &lexlsi_parameters.realSensitivityResidual, 
+                            options_struct, 
+                            "realSensitivityResidual");
+
+
+            // ================================================
+            // check provided options
+
+            /// @todo This check should probably go to the solver interface
+            if ( 
+                    ((lexlsi_parameters.regularizationType == LexLS::REGULARIZATION_NONE) && (is_regularization_set)) ||
+                    ((lexlsi_parameters.regularizationType != LexLS::REGULARIZATION_NONE) && (!is_regularization_set))
+               )
+            {
+                std::cout << lexlsi_parameters.regularizationType << std::endl;
+                std::cout << is_regularization_set << std::endl;
+                mexErrMsgTxt("Both regularization type and regularization factors must be specified.");
+            }
         }
     }
 
@@ -237,6 +242,8 @@ void mexFunction( int num_output, mxArray *output[],
 
     // ok
         first_normal_obj_index = 1;
+
+        failIfTrue(num_obj == 1, "Problems consisting of one level of simple bounds are not supported.");
     }
 
 
@@ -274,7 +281,7 @@ void mexFunction( int num_output, mxArray *output[],
 
     if (num_input >= 2)
     {
-        const mxArray *active_set_cell = input[1];
+        const mxArray *active_set_cell = input[2];
 
         if ((active_set_cell != NULL) && (!mxIsEmpty (active_set_cell)))
         {
@@ -305,7 +312,7 @@ void mexFunction( int num_output, mxArray *output[],
 
     if (num_input >= 3)
     {
-        x0 = input[2];
+        x0 = input[3];
 
         if ((x0 != NULL) && (!mxIsEmpty (x0)) )
         {
@@ -316,6 +323,36 @@ void mexFunction( int num_output, mxArray *output[],
         }
     }
 
+
+// process residual guess
+    std::vector<mxArray *> residuals;
+    residuals.resize(num_obj);
+
+    if (num_input >= 5)
+    {
+        const mxArray *residuals_cell = input[4];
+
+        if ((residuals_cell != NULL) && (!mxIsEmpty (residuals_cell)))
+        {
+            failIfTrue (!mxIsCell(residuals_cell), "Residuals must be of 'cell' type.");
+            failIfTrue (mxGetNumberOfElements(residuals_cell) != num_obj, "Wrong dimention of the residuals.");
+
+            for (int i = 0; i < num_obj; ++i)
+            {
+                mxArray *c = mxGetCell (residuals_cell, i);
+                if ((c == NULL) || (mxIsEmpty (c)))
+                {
+                    residuals[i] = NULL;
+                }
+                else
+                {
+                    failIfTrue (!mxIsDouble(c), "Residuals must be of 'double' type.");
+                    checkInputMatrixSize(c, num_constr[i], 1, "residuals");
+                    residuals[i] = c;
+                }
+            }
+        }
+    }
 
 
 // instantiate LexLS
@@ -373,6 +410,28 @@ void mexFunction( int num_output, mxArray *output[],
             }
 
             lexlsi.set_x0(x0_in);
+        }
+
+
+        // set residuals
+        for (int i = 0; i < num_obj; ++i)
+        {
+            if (residuals[i] == NULL)
+            {
+                // no residual
+                continue;
+            }
+            else
+            {
+                LexLS::dVectorType residual(num_constr[i]);
+
+                for (int j = 0; j < num_constr[i]; ++j)
+                {
+                    residual(j) = (static_cast <const double *> (mxGetPr(residuals[i])))[j];
+                }
+
+                lexlsi.set_w(i, residual);
+            }
         }
 
 
