@@ -34,6 +34,9 @@ public:
     bool is_regularization_type_set;
     LexLS::RegularizationType regularizationType;
 
+    bool is_regularizationMaxIterCG_set;
+    int regularizationMaxIterCG;
+
     LexlseOptions()
     {
         is_linear_dependence_tolerance_set = false;
@@ -46,6 +49,8 @@ public:
         is_regularization_type_set = false;
 
         get_least_norm_solution = 0;
+
+        regularizationMaxIterCG = 10;
     }
 };
 
@@ -95,6 +100,9 @@ void mexFunction( int num_output, mxArray *output[],
         
         options.regularizationType = static_cast <LexLS::RegularizationType> (regularization_type);
 
+        options.is_regularizationMaxIterCG_set = getOptionInteger(   &options.regularizationMaxIterCG, 
+                                                                     options_struct, 
+                                                                     "regularizationMaxIterCG");
     }
 
 // parse objectives
@@ -201,6 +209,11 @@ void mexFunction( int num_output, mxArray *output[],
         if (options.is_regularization_type_set)
         {
             lexlse.setRegularizationType(options.regularizationType);
+        }
+
+        if (options.is_regularizationMaxIterCG_set)
+        {
+            lexlse.setRegularizationMaxIterCG(options.regularizationMaxIterCG);
         }
 
         // constraints

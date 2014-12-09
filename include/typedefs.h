@@ -1,4 +1,4 @@
-// Time-stamp: <2014-12-04 17:49:53 drdv>
+// Time-stamp: <2014-12-09 10:12:10 drdv>
 #ifndef TYPEDEFS
 #define TYPEDEFS
 
@@ -20,16 +20,15 @@ namespace LexLS
     typedef Eigen::Matrix<RealScalar, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> MatrixType;    
     //typedef Eigen::Matrix<RealScalar, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixType; 
     
-    typedef Eigen::Block<MatrixType , Eigen::Dynamic, Eigen::Dynamic> dBlockType;
-    //typedef Eigen::Block<MatrixType> dBlockType;
-
     typedef Eigen::Matrix<RealScalar, Eigen::Dynamic, 1>              dVectorType;
     typedef Eigen::Matrix<RealScalar, 1, Eigen::Dynamic>              dRowVectorType;
 
     typedef Eigen::Matrix<     Index, Eigen::Dynamic, 1>              iVectorType;
     
+    typedef Eigen::Block<MatrixType , Eigen::Dynamic, Eigen::Dynamic> dBlockType;
+    typedef Eigen::Block<MatrixType , Eigen::Dynamic, 1>              dBlockType2Vector;
     typedef Eigen::VectorBlock<dVectorType, Eigen::Dynamic>           dVectorBlockType;
-    //typedef Eigen::VectorBlock<dVectorType> dVectorBlockType;
+
 
     enum RegularizationType
     {
