@@ -121,7 +121,7 @@ void mexFunction( int num_output, mxArray *output[],
                 ((options.regularizationType != LexLS::REGULARIZATION_NONE) && (!options.is_regularization_set))
            )
         {
-            mexErrMsgTxt("Both regularization type and regularization factors must be specified.");
+            mexWarnMsgTxt("Both regularization type and regularization factors must be specified.");
         }
     }
 

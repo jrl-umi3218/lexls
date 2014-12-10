@@ -182,9 +182,7 @@ void mexFunction( int num_output, mxArray *output[],
                     ((lexlsi_parameters.regularizationType != LexLS::REGULARIZATION_NONE) && (!is_regularization_set))
                )
             {
-                std::cout << lexlsi_parameters.regularizationType << std::endl;
-                std::cout << is_regularization_set << std::endl;
-                mexErrMsgTxt("Both regularization type and regularization factors must be specified.");
+                mexWarnMsgTxt("Both regularization type and regularization factors must be specified.");
             }
         }
     }
