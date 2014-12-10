@@ -277,7 +277,7 @@ void mexFunction( int num_output, mxArray *output[],
     std::vector<mxArray *> active_set;
     active_set.resize(num_obj);
 
-    if (num_input >= 2)
+    if (num_input >= 3)
     {
         const mxArray *active_set_cell = input[2];
 
@@ -308,7 +308,7 @@ void mexFunction( int num_output, mxArray *output[],
     const mxArray *x0 = NULL;
     bool is_initial_guess_set = false;
 
-    if (num_input >= 3)
+    if (num_input >= 4)
     {
         x0 = input[3];
 
