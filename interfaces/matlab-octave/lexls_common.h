@@ -164,6 +164,37 @@ bool getOptionDouble(double *option_value, const mxArray *option_struct, const c
 }
 
 
+
+bool getOptionString(   std::string &option_value, 
+                        const mxArray *option_struct, 
+                        const char *option_id,
+                        const mwSize strlen)
+{
+    bool is_parsing_successful = false;
+
+
+    mxArray *option = mxGetField (option_struct, 0, option_id);
+
+    if ( (option != NULL) && (strlen > 0) )
+    {
+        // if there is such field
+        failIfTrue (!mxIsChar(option), (std::string("Option '") + option_id + "' must be of 'char' type.").c_str());
+
+        char char_string[strlen];
+        int retval;
+
+        if (mxGetString(option, char_string, strlen) == 0)
+        {
+            option_value = char_string;
+            is_parsing_successful = true;
+        }
+    }
+
+
+    return (is_parsing_successful);
+}
+
+
 bool getOptionBool(bool *option_value, const mxArray *option_struct, const char *option_id)
 {
     bool is_parsing_successful = false;
