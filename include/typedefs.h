@@ -1,4 +1,4 @@
-// Time-stamp: <2014-12-09 10:12:10 drdv>
+// Time-stamp: <2014-12-11 10:23:44 drdv>
 #ifndef TYPEDEFS
 #define TYPEDEFS
 
@@ -32,16 +32,16 @@ namespace LexLS
 
     enum RegularizationType
     {
-        REGULARIZATION_NONE = 0,    // 0
-        REGULARIZATION_TIKHONOV,    // 1
-        REGULARIZATION_TIKHONOV_CG, // 2
-        REGULARIZATION_R,           // 3
-        REGULARIZATION_R_NO_Z,      // 4
-        REGULARIZATION_RT_NO_Z,     // 5
-        REGULARIZATION_RT_NO_Z_CG,  // 6
-        REGULARIZATION_TIKHONOV_1,  // 7
-        REGULARIZATION_TIKHONOV_2,  // 8
-        REGULARIZATION_TEST         // 9
+        REGULARIZATION_NONE = 0,       // 0
+        REGULARIZATION_TIKHONOV,       // 1
+        REGULARIZATION_TIKHONOV_CG,    // 2
+        REGULARIZATION_R,              // 3
+        REGULARIZATION_R_NO_Z,         // 4
+        REGULARIZATION_RT_NO_Z,        // 5
+        REGULARIZATION_RT_NO_Z_CG,     // 6
+        REGULARIZATION_TIKHONOV_1,     // 7
+        REGULARIZATION_TIKHONOV_2,     // 8
+        REGULARIZATION_TEST            // 9
     };
     
     /**

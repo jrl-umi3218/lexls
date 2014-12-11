@@ -1,4 +1,4 @@
-// Time-stamp: <2014-12-09 15:38:36 drdv>
+// Time-stamp: <2014-12-11 17:46:42 drdv>
 #ifndef LEXLSI
 #define LEXLSI
 
@@ -46,11 +46,12 @@ namespace LexLS
         // use the real residual when computing sensitivity
         bool realSensitivityResidual;
 
+        std::string output_file_name; // drdv: do I need to initialize?
+
         LexLSIParameters()
         {
             setDefaults();
         }
-
 
         void setDefaults()
         {
@@ -223,7 +224,6 @@ namespace LexLS
             for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
                 Obj[ObjIndex].formStep(dx);
             // --------------------------------------------------------
-
         }
         
         /**
@@ -235,9 +235,15 @@ namespace LexLS
         {
             phase1();
 
+            if (!parameters.output_file_name.empty())
+                outputResidualNorm(parameters.output_file_name.c_str(), true);
+
             while (1)
             {
                 verifyWorkingSet();
+
+                if (!parameters.output_file_name.empty())
+                    outputResidualNorm(parameters.output_file_name.c_str());
               
                 if ((status == PROBLEM_SOLVED) || (status == PROBLEM_SOLVED_CYCLING_HANDLING))
                 {
@@ -429,7 +435,7 @@ namespace LexLS
 
             regularization(ObjIndex) = RegularizationFactor;
         }
-
+        
         /** 
             \brief Return the (primal) solution vector
         */
@@ -820,6 +826,28 @@ namespace LexLS
                 status = cycling_handler.update(operation, ConstraintIdentifier, Obj, iter, false);
 
             iter++;
+        }
+
+        /**
+           \brief Outputs resiadual norm to file
+        */
+        void outputResidualNorm(const char *file_name, bool flag_clear_file = false)
+        {
+            // clear the content of the file
+            if (flag_clear_file)
+            {
+                std::ofstream file(file_name, std::ios::out | std::ofstream::trunc);
+                file.close();
+            }
+
+            std::ofstream file(file_name, std::ios::out | std::ios::app);
+            file.precision(12);
+
+            file << iter << " ";
+            for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
+                file << Obj[ObjIndex].getResidualSquaredNorm() << " "; 
+            file << "\n";
+            file.close();
         }
 
         // ==================================================================
