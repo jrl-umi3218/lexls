@@ -1,4 +1,4 @@
-// Time-stamp: <2013-12-23 13:40:00 drdv>
+// Time-stamp: <2014-12-12 17:46:47 drdv>
 #ifndef WORKING_SET
 #define WORKING_SET
 
@@ -21,7 +21,7 @@ namespace LexLS
         void resize(Index dim)
         {
             // initialize all constraints as inactive
-            all.resize(dim,false);
+            all_type.resize(dim,CONSTRAINT_TYPE_UNKNOWN);
             
             inactive.resize(dim);
             for (Index CtrIndex=0; CtrIndex<dim; CtrIndex++)
@@ -40,7 +40,7 @@ namespace LexLS
         */                                        
         void activate(Index CtrIndex, ConstraintType type)
         {
-            if (all[CtrIndex])
+            if (all_type[CtrIndex] != CONSTRAINT_TYPE_UNKNOWN)
                 throw Exception("Cannot activate an active constraint");
             
             std::vector<Index>::iterator it;
@@ -58,7 +58,7 @@ namespace LexLS
             // ----------------------------------------------------------------------------
             // add to set of active constraints
             // ----------------------------------------------------------------------------
-            all[CtrIndex] = true;
+            all_type[CtrIndex] = type;
             active.push_back(CtrIndex);
 
             ActiveCtrType.push_back(type); // set the type
@@ -80,7 +80,7 @@ namespace LexLS
             // CtrIndex is the index of WorkingSet.active[CtrIndexActive] in the LexLSI objective
             Index CtrIndex = getActiveCtrIndex(CtrIndexActive); // CtrIndexActive --> CtrIndex
 
-            if (!all[CtrIndex])
+            if (all_type[CtrIndex] == CONSTRAINT_TYPE_UNKNOWN)
                 throw Exception("Cannot deactivate an inactive constraint");
 
             // ----------------------------------------------------------------------------
@@ -89,7 +89,7 @@ namespace LexLS
             active.erase(active.begin() + CtrIndexActive); // we want to preserve the order of the remaining constraints
             ActiveCtrType.erase(ActiveCtrType.begin() + CtrIndexActive);
 
-            all[CtrIndex] = false;
+            all_type[CtrIndex] = CONSTRAINT_TYPE_UNKNOWN;
             // ----------------------------------------------------------------------------
             // add to set of inactive constraints
             // ----------------------------------------------------------------------------
@@ -121,6 +121,14 @@ namespace LexLS
         }
 
         /**
+           \brief Returns the type of the k-th constraint
+        */
+        ConstraintType getCtrType(Index k) const
+        {
+            return all_type[k];
+        }
+
+        /**
            \brief Returns the number of inactive constraints
         */
         Index getInactiveCtrCount() const
@@ -141,7 +149,10 @@ namespace LexLS
         */                                        
         bool isActive(Index k) const
         {
-            return all[k];
+            if (all_type[k] == CONSTRAINT_TYPE_UNKNOWN)
+                return false;
+            else
+                return true;
         }
 
         /**
@@ -152,10 +163,10 @@ namespace LexLS
             // -----------------------------------------------------------
             // all
             // -----------------------------------------------------------
-            std::cout << "     all = {";
-            std::copy(all.begin(),
-                      all.end(),
-                      std::ostream_iterator<bool>(std::cout, " "));
+            std::cout << " all_type = {";
+            std::copy(all_type.begin(),
+                      all_type.end(),
+                      std::ostream_iterator<ConstraintType>(std::cout, " "));
             std::cout << "}" << std::endl;
 
             // -----------------------------------------------------------
@@ -191,11 +202,11 @@ namespace LexLS
     private:
 
         /**
-           \brief If all[k] = true, the k-th constraint in in the working set
+           \brief Specifies the type of all constraints.
 
            \note Introduced for convenience.
         */                                        
-        std::vector<bool> all;
+        std::vector<ConstraintType> all_type;
 
         /**
            \brief Indexes of active constraints

@@ -1,4 +1,4 @@
-// Time-stamp: <2014-12-11 13:12:16 drdv>
+// Time-stamp: <2014-12-12 11:57:15 drdv>
 #ifndef LEXLSE
 #define LEXLSE
 
@@ -748,8 +748,7 @@ namespace LexLS
                     if (*aCtrType == LOWER_BOUND)
                         aLambda = -aLambda;
                             
-                    // FIXME: to have as user input
-                    if (aLambda > tolCorrectSignLambda) // is this reasonable?
+                    if (aLambda > tolCorrectSignLambda)
                     {
                         *aCtrType = CORRECT_SIGN_OF_LAMBDA;
                     }

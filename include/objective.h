@@ -1,4 +1,4 @@
-// Time-stamp: <2014-12-11 16:48:52 drdv>
+// Time-stamp: <2014-12-12 12:24:38 drdv>
 #ifndef OBJECTIVE
 #define OBJECTIVE
 
@@ -488,6 +488,14 @@ namespace LexLS
         ConstraintType getActiveCtrType(Index k) const
         {
             return WorkingSet.getActiveCtrType(k);
+        }
+
+        /**
+           \brief Returns the type of the k-th constraint
+        */
+        ConstraintType getCtrType(Index k) const
+        {
+            return WorkingSet.getCtrType(k);
         }
 
         /**

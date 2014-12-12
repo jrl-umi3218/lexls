@@ -1,4 +1,4 @@
-// Time-stamp: <2014-12-11 17:46:42 drdv>
+// Time-stamp: <2014-12-12 17:50:51 drdv>
 #ifndef LEXLSI
 #define LEXLSI
 
@@ -181,6 +181,7 @@ namespace LexLS
             bool ActiveSet_is_initialized = false;
             for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
             {
+                // we would enter even if there are only equality constraints
                 if (Obj[ObjIndex].getActiveCtrCount() > 0)
                 {
                     ActiveSet_is_initialized = true;
@@ -192,9 +193,9 @@ namespace LexLS
             // form x
             // --------------------------------------------------------
             if (ActiveSet_is_initialized)
-            {                
+            {
                 formLexLSE();                
-
+                
                 if (!x0_is_initialized)
                 {
                     lexlse.factorize();
@@ -233,17 +234,19 @@ namespace LexLS
         */
         TerminationStatus solve()
         {
+            OperationType operation;
+
             phase1();
 
             if (!parameters.output_file_name.empty())
-                outputResidualNorm(parameters.output_file_name.c_str(), true);
+                outputStuff(parameters.output_file_name.c_str(), UNDEFINED, true);
 
             while (1)
             {
-                verifyWorkingSet();
+                operation = verifyWorkingSet();
 
                 if (!parameters.output_file_name.empty())
-                    outputResidualNorm(parameters.output_file_name.c_str());
+                    outputStuff(parameters.output_file_name.c_str(), operation);
               
                 if ((status == PROBLEM_SOLVED) || (status == PROBLEM_SOLVED_CYCLING_HANDLING))
                 {
@@ -752,7 +755,7 @@ namespace LexLS
         /**
            \brief One iteration of an active-set method
         */        
-        void verifyWorkingSet()
+        OperationType verifyWorkingSet()
         {
             // ----------------------------------------------------------------------
             Index ObjIndex2Manipulate, CtrIndex2Manipulate;
@@ -826,12 +829,14 @@ namespace LexLS
                 status = cycling_handler.update(operation, ConstraintIdentifier, Obj, iter, false);
 
             iter++;
+
+            return operation;
         }
 
         /**
            \brief Outputs resiadual norm to file
         */
-        void outputResidualNorm(const char *file_name, bool flag_clear_file = false)
+        void outputStuff(const char *file_name, OperationType operation, bool flag_clear_file = false)
         {
             // clear the content of the file
             if (flag_clear_file)
@@ -841,12 +846,42 @@ namespace LexLS
             }
 
             std::ofstream file(file_name, std::ios::out | std::ios::app);
-            file.precision(12);
+            file.precision(15);
 
-            file << iter << " ";
+            file << "operation_("<<iter+1<<") = " << operation << ";\n"; 
+
             for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
-                file << Obj[ObjIndex].getResidualSquaredNorm() << " "; 
+            {
+                dVectorType w_ = Obj[ObjIndex].getResidual();
+
+                file << "w_{"<<ObjIndex+1<<"}(:,"<<iter+1<<") = [ "; 
+                for (Index k=0; k<Obj[ObjIndex].getDim(); k++)
+                {
+                    file << w_(k) << " ";
+                }
+                file << "]';\n";
+            }
+
+            file << "nw_(:,"<<iter+1<<") = [ "; 
+            for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
+                file << std::sqrt(Obj[ObjIndex].getResidualSquaredNorm()) << " "; 
+            file << "]';\n";
+
+            for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
+            {
+                file << "a_{"<<ObjIndex+1<<"}(:,"<<iter+1<<") = [ "; 
+                for (Index k=0; k<Obj[ObjIndex].getDim(); k++)
+                    file << (Index) Obj[ObjIndex].getCtrType(k) << " ";
+                file << "]';\n";
+            }
+
+            file << "x_(:,"<<iter+1<<") = [ "; 
+            for (Index k=0; k<nVar; k++)
+                file << x(k) << " "; 
+            file << "]'; \n"; 
+
             file << "\n";
+
             file.close();
         }
 

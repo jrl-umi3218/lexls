@@ -1,4 +1,4 @@
-// Time-stamp: <2014-12-11 10:23:44 drdv>
+// Time-stamp: <2014-12-12 12:19:03 drdv>
 #ifndef TYPEDEFS
 #define TYPEDEFS
 
@@ -81,12 +81,11 @@ namespace LexLS
     */
     enum ConstraintType
     {
-        CONSTRAINT_TYPE_UNKNOWN, // used for initialization purposes
-        LOWER_BOUND,             // bl <= A*x - w
-        UPPER_BOUND,             //       A*x - w <= bu
-        EQUALITY_CONSTRAINT,     //       A*x - w  = b
-        CORRECT_SIGN_OF_LAMBDA   // positive if UPPER_BOUND
-                                 // negative if LOWER_BOUND
+        CONSTRAINT_TYPE_UNKNOWN, // 0: used for initialization purposes
+        LOWER_BOUND,             // 1: bl <= A*x - w
+        UPPER_BOUND,             // 2:       A*x - w <= bu
+        EQUALITY_CONSTRAINT,     // 3:       A*x - w  = b
+        CORRECT_SIGN_OF_LAMBDA   // 4: positive if UPPER_BOUND, negative if LOWER_BOUND
     };
 
     /**
