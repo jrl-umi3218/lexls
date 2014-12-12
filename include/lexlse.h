@@ -1,11 +1,11 @@
-// Time-stamp: <2014-12-09 22:38:48 drdv>
+// Time-stamp: <2014-12-11 13:12:16 drdv>
 #ifndef LEXLSE
 #define LEXLSE
 
 #include <utility.h>
 
 namespace LexLS
-{
+{    
     /** 
         \brief Definition of a lexicographic least-squares problem with equality constraints
 
@@ -377,9 +377,13 @@ namespace LexLS
 
                     case REGULARIZATION_TEST:
 
-                        //printf("REGULARIZATION_TEST \n");
+                        //printf("REGULARIZATION_TIKHONOV_RT_NO_Z_SMOOTH \n");
 
-                        // nothing to test
+                        if ( !isEqual(damp_factor,0.0) ) 
+                        {
+                            regularize_RT_NO_Z_smooth(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
+                        }
+                        accumulate_nullspace_basis(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
                         break;
 
                     case REGULARIZATION_NONE:
@@ -1484,12 +1488,10 @@ namespace LexLS
                 D.coeffRef(i,i) += mu;
 
             // ==============================================================================================
+            d.head(ObjRank).noalias() = Rk.triangularView<Eigen::Upper>().transpose()*LQR.col(nVar).segment(FirstRowIndex,ObjRank);
+            d.tail(RemainingColumns).noalias() = Tk.transpose()*LQR.col(nVar).segment(FirstRowIndex,ObjRank);
 
-            d.noalias() = up.transpose() * NullSpace.col(nVar).head(FirstColIndex);
-            d *= mu;
-
-            d.head(ObjRank).noalias() += Rk.triangularView<Eigen::Upper>().transpose()*LQR.col(nVar).segment(FirstRowIndex,ObjRank);
-            d.segment(ObjRank,RemainingColumns).noalias() += Tk.transpose()*LQR.col(nVar).segment(FirstRowIndex,ObjRank);
+            d.noalias() += mu * up.transpose() * NullSpace.col(nVar).head(FirstColIndex);
 
             // ==============================================================================================
 
@@ -1648,6 +1650,53 @@ namespace LexLS
             for (Index i=0; i<ObjRank; i++)
                 D.coeffRef(i,i) -= mu;
             LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias() = D.selfadjointView<Eigen::Lower>() * d;
+        }
+
+        void regularize_RT_NO_Z_smooth(Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
+        {
+            RealScalar mu = damp_factor*damp_factor;
+
+            // -------------------------------------------------------------------------
+            // create blocks
+            // -------------------------------------------------------------------------
+            dBlockType Rk(      LQR, FirstRowIndex,         FirstColIndex,                  ObjRank,                  ObjRank);
+            dBlockType Tk(      LQR, FirstRowIndex, FirstColIndex+ObjRank,                  ObjRank,         RemainingColumns);
+            dBlockType up(NullSpace,             0,         FirstColIndex,            FirstColIndex, RemainingColumns+ObjRank);
+            dBlockType  D(    array,             0,                     0, RemainingColumns+ObjRank, RemainingColumns+ObjRank);
+
+            dBlockType2Vector d(array, 0, nVar, RemainingColumns+ObjRank, 1);
+
+            MatrixType V(FirstColIndex, RemainingColumns+ObjRank);
+            V.setZero();
+            V.block(0,0,FirstColIndex,FirstColIndex).setIdentity();
+
+            // -------------------------------------------------------------------------
+
+            D.setZero();
+            D.block(0,0,ObjRank,ObjRank).triangularView<Eigen::Lower>() = (Rk.transpose()*Rk.triangularView<Eigen::Upper>()).eval();
+            D.block(ObjRank,ObjRank,RemainingColumns,RemainingColumns).triangularView<Eigen::Lower>() = Tk.transpose()*Tk;
+            D.block(ObjRank,0,RemainingColumns,ObjRank).noalias() = Tk.transpose()*Rk.triangularView<Eigen::Upper>();
+            //D.triangularView<Eigen::Lower>() += mu*up.transpose()*up;
+            D.triangularView<Eigen::Lower>() += mu*MatrixType::Identity(RemainingColumns+ObjRank,RemainingColumns+ObjRank);
+            //D.triangularView<Eigen::Lower>() += mu*V.transpose()*V;
+
+            for (Index i=0; i<RemainingColumns+ObjRank; i++)
+                D.coeffRef(i,i) += mu;
+            
+            // ==============================================================================================
+            d.head(ObjRank).noalias() = Rk.triangularView<Eigen::Upper>().transpose()*LQR.col(nVar).segment(FirstRowIndex,ObjRank);
+            d.tail(RemainingColumns).noalias() = Tk.transpose()*LQR.col(nVar).segment(FirstRowIndex,ObjRank);
+
+            //d.noalias() += mu * up.transpose() * NullSpace.col(nVar).head(FirstColIndex);
+
+            //d.noalias() += mu * V.transpose() * NullSpace.col(nVar).head(FirstColIndex);
+            
+            // ==============================================================================================
+
+            Eigen::LLT<MatrixType> chol(D);
+            chol.solveInPlace(d);
+            LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias()  = Rk.triangularView<Eigen::Upper>() * d.head(ObjRank);
+            LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias() += Tk * d.tail(RemainingColumns);
         }
 
         /** 

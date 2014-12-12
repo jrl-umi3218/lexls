@@ -1,4 +1,4 @@
-// Time-stamp: <2014-12-09 15:49:20 drdv>
+// Time-stamp: <2014-12-11 16:48:52 drdv>
 #ifndef OBJECTIVE
 #define OBJECTIVE
 
@@ -448,6 +448,14 @@ namespace LexLS
         dVectorType& getResidual()
         {
             return w;
+        }
+
+        /**
+           \brief Returns squared norm of #w
+        */
+        RealScalar getResidualSquaredNorm()
+        {
+            return w.squaredNorm();
         }
 
         /**

@@ -97,8 +97,6 @@ void mexFunction( int num_output, mxArray *output[],
     bool                is_regularization_set = false;
     std::vector<double> regularization;
 
-
-
 // parse parameters
 
     if (num_input >= 2)
@@ -173,6 +171,11 @@ void mexFunction( int num_output, mxArray *output[],
                             "realSensitivityResidual");
 
 
+            getOptionString(lexlsi_parameters.output_file_name, 
+                            options_struct, 
+                            "output_file_name",
+                            20);
+            
             // ================================================
             // check provided options
 
@@ -362,7 +365,6 @@ void mexFunction( int num_output, mxArray *output[],
     try
     {
         lexlsi.setParameters(lexlsi_parameters);
-
 
         // regularization
         if (is_regularization_set)
