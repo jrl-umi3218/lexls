@@ -15,21 +15,13 @@ namespace LexLS
         };
 
 
-        enum ObjectiveType
-        {
-            OBJECTIVE_TYPE_NONE     = 0,
-            OBJECTIVE_TYPE_SIMPLE   = 100,
-            OBJECTIVE_TYPE_GENERAL  = 200
-        };
-
-
-        void import_hierarchy(  const std::string               file_name,
-                                HierarchyType                   & type_of_hierarchy,
-                                unsigned int                    & number_of_variables,
-                                unsigned int                    & number_of_objectives,
-                                std::vector<unsigned int>       & number_of_constraits_per_objective,
-                                std::vector<ObjectiveType>      & types_of_objectives,
-                                std::vector<Eigen::MatrixXd>    & objectives)
+        void import_hierarchy(  const std::string                   file_name,
+                                HierarchyType                       & type_of_hierarchy,
+                                unsigned int                        & number_of_variables,
+                                unsigned int                        & number_of_objectives,
+                                std::vector<unsigned int>           & number_of_constraits_per_objective,
+                                std::vector<LexLS::ObjectiveType>   & types_of_objectives,
+                                std::vector<Eigen::MatrixXd>        & objectives)
         {
             // Define identifiers
             const std::string NVAR = "#nVar";
@@ -39,6 +31,10 @@ namespace LexLS
             const std::string OBJTYPE = "#ObjType";
             const std::string DATA = "#OBJECTIVE";
 
+
+            const unsigned int  OBJECTIVE_TYPE_SIMPLE   = 100;
+            const unsigned int  OBJECTIVE_TYPE_GENERAL  = 200;
+            
 
             // ---------------------------------------------------------------------------
 
@@ -188,17 +184,23 @@ namespace LexLS
 
                         while (!stream.eof())
                         {
-                            unsigned int type = OBJECTIVE_TYPE_NONE;
+                            unsigned int type;
 
                             stream >> type;
 
                             if (!stream.fail())
                             {
-                                types_of_objectives.push_back(static_cast <ObjectiveType> (type));
-
-                                if ( ! ((type == OBJECTIVE_TYPE_SIMPLE) || (type == OBJECTIVE_TYPE_GENERAL))  )
+                                switch(type)
                                 {
-                                    throw std::runtime_error("Unsupported type of objective.");
+                                    case OBJECTIVE_TYPE_SIMPLE:
+                                        types_of_objectives.push_back(LexLS::SIMPLE_BOUNDS_OBJECTIVE_HP);
+                                        break;
+                                    case OBJECTIVE_TYPE_GENERAL:
+                                        types_of_objectives.push_back(LexLS::DEFAULT_OBJECTIVE);
+                                        break;
+                                    default:
+                                        throw std::runtime_error("Unsupported type of objective.");
+                                        break;
                                 }
                             }
                         }
@@ -263,7 +265,7 @@ namespace LexLS
 
                 if (line.compare(0, DATA.length(), DATA) == 0)
                 {
-                    if ((objective_index != 0) || (types_of_objectives[objective_index] != OBJECTIVE_TYPE_SIMPLE))
+                    if ((objective_index != 0) || (types_of_objectives[objective_index] != LexLS::SIMPLE_BOUNDS_OBJECTIVE_HP))
                     {
                         number_of_columns = number_of_variables + number_of_bounds;
                     }

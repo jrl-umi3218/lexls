@@ -6,6 +6,7 @@
 */
 
 
+#include <lexlsi.h>
 #include <lexls_tools.h>
 
 #include <iostream>
@@ -20,12 +21,12 @@ int main(int argc, char **argv)
     }
     
 
-    LexLS::tools::HierarchyType                 type_of_hierarchy;
-    unsigned int                                number_of_variables;
-    unsigned int                                number_of_objectives;
-    std::vector<unsigned int>                   number_of_constraits_per_objective;
-    std::vector<LexLS::tools::ObjectiveType>    types_of_objectives;
-    std::vector<Eigen::MatrixXd>                objectives;
+    LexLS::tools::HierarchyType          type_of_hierarchy;
+    unsigned int                         number_of_variables;
+    unsigned int                         number_of_objectives;
+    std::vector<unsigned int>            number_of_constraits_per_objective;
+    std::vector<LexLS::ObjectiveType>    types_of_objectives;
+    std::vector<Eigen::MatrixXd>         objectives;
 
 
     try
