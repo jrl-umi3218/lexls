@@ -555,16 +555,16 @@ void mexFunction( int num_output, mxArray *output[],
                 switch (lexlsi_active_constraints[j])
                 {
                     case LexLS::LOWER_BOUND:
-                        mxGetPr(active_constraints)[j] = LOWER_BOUND_ACTIVE;
+                        mxGetPr(active_constraints)[j] = LexLS::tools::LOWER_BOUND_ACTIVE;
                         break;
                     case LexLS::UPPER_BOUND:
-                        mxGetPr(active_constraints)[j] = UPPER_BOUND_ACTIVE;
+                        mxGetPr(active_constraints)[j] = LexLS::tools::UPPER_BOUND_ACTIVE;
                         break;
                     case LexLS::EQUALITY_CONSTRAINT:
-                        mxGetPr(active_constraints)[j] = EQUALITY_CONSTRAINT;
+                        mxGetPr(active_constraints)[j] = LexLS::tools::EQUALITY_CONSTRAINT;
                         break;
                     default:
-                        mxGetPr(active_constraints)[j] = BOUNDS_INACTIVE;
+                        mxGetPr(active_constraints)[j] = LexLS::tools::BOUNDS_INACTIVE;
                         break;
                 }
             }
