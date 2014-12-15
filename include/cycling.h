@@ -1,4 +1,4 @@
-// Time-stamp: <2014-10-29 16:17:17 drdv>
+// Time-stamp: <2014-12-15 18:35:19 drdv>
 #ifndef CYCLING
 #define CYCLING
 
@@ -32,7 +32,7 @@ namespace LexLS
         {
             printf("============================================= \n");
             printf("CtrAdded (%d): \n", (Index)CtrAdded.size());
-            for (Index k=0; k<CtrAdded.size(); k++)
+            for (Index k=0; k<(Index)CtrAdded.size(); k++)
             {
                 printf("     ");
                 CtrAdded[k].print();
@@ -40,7 +40,7 @@ namespace LexLS
 
             printf("============================================= \n");
             printf("CtrRemoved (%d): \n", (Index)CtrRemoved.size());
-            for (Index k=0; k<CtrRemoved.size(); k++)
+            for (Index k=0; k<(Index)CtrRemoved.size(); k++)
             {
                 printf("     ");
                 CtrRemoved[k].print();
@@ -137,7 +137,7 @@ namespace LexLS
             bool condition = true;
             if (CtrRemoved.size() == CtrAdded.size())
             {
-                for (Index k=0; k<CtrRemoved.size(); k++)
+                for (Index k=0; k<(Index)CtrRemoved.size(); k++)
                 {
                     if (std::find(CtrRemoved.begin(), CtrRemoved.end(), CtrAdded[k]) == CtrRemoved.end())
                     {
@@ -152,7 +152,7 @@ namespace LexLS
 
         void relax_bounds(std::vector<Objective> &Obj)
         {
-            for (Index k=0; k<CtrRemoved.size(); k++)
+            for (Index k=0; k<(Index)CtrRemoved.size(); k++)
             {
                 Obj[CtrRemoved[k].getObjIndex()]
                     .relax_bounds(CtrRemoved[k].getCtrIndex(), CtrRemoved[k].getCtrType(), relax_step);

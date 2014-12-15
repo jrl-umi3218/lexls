@@ -1,4 +1,4 @@
-// Time-stamp: <2014-12-12 11:57:15 drdv>
+// Time-stamp: <2014-12-15 18:41:41 drdv>
 #ifndef LEXLSE
 #define LEXLSE
 
@@ -31,11 +31,11 @@ namespace LexLS
             nVarFixed(0),
             nVarFixedInit(0),
             LinearDependenceTolerance(1e-12),
-            isFactorized(false), 
-            regularizationType(REGULARIZATION_NONE),
             regularizationMaxIterCG(10),
-            realSensitivityResidual(false),
-            isSolved(false) {}
+            isFactorized(false), 
+            isSolved(false),
+            realSensitivityResidual(false),            
+            regularizationType(REGULARIZATION_NONE) {}
         
         /** 
             \param[in] nVar_   Number of variables (only number of elements in x, and not in the residuals w)
@@ -46,11 +46,11 @@ namespace LexLS
             nVarFixed(0),
             nVarFixedInit(0),
             LinearDependenceTolerance(1e-12),
-            regularizationType(REGULARIZATION_NONE),
             regularizationMaxIterCG(10),
-            realSensitivityResidual(false),
             isFactorized(false), 
-            isSolved(false)
+            isSolved(false),
+            realSensitivityResidual(false),
+            regularizationType(REGULARIZATION_NONE)
         {
             resize(nVar_, nObj_, ObjDim_);
             setObjDim(ObjDim_);
@@ -1651,6 +1651,7 @@ namespace LexLS
             LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias() = D.selfadjointView<Eigen::Lower>() * d;
         }
 
+        // I am testing stuff here
         void regularize_RT_NO_Z_smooth(Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
         {
             RealScalar mu = damp_factor*damp_factor;
@@ -1665,37 +1666,57 @@ namespace LexLS
 
             dBlockType2Vector d(array, 0, nVar, RemainingColumns+ObjRank, 1);
 
-            MatrixType V(FirstColIndex, RemainingColumns+ObjRank);
-            V.setZero();
-            V.block(0,0,FirstColIndex,FirstColIndex).setIdentity();
-
             // -------------------------------------------------------------------------
 
+            /*
+              Rk  Tk
+                Sk
+                I
+
+              Rk'*Rk Rk'*Tk 
+                             + Sk'*Sk + I
+              Tk'*Rk Tk'*Tk
+            */
             D.setZero();
             D.block(0,0,ObjRank,ObjRank).triangularView<Eigen::Lower>() = (Rk.transpose()*Rk.triangularView<Eigen::Upper>()).eval();
             D.block(ObjRank,ObjRank,RemainingColumns,RemainingColumns).triangularView<Eigen::Lower>() = Tk.transpose()*Tk;
             D.block(ObjRank,0,RemainingColumns,ObjRank).noalias() = Tk.transpose()*Rk.triangularView<Eigen::Upper>();
-            //D.triangularView<Eigen::Lower>() += mu*up.transpose()*up;
-            D.triangularView<Eigen::Lower>() += mu*MatrixType::Identity(RemainingColumns+ObjRank,RemainingColumns+ObjRank);
-            //D.triangularView<Eigen::Lower>() += mu*V.transpose()*V;
+            D.triangularView<Eigen::Lower>() += mu*up.transpose()*up;
 
+            // approximate mu*up.transpose()*up with an identity!
+            // obviously up.transpose()*up is not full rank but anyway :)
+            //for (Index i=0; i<RemainingColumns+ObjRank; i++)
+            //  D.coeffRef(i,i) += mu;
+
+            // this is the I*I (from the lower part of Z)
             for (Index i=0; i<RemainingColumns+ObjRank; i++)
                 D.coeffRef(i,i) += mu;
             
             // ==============================================================================================
             d.head(ObjRank).noalias() = Rk.triangularView<Eigen::Upper>().transpose()*LQR.col(nVar).segment(FirstRowIndex,ObjRank);
             d.tail(RemainingColumns).noalias() = Tk.transpose()*LQR.col(nVar).segment(FirstRowIndex,ObjRank);
-
-            //d.noalias() += mu * up.transpose() * NullSpace.col(nVar).head(FirstColIndex);
-
-            //d.noalias() += mu * V.transpose() * NullSpace.col(nVar).head(FirstColIndex);
+            
+            d.noalias() += mu * up.transpose() * NullSpace.col(nVar).head(FirstColIndex);
             
             // ==============================================================================================
 
-            Eigen::LLT<MatrixType> chol(D);
-            chol.solveInPlace(d);
-            LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias()  = Rk.triangularView<Eigen::Upper>() * d.head(ObjRank);
-            LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias() += Tk * d.tail(RemainingColumns);
+            if (1)
+            {
+                Eigen::LLT<MatrixType> chol(D);
+                chol.solveInPlace(d);
+                LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias()  = Rk.triangularView<Eigen::Upper>() * d.head(ObjRank);
+                LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias() += Tk * d.tail(RemainingColumns);
+            }
+            else // the same as regularize_R
+            {
+                MatrixType  D1 = D.block(0,0,ObjRank,ObjRank);
+                dVectorType d1 = d.head(ObjRank);
+                
+                Eigen::LLT<MatrixType> chol(D1);
+                chol.solveInPlace(d1);
+                
+                LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias()  = Rk.triangularView<Eigen::Upper>() * d1;
+            }
         }
 
         /** 
@@ -1984,7 +2005,7 @@ namespace LexLS
             dBlockType     LeftBlock(NullSpace,             0,           FirstColIndex, FirstColIndex+ObjRank,            ObjRank);
             dBlockType TrailingBlock(NullSpace,             0, FirstColIndex + ObjRank, FirstColIndex+ObjRank, RemainingColumns+1);
 
-            // I have to do this because in regularize_tikhonov_1(...) I use NullSpace as a temporary storage
+            // todo: I don't need to do this (to remove)
             LeftBlock.block(FirstColIndex,0,ObjRank,ObjRank).setIdentity();
 
             Rk.triangularView<Eigen::Upper>().solveInPlace<Eigen::OnTheRight>(LeftBlock);
@@ -2038,17 +2059,17 @@ namespace LexLS
         Index nCtr;
 
         /** 
+            \brief Linear dependence tolerance
+        */
+        RealScalar LinearDependenceTolerance;
+
+        /** 
             \brief Max number of iterations for cg_tikhonov(...)
 
             \note used only with regularizationType = REGULARIZATION_TIKHONOV_CG
         */
         Index regularizationMaxIterCG;
   
-        /** 
-            \brief Linear dependence tolerance
-        */
-        RealScalar LinearDependenceTolerance;
-
         /** 
             \brief Regularization factor used at the current level
 

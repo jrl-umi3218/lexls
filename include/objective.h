@@ -1,4 +1,4 @@
-// Time-stamp: <2014-12-12 12:24:38 drdv>
+// Time-stamp: <2014-12-15 18:33:05 drdv>
 #ifndef OBJECTIVE
 #define OBJECTIVE
 
@@ -22,8 +22,8 @@ namespace LexLS
         */
         Objective(): 
             nCtr(0),
-            w_is_initialized(false),
-            ObjType(DEFAULT_OBJECTIVE) {}
+            ObjType(DEFAULT_OBJECTIVE),
+            w_is_initialized(false) {}
 
         /**
            \brief Resize the objective

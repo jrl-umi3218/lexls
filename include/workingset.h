@@ -1,4 +1,4 @@
-// Time-stamp: <2014-12-12 17:46:47 drdv>
+// Time-stamp: <2014-12-13 11:52:39 drdv>
 #ifndef WORKING_SET
 #define WORKING_SET
 
@@ -202,13 +202,6 @@ namespace LexLS
     private:
 
         /**
-           \brief Specifies the type of all constraints.
-
-           \note Introduced for convenience.
-        */                                        
-        std::vector<ConstraintType> all_type;
-
-        /**
            \brief Indexes of active constraints
         */                                        
         std::vector<Index> active;
@@ -222,6 +215,13 @@ namespace LexLS
            \brief Type of the active constraints (see #ConstraintType)
         */                                        
         std::vector<ConstraintType> ActiveCtrType;
+
+        /**
+           \brief Specifies the type of all constraints.
+
+           \note Introduced for convenience.
+        */                                        
+        std::vector<ConstraintType> all_type;
     };
     
 } // END namespace LexLS
