@@ -8,21 +8,14 @@
 
 
 #include "lexls_common.h"
+#include "../../tools/lexls_tools.h"
+
 
 const int MIN_INPUTS = 1;
 const int MAX_INPUTS = 5;
 const int MIN_OUTPUTS = 1;
 const int MAX_OUTPUTS = 4;
 const int MIN_NUMBER_OF_FIELDS_IN_OBJ = 3;
-
-
-enum ConstraintActivationType
-{
-    BOUNDS_INACTIVE = 0,
-    LOWER_BOUND_ACTIVE = 1,
-    UPPER_BOUND_ACTIVE = 2,
-    EQUALITY_CONSTRAINT = 3
-};
 
 
 
@@ -449,16 +442,16 @@ void mexFunction( int num_output, mxArray *output[],
                 {
                     switch (static_cast <int> (round(mxGetPr(active_set[i])[j])))
                     {
-                        case BOUNDS_INACTIVE:
+                        case LexLS::tools::BOUNDS_INACTIVE:
                             // nothing to activate
                             break;
-                        case LOWER_BOUND_ACTIVE:
+                        case LexLS::tools::LOWER_BOUND_ACTIVE:
                             lexlsi.api_activate(i, j, LexLS::LOWER_BOUND);
                             break;
-                        case UPPER_BOUND_ACTIVE:
+                        case LexLS::tools::UPPER_BOUND_ACTIVE:
                             lexlsi.api_activate(i, j, LexLS::UPPER_BOUND);
                             break;
-                        case EQUALITY_CONSTRAINT:
+                        case LexLS::tools::EQUALITY_CONSTRAINT:
                             lexlsi.api_activate(i, j, LexLS::EQUALITY_CONSTRAINT);
                             break;
                         default:
