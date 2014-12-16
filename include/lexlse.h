@@ -1,4 +1,4 @@
-// Time-stamp: <2014-12-15 18:41:41 drdv>
+// Time-stamp: <2014-12-16 23:57:03 drdv>
 #ifndef LEXLSE
 #define LEXLSE
 
@@ -298,6 +298,8 @@ namespace LexLS
                                 regularize_tikhonov_1(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
                         }            
                         accumulate_nullspace_basis(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
+
+                        //printf("===================================================================================\n");
                         break;
 
                     case REGULARIZATION_TIKHONOV_CG:
@@ -377,13 +379,8 @@ namespace LexLS
 
                     case REGULARIZATION_TEST:
 
-                        //printf("REGULARIZATION_TIKHONOV_RT_NO_Z_SMOOTH \n");
+                        //printf("REGULARIZATION_TEST \n");
 
-                        if ( !isEqual(damp_factor,0.0) ) 
-                        {
-                            regularize_RT_NO_Z_smooth(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
-                        }
-                        accumulate_nullspace_basis(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
                         break;
 
                     case REGULARIZATION_NONE:
@@ -1013,9 +1010,9 @@ namespace LexLS
             // -------------------------------------------------------------------------
             // create blocks
             // -------------------------------------------------------------------------
-            dBlockType iR(NullSpace, nVarFixed,          nVarFixed, nVarRank,   nVarRank); // inv(R)
-            dBlockType  T(NullSpace, nVarFixed, nVarFixed+nVarRank, nVarRank, nVarFree+1); // inv(R)*T
-            dBlockType  D(    array,         0,                  0, nVarFree,   nVarFree);
+            dBlockType iR(NullSpace, 0,        0, nVarRank,   nVarRank); // inv(R)
+            dBlockType  T(NullSpace, 0, nVarRank, nVarRank, nVarFree+1); // inv(R)*T
+            dBlockType  D(    array, 0,        0, nVarFree,   nVarFree);
 
             dBlockType2Vector d(array, 0, nVar, nVarFree, 1);
 
@@ -1446,7 +1443,8 @@ namespace LexLS
 
             hh_scalars.setZero();
 
-            NullSpace.setIdentity(); //todo: I could set it to 0
+            NullSpace.setZero();
+
             array.setZero();
 
             P.setIdentity();
@@ -1459,8 +1457,6 @@ namespace LexLS
             \brief Tikhonov regularization (using the normal equations inv(A'*A+I)*A'*b)
 
             \note fast when column-dimension is small
-
-            todo: maybe use "array" instaed of NullSpace for temporary storage (this would impact accumulate_nullspace_basis)
         */        
         void regularize_tikhonov_1(Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
         {
@@ -1471,7 +1467,7 @@ namespace LexLS
             // -------------------------------------------------------------------------
             dBlockType Rk(      LQR, FirstRowIndex,         FirstColIndex,                  ObjRank,                  ObjRank);
             dBlockType Tk(      LQR, FirstRowIndex, FirstColIndex+ObjRank,                  ObjRank,         RemainingColumns);
-            dBlockType up(NullSpace,             0,         FirstColIndex,            FirstColIndex, RemainingColumns+ObjRank);
+            dBlockType up(NullSpace,             0,         FirstColIndex,  FirstColIndex-nVarFixed, RemainingColumns+ObjRank);
             dBlockType  D(    array,             0,                     0, RemainingColumns+ObjRank, RemainingColumns+ObjRank);
 
             dBlockType2Vector d(array, 0, nVar, RemainingColumns+ObjRank, 1);
@@ -1490,7 +1486,7 @@ namespace LexLS
             d.head(ObjRank).noalias() = Rk.triangularView<Eigen::Upper>().transpose()*LQR.col(nVar).segment(FirstRowIndex,ObjRank);
             d.tail(RemainingColumns).noalias() = Tk.transpose()*LQR.col(nVar).segment(FirstRowIndex,ObjRank);
 
-            d.noalias() += mu * up.transpose() * NullSpace.col(nVar).head(FirstColIndex);
+            d.noalias() += mu * up.transpose() * NullSpace.col(nVar).head(FirstColIndex-nVarFixed);
 
             // ==============================================================================================
 
@@ -1512,31 +1508,31 @@ namespace LexLS
             // -------------------------------------------------------------------------
             // create blocks
             // -------------------------------------------------------------------------
-            dBlockType Rk(      LQR, FirstRowIndex,         FirstColIndex,               ObjRank,                    ObjRank);
-            dBlockType Tk(      LQR, FirstRowIndex, FirstColIndex+ObjRank,               ObjRank,           RemainingColumns);
-            dBlockType up(NullSpace,             0,         FirstColIndex,         FirstColIndex, RemainingColumns + ObjRank);
-            dBlockType  D(    array,             0,                     0, FirstColIndex+ObjRank,      FirstColIndex+ObjRank);
+            dBlockType Rk(      LQR, FirstRowIndex,         FirstColIndex,                         ObjRank,                         ObjRank);
+            dBlockType Tk(      LQR, FirstRowIndex, FirstColIndex+ObjRank,                         ObjRank,                RemainingColumns);
+            dBlockType up(NullSpace,             0,         FirstColIndex,         FirstColIndex-nVarFixed,      RemainingColumns + ObjRank);
+            dBlockType  D(    array,             0,                     0, FirstColIndex-nVarFixed+ObjRank, FirstColIndex-nVarFixed+ObjRank);
 
-            dBlockType2Vector d(array, 0, nVar, FirstColIndex+ObjRank, 1);
+            dBlockType2Vector d(array, 0, nVar, FirstColIndex-nVarFixed+ObjRank, 1);
             // -------------------------------------------------------------------------
 
             // forming D is very expensive
             D.block(0,0,ObjRank,ObjRank).triangularView<Eigen::Lower>()  = (Rk.triangularView<Eigen::Upper>()*Rk.transpose()).eval();
             D.block(0,0,ObjRank,ObjRank).triangularView<Eigen::Lower>() += Tk*Tk.transpose();
 
-            D.block(ObjRank,ObjRank,FirstColIndex,FirstColIndex).triangularView<Eigen::Lower>() = mu*up*up.transpose();
+            D.block(ObjRank,ObjRank,FirstColIndex-nVarFixed,FirstColIndex-nVarFixed).triangularView<Eigen::Lower>() = mu*up*up.transpose();
 
-            D.block(ObjRank, 0, FirstColIndex, ObjRank).noalias()  = 
+            D.block(ObjRank, 0, FirstColIndex-nVarFixed, ObjRank).noalias()  = 
                 damp_factor*up.leftCols(ObjRank)*Rk.triangularView<Eigen::Upper>().transpose();
             
-            D.block(ObjRank, 0, FirstColIndex, ObjRank).noalias() += 
+            D.block(ObjRank, 0, FirstColIndex-nVarFixed, ObjRank).noalias() += 
                 damp_factor*up.rightCols(RemainingColumns)*Tk.transpose();
             
-            for (Index i=0; i<FirstColIndex+ObjRank; i++)
+            for (Index i=0; i<FirstColIndex-nVarFixed+ObjRank; i++)
                 D.coeffRef(i,i) += mu;
 
             d.head(ObjRank) = LQR.col(nVar).segment(FirstRowIndex,ObjRank);
-            d.segment(ObjRank,FirstColIndex) = damp_factor*NullSpace.col(nVar).head(FirstColIndex);
+            d.segment(ObjRank,FirstColIndex-nVarFixed) = damp_factor*NullSpace.col(nVar).head(FirstColIndex-nVarFixed);
 
             // -------------------------------------------------------------------------
 
@@ -1545,7 +1541,7 @@ namespace LexLS
 
             // -------------------------------------------------------------------------
 
-            for (Index i=0; i<FirstColIndex+ObjRank; i++)
+            for (Index i=0; i<FirstColIndex-nVarFixed+ObjRank; i++)
                 D.coeffRef(i,i) -= mu;
 
             d = D.selfadjointView<Eigen::Lower>() * d;
@@ -1562,9 +1558,9 @@ namespace LexLS
             // -------------------------------------------------------------------------
             // create blocks
             // -------------------------------------------------------------------------
-            dBlockType  Rk(      LQR, FirstRowIndex, FirstColIndex,       ObjRank, ObjRank);
-            dBlockType  up(NullSpace,             0, FirstColIndex, FirstColIndex, ObjRank);
-            dBlockType   D(    array,             0,             0,       ObjRank, ObjRank);
+            dBlockType  Rk(      LQR, FirstRowIndex, FirstColIndex,                 ObjRank, ObjRank);
+            dBlockType  up(NullSpace,             0, FirstColIndex, FirstColIndex-nVarFixed, ObjRank);
+            dBlockType   D(    array,             0,             0,                 ObjRank, ObjRank);
 
             dBlockType2Vector d(array, 0, nVar, ObjRank, 1);
 
@@ -1575,7 +1571,7 @@ namespace LexLS
             for (Index i=0; i<ObjRank; i++)
                 D.coeffRef(i,i) += mu;
 
-            d.noalias()  = up.transpose() * NullSpace.col(nVar).head(FirstColIndex);
+            d.noalias()  = up.transpose() * NullSpace.col(nVar).head(FirstColIndex-nVarFixed);
             d *= mu;
             d.noalias() += Rk.triangularView<Eigen::Upper>().transpose()*LQR.col(nVar).segment(FirstRowIndex,ObjRank);
 
@@ -1649,74 +1645,6 @@ namespace LexLS
             for (Index i=0; i<ObjRank; i++)
                 D.coeffRef(i,i) -= mu;
             LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias() = D.selfadjointView<Eigen::Lower>() * d;
-        }
-
-        // I am testing stuff here
-        void regularize_RT_NO_Z_smooth(Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
-        {
-            RealScalar mu = damp_factor*damp_factor;
-
-            // -------------------------------------------------------------------------
-            // create blocks
-            // -------------------------------------------------------------------------
-            dBlockType Rk(      LQR, FirstRowIndex,         FirstColIndex,                  ObjRank,                  ObjRank);
-            dBlockType Tk(      LQR, FirstRowIndex, FirstColIndex+ObjRank,                  ObjRank,         RemainingColumns);
-            dBlockType up(NullSpace,             0,         FirstColIndex,            FirstColIndex, RemainingColumns+ObjRank);
-            dBlockType  D(    array,             0,                     0, RemainingColumns+ObjRank, RemainingColumns+ObjRank);
-
-            dBlockType2Vector d(array, 0, nVar, RemainingColumns+ObjRank, 1);
-
-            // -------------------------------------------------------------------------
-
-            /*
-              Rk  Tk
-                Sk
-                I
-
-              Rk'*Rk Rk'*Tk 
-                             + Sk'*Sk + I
-              Tk'*Rk Tk'*Tk
-            */
-            D.setZero();
-            D.block(0,0,ObjRank,ObjRank).triangularView<Eigen::Lower>() = (Rk.transpose()*Rk.triangularView<Eigen::Upper>()).eval();
-            D.block(ObjRank,ObjRank,RemainingColumns,RemainingColumns).triangularView<Eigen::Lower>() = Tk.transpose()*Tk;
-            D.block(ObjRank,0,RemainingColumns,ObjRank).noalias() = Tk.transpose()*Rk.triangularView<Eigen::Upper>();
-            D.triangularView<Eigen::Lower>() += mu*up.transpose()*up;
-
-            // approximate mu*up.transpose()*up with an identity!
-            // obviously up.transpose()*up is not full rank but anyway :)
-            //for (Index i=0; i<RemainingColumns+ObjRank; i++)
-            //  D.coeffRef(i,i) += mu;
-
-            // this is the I*I (from the lower part of Z)
-            for (Index i=0; i<RemainingColumns+ObjRank; i++)
-                D.coeffRef(i,i) += mu;
-            
-            // ==============================================================================================
-            d.head(ObjRank).noalias() = Rk.triangularView<Eigen::Upper>().transpose()*LQR.col(nVar).segment(FirstRowIndex,ObjRank);
-            d.tail(RemainingColumns).noalias() = Tk.transpose()*LQR.col(nVar).segment(FirstRowIndex,ObjRank);
-            
-            d.noalias() += mu * up.transpose() * NullSpace.col(nVar).head(FirstColIndex);
-            
-            // ==============================================================================================
-
-            if (1)
-            {
-                Eigen::LLT<MatrixType> chol(D);
-                chol.solveInPlace(d);
-                LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias()  = Rk.triangularView<Eigen::Upper>() * d.head(ObjRank);
-                LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias() += Tk * d.tail(RemainingColumns);
-            }
-            else // the same as regularize_R
-            {
-                MatrixType  D1 = D.block(0,0,ObjRank,ObjRank);
-                dVectorType d1 = d.head(ObjRank);
-                
-                Eigen::LLT<MatrixType> chol(D1);
-                chol.solveInPlace(d1);
-                
-                LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias()  = Rk.triangularView<Eigen::Upper>() * d1;
-            }
         }
 
         /** 
@@ -1829,14 +1757,14 @@ namespace LexLS
             // -------------------------------------------------------------------------
             // create blocks
             // -------------------------------------------------------------------------
-            dBlockType Rk(      LQR, FirstRowIndex,         FirstColIndex,       ObjRank,                    ObjRank);
-            dBlockType Tk(      LQR, FirstRowIndex, FirstColIndex+ObjRank,       ObjRank,           RemainingColumns);
-            dBlockType Sk(NullSpace,             0,         FirstColIndex, FirstColIndex, RemainingColumns + ObjRank);
+            dBlockType Rk(      LQR, FirstRowIndex,         FirstColIndex,                 ObjRank,                    ObjRank);
+            dBlockType Tk(      LQR, FirstRowIndex, FirstColIndex+ObjRank,                 ObjRank,           RemainingColumns);
+            dBlockType Sk(NullSpace,             0,         FirstColIndex, FirstColIndex-nVarFixed, RemainingColumns + ObjRank);
 
-            dBlockType2Vector r(rqsp_work, 0, 0, ObjRank + FirstColIndex + ObjRank + RemainingColumns, 1);
-            dBlockType2Vector q(rqsp_work, 0, 1, ObjRank + FirstColIndex + ObjRank + RemainingColumns, 1);
-            dBlockType2Vector s(rqsp_work, 0, 2,                           ObjRank + RemainingColumns, 1);
-            dBlockType2Vector p(rqsp_work, 0, 3,                           ObjRank + RemainingColumns, 1);
+            dBlockType2Vector r(rqsp_work, 0, 0, ObjRank + FirstColIndex-nVarFixed + ObjRank + RemainingColumns, 1);
+            dBlockType2Vector q(rqsp_work, 0, 1, ObjRank + FirstColIndex-nVarFixed + ObjRank + RemainingColumns, 1);
+            dBlockType2Vector s(rqsp_work, 0, 2,                                     ObjRank + RemainingColumns, 1);
+            dBlockType2Vector p(rqsp_work, 0, 3,                                     ObjRank + RemainingColumns, 1);
             
             // ------------------------------------------------------------------------------------------------
             /*
@@ -1848,8 +1776,8 @@ namespace LexLS
             r.head(ObjRank).noalias()  = LQR.col(nVar).segment(FirstRowIndex,ObjRank) - Tk*sol_x.tail(RemainingColumns);
             r.head(ObjRank).noalias() -= Rk.triangularView<Eigen::Upper>()*sol_x.head(ObjRank);
 
-            r.segment(ObjRank,FirstColIndex).noalias() = NullSpace.col(nVar).head(FirstColIndex) - Sk * sol_x;
-            r.segment(ObjRank,FirstColIndex)          *= damp_factor;
+            r.segment(ObjRank,FirstColIndex-nVarFixed).noalias() = NullSpace.col(nVar).head(FirstColIndex-nVarFixed) - Sk * sol_x;
+            r.segment(ObjRank,FirstColIndex-nVarFixed)          *= damp_factor;
 
             r.tail(ObjRank+RemainingColumns).noalias() = -damp_factor*sol_x;
             // ------------------------------------------------------------------------------------------------
@@ -1859,7 +1787,7 @@ namespace LexLS
                   | Tk'       |   | r3 |
             */
             // ------------------------------------------------------------------------------------------------
-            s.noalias() = Sk.transpose() * r.segment(ObjRank,FirstColIndex) + r.tail(ObjRank+RemainingColumns);
+            s.noalias() = Sk.transpose() * r.segment(ObjRank,FirstColIndex-nVarFixed) + r.tail(ObjRank+RemainingColumns);
             s *= damp_factor;
 
             s.head(ObjRank).noalias()          += Rk.triangularView<Eigen::Upper>().transpose() * r.head(ObjRank);
@@ -1879,8 +1807,8 @@ namespace LexLS
                 q.head(ObjRank).noalias()  = Tk*p.tail(RemainingColumns);
                 q.head(ObjRank).noalias() += Rk.triangularView<Eigen::Upper>()*p.head(ObjRank);
 
-                q.segment(ObjRank,FirstColIndex).noalias() = Sk * p;
-                q.segment(ObjRank,FirstColIndex) *= damp_factor;
+                q.segment(ObjRank,FirstColIndex-nVarFixed).noalias() = Sk * p;
+                q.segment(ObjRank,FirstColIndex-nVarFixed) *= damp_factor;
 
                 q.tail(ObjRank+RemainingColumns).noalias() = damp_factor*p;
                 // ------------------------------------------------------------------------------------------------
@@ -1890,7 +1818,7 @@ namespace LexLS
                 // ------------------------------------------------------------------------------------------------
                 // S = [Rk Tk; Sk ; Ik]'*r
                 // ------------------------------------------------------------------------------------------------
-                s.noalias() = Sk.transpose() * r.segment(ObjRank,FirstColIndex) + r.tail(ObjRank+RemainingColumns);
+                s.noalias() = Sk.transpose() * r.segment(ObjRank,FirstColIndex-nVarFixed) + r.tail(ObjRank+RemainingColumns);
                 s *= damp_factor;
 
                 s.head(ObjRank).noalias()          += Rk.triangularView<Eigen::Upper>().transpose() * r.head(ObjRank);
@@ -2000,16 +1928,15 @@ namespace LexLS
         */
         void accumulate_nullspace_basis(Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
         {
-            dBlockType            Rk(      LQR, FirstRowIndex,           FirstColIndex,               ObjRank,            ObjRank);
-            dBlockType       UpBlock(      LQR, FirstRowIndex, FirstColIndex + ObjRank,               ObjRank, RemainingColumns+1);
-            dBlockType     LeftBlock(NullSpace,             0,           FirstColIndex, FirstColIndex+ObjRank,            ObjRank);
-            dBlockType TrailingBlock(NullSpace,             0, FirstColIndex + ObjRank, FirstColIndex+ObjRank, RemainingColumns+1);
+            dBlockType            Rk(      LQR, FirstRowIndex,           FirstColIndex,                         ObjRank,            ObjRank);
+            dBlockType       UpBlock(      LQR, FirstRowIndex, FirstColIndex + ObjRank,                         ObjRank, RemainingColumns+1);
+            dBlockType     LeftBlock(NullSpace,             0,           FirstColIndex, FirstColIndex-nVarFixed+ObjRank,            ObjRank);
+            dBlockType TrailingBlock(NullSpace,             0, FirstColIndex + ObjRank, FirstColIndex-nVarFixed+ObjRank, RemainingColumns+1);
 
-            // todo: I don't need to do this (to remove)
-            LeftBlock.block(FirstColIndex,0,ObjRank,ObjRank).setIdentity();
+            LeftBlock.block(FirstColIndex-nVarFixed,0,ObjRank,ObjRank).setIdentity();
 
             Rk.triangularView<Eigen::Upper>().solveInPlace<Eigen::OnTheRight>(LeftBlock);
-            
+
             if (ObjRank == 1)
             {
                 TrailingBlock.noalias() -= LeftBlock.col(0) * UpBlock.row(0);
