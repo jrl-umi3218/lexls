@@ -1,4 +1,4 @@
-// Time-stamp: <2014-12-16 23:57:03 drdv>
+// Time-stamp: <2014-12-17 11:10:21 drdv>
 #ifndef LEXLSE
 #define LEXLSE
 
@@ -1010,9 +1010,9 @@ namespace LexLS
             // -------------------------------------------------------------------------
             // create blocks
             // -------------------------------------------------------------------------
-            dBlockType iR(NullSpace, 0,        0, nVarRank,   nVarRank); // inv(R)
-            dBlockType  T(NullSpace, 0, nVarRank, nVarRank, nVarFree+1); // inv(R)*T
-            dBlockType  D(    array, 0,        0, nVarFree,   nVarFree);
+            dBlockType iR(NullSpace, 0,          nVarFixed, nVarRank,   nVarRank); // inv(R)
+            dBlockType  T(NullSpace, 0, nVarFixed+nVarRank, nVarRank, nVarFree+1); // inv(R)*T
+            dBlockType  D(    array, 0,                  0, nVarFree,   nVarFree);
 
             dBlockType2Vector d(array, 0, nVar, nVarFree, 1);
 
