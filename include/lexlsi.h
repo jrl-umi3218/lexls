@@ -1,4 +1,4 @@
-// Time-stamp: <2014-12-18 17:51:22 drdv>
+// Time-stamp: <2014-12-18 17:58:36 drdv>
 #ifndef LEXLSI
 #define LEXLSI
 
@@ -255,7 +255,7 @@ namespace LexLS
                 }
                 else
                 {
-                    if (numberOfFactorizations => parameters.max_number_of_iterations)
+                    if (numberOfFactorizations >= parameters.max_number_of_iterations)
                     {
                         status = MAX_NUMBER_OF_ITERATIONS_EXCEDED;
                         break;
