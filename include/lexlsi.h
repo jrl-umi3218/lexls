@@ -1,4 +1,4 @@
-// Time-stamp: <2014-12-12 17:50:51 drdv>
+// Time-stamp: <2014-12-18 17:51:22 drdv>
 #ifndef LEXLSI
 #define LEXLSI
 
@@ -100,7 +100,6 @@ namespace LexLS
         LexLSI(Index nVar_, Index nObj_, Index *ObjDim_, ObjectiveType *ObjType_):
             nVar(nVar_), 
             nObj(nObj_),
-            iter(0),
             x0_is_initialized(false),
             status(TERMINATION_STATUS_UNKNOWN)
         {           
@@ -178,13 +177,13 @@ namespace LexLS
         */
         void phase1()
         {
-            bool ActiveSet_is_initialized = false;
+            bool active_constraints_exist = false;
             for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
             {
                 // we would enter even if there are only equality constraints
                 if (Obj[ObjIndex].getActiveCtrCount() > 0)
                 {
-                    ActiveSet_is_initialized = true;
+                    active_constraints_exist = true;
                     break;
                 }
             }
@@ -192,7 +191,7 @@ namespace LexLS
             // --------------------------------------------------------
             // form x
             // --------------------------------------------------------
-            if (ActiveSet_is_initialized)
+            if (active_constraints_exist)
             {
                 formLexLSE();                
                 
@@ -201,6 +200,8 @@ namespace LexLS
                     lexlse.factorize();
                     lexlse.solve();                    
                     x = lexlse.get_x();
+
+                    numberOfFactorizations++;
                 }
             }
             else
@@ -254,7 +255,7 @@ namespace LexLS
                 }
                 else
                 {
-                    if (getIterationsCount() > parameters.max_number_of_iterations)
+                    if (numberOfFactorizations => parameters.max_number_of_iterations)
                     {
                         status = MAX_NUMBER_OF_ITERATIONS_EXCEDED;
                         break;
@@ -484,6 +485,14 @@ namespace LexLS
         /** 
             \brief Returns number of iterations in the active-set method
         */
+        Index getNumberOfFactorizations() const
+        {
+            return numberOfFactorizations;
+        }
+
+        /** 
+            \brief Returns number of iterations in the active-set method
+        */
         Index getIterationsCount() const
         {
             return iter;
@@ -647,8 +656,10 @@ namespace LexLS
         */
         void initialize()
         {            
+            iter       = 0;
             iterAdd    = 0;
             iterRemove = 0;
+            numberOfFactorizations = 0;
 
             x.setZero();
             dx.setZero();
@@ -776,6 +787,8 @@ namespace LexLS
                 lexlse.solve();
 
                 formStep();
+
+                numberOfFactorizations++;
             }
             else // if iter == 0
             {
@@ -817,7 +830,7 @@ namespace LexLS
                     }
                 }
             }
-            
+
             if (alpha > 0) // take a step
             {
                 x += alpha*dx;
@@ -924,6 +937,11 @@ namespace LexLS
           \brief Number of iterations during which a constraint was removed
         */
         Index iterRemove;
+
+        /*
+          \brief Number of factorization
+        */
+        Index numberOfFactorizations;
 
         /** 
             \brief If x0_is_initialized == true, the function set_x0(dVectorType &x0) has been

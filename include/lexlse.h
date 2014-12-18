@@ -1,4 +1,4 @@
-// Time-stamp: <2014-12-17 11:10:21 drdv>
+// Time-stamp: <2014-12-18 15:08:08 drdv>
 #ifndef LEXLSE
 #define LEXLSE
 
@@ -253,32 +253,41 @@ namespace LexLS
                 // -----------------------------------------------------------------------
                 // Regularization
                 // -----------------------------------------------------------------------
-                RealScalar conditioning_estimate;
-
                 if (1) // constant damping factor
                 {
                     damp_factor = regularization[ObjIndex];
                 }
-                else // variable damping factor (JUST TESTING, NOT READY YET)
+                else // variable damping factor (use with caution)
                 {
                     damp_factor = 0.0;
                     if (ObjRank > 0)
                     {                        
                         // -----------------------------------------------------------------------
-                        // conditioninig estimation
+                        // conditioninig estimation (here we could use that 1/sigma = norm(inv(R)))
                         // -----------------------------------------------------------------------
                         dVectorType rhs_tmp = LQR.col(nVar).segment(FirstRowIndex,ObjRank);
 
-                        //print_eigen_matrix(rhs_tmp, "rhs");
-
-                        conditioning_estimate = rhs_tmp.squaredNorm();
+                        RealScalar conditioning_estimate = rhs_tmp.squaredNorm();
                         LQR.block(FirstRowIndex, FirstColIndex, ObjRank, ObjRank).
                             triangularView<Eigen::Upper>().solveInPlace<Eigen::OnTheLeft>(rhs_tmp);
 
-                        //print_eigen_matrix(rhs_tmp, "x");
-
                         conditioning_estimate /= rhs_tmp.squaredNorm();
+
+                        //printf("conditioning_estimate = %e \n",conditioning_estimate);
                         // -----------------------------------------------------------------------
+
+                        /*
+                          see equation (10) in 
+                          Stefano Chiaverini, Bruno Siciliano, "Review of the damped least-squares inverse kinematics 
+                          with experiments on an industrial robot manipulator, " 1994.
+                        */
+                        RealScalar epsilon = 1e-4;
+                        if (conditioning_estimate < epsilon)
+                        {
+                            damp_factor = std::sqrt((1 - (conditioning_estimate*conditioning_estimate)/(epsilon*epsilon)))*regularization[ObjIndex];
+
+                            //printf("damp_factor = %e \n", damp_factor);
+                        }
                     }
                 }
                 
