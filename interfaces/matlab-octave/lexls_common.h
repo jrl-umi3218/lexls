@@ -180,14 +180,15 @@ bool getOptionString(   std::string &option_value,
         // if there is such field
         failIfTrue (!mxIsChar(option), (std::string("Option '") + option_id + "' must be of 'char' type.").c_str());
 
-        char char_string[strlen];
-        int retval;
+        char *char_string = new char[strlen];
 
         if (mxGetString(option, char_string, strlen) == 0)
         {
             option_value = char_string;
             is_parsing_successful = true;
         }
+
+        delete char_string;
     }
 
 
@@ -240,7 +241,7 @@ bool getOptionInteger(int *option_value, const mxArray *option_struct, const cha
 
 
 bool getOptionArray(std::vector<double> &array, 
-                    const int number_of_elements, 
+                    const unsigned int number_of_elements, 
                     const mxArray *option_struct, 
                     const char *option_id)
 {
@@ -258,7 +259,7 @@ bool getOptionArray(std::vector<double> &array,
                     (std::string("Wrong number of elements in option '") + option_id + "'.").c_str());
 
         array.clear();
-        for (int i = 0; i < number_of_elements; ++i)
+        for (unsigned int i = 0; i < number_of_elements; ++i)
         {
             array.push_back( (static_cast <double *> (mxGetPr(option)) )[i]);
         }
@@ -288,7 +289,7 @@ mxArray * catenateMatrices( mxArray *matrix1,
     }
 
 
-    mxArray *cat_input[number_of_matrices + 1];
+    mxArray **cat_input = new mxArray*[number_of_matrices + 1];
     mxArray *cat_output[1];
 
     mxArray *dimension = mxCreateDoubleMatrix (1, 1, mxREAL);
@@ -309,6 +310,7 @@ mxArray * catenateMatrices( mxArray *matrix1,
         mexErrMsgTxt("Catenation of A and b failed!");
     }
     mxDestroyArray(dimension);
+    delete cat_input;
 
     return (cat_output[0]);
 }

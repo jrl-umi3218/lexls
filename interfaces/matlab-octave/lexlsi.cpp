@@ -193,7 +193,7 @@ void mexFunction( int num_output, mxArray *output[],
 // parse objectives
     const mxArray * objectives = input[0];
 
-    LexLS::Index num_obj = mxGetNumberOfElements (objectives);
+    unsigned int num_obj = mxGetNumberOfElements (objectives);
 
     std::vector<mxArray *> constraints;
 
@@ -206,8 +206,8 @@ void mexFunction( int num_output, mxArray *output[],
     num_constr.resize(num_obj);
     constraints.resize(num_obj);
 
-    int total_num_constr = 0;
-    int first_normal_obj_index = 0;
+    unsigned int total_num_constr = 0;
+    unsigned int first_normal_obj_index = 0;
 
 
     if (is_simple_bounds_handling_enabled)
@@ -249,7 +249,7 @@ void mexFunction( int num_output, mxArray *output[],
 
     LexLS::Index num_var = 0;
 
-    for (int i = first_normal_obj_index; i < num_obj; ++i)
+    for (unsigned int i = first_normal_obj_index; i < num_obj; ++i)
     {
         mxArray *A = getObjectiveMatrix(objectives, i, "A");
         mxArray *lb = getObjectiveMatrix(objectives, i, "lb");
@@ -288,7 +288,7 @@ void mexFunction( int num_output, mxArray *output[],
             failIfTrue (!mxIsCell(active_set_cell), "Active set must be of 'cell' type.");
             failIfTrue (mxGetNumberOfElements(active_set_cell) != num_obj, "Wrong dimention of the active set.");
 
-            for (int i = 0; i < num_obj; ++i)
+            for (unsigned int i = 0; i < num_obj; ++i)
             {
                 mxArray *c = mxGetCell (active_set_cell, i);
                 if ((c == NULL) || (mxIsEmpty (c)))
@@ -337,7 +337,7 @@ void mexFunction( int num_output, mxArray *output[],
             failIfTrue (!mxIsCell(residuals_cell), "Residuals must be of 'cell' type.");
             failIfTrue (mxGetNumberOfElements(residuals_cell) != num_obj, "Wrong dimention of the residuals.");
 
-            for (int i = 0; i < num_obj; ++i)
+            for (unsigned int i = 0; i < num_obj; ++i)
             {
                 mxArray *c = mxGetCell (residuals_cell, i);
                 if ((c == NULL) || (mxIsEmpty (c)))
@@ -356,7 +356,7 @@ void mexFunction( int num_output, mxArray *output[],
 
 
 // instantiate LexLS
-    LexLS::TerminationStatus status;
+    LexLS::TerminationStatus status = LexLS::TERMINATION_STATUS_UNKNOWN;
     LexLS::LexLSI lexlsi(num_var, num_obj, num_constr.data(), obj_type.data());
 
 
@@ -368,7 +368,7 @@ void mexFunction( int num_output, mxArray *output[],
         // regularization
         if (is_regularization_set)
         {
-            for (int i = 0; i < num_obj; ++i)
+            for (unsigned int i = 0; i < num_obj; ++i)
             {
                 lexlsi.setRegularization(i, regularization[i]);
             }
@@ -385,7 +385,7 @@ void mexFunction( int num_output, mxArray *output[],
                         num_constr[0], 
                         2));
         }
-        for (int i = first_normal_obj_index; i < num_obj; ++i)
+        for (unsigned int i = first_normal_obj_index; i < num_obj; ++i)
         {
             lexlsi.setData(
                     i, 
@@ -413,7 +413,7 @@ void mexFunction( int num_output, mxArray *output[],
 
 
         // set residuals
-        for (int i = 0; i < num_obj; ++i)
+        for (unsigned int i = 0; i < num_obj; ++i)
         {
             if (residuals[i] == NULL)
             {
@@ -435,7 +435,7 @@ void mexFunction( int num_output, mxArray *output[],
 
 
         // activate constraints
-        for (int i = 0; i < num_obj; ++i)
+        for (unsigned int i = 0; i < num_obj; ++i)
         {
             if (active_set[i] == NULL)
             {
@@ -517,7 +517,7 @@ void mexFunction( int num_output, mxArray *output[],
     if (num_output >= 3)
     {
         output[2] = mxCreateCellMatrix(num_obj, 1);
-        for (int i = 0; i < num_obj; ++i)
+        for (unsigned int i = 0; i < num_obj; ++i)
         {
 
             try
@@ -545,7 +545,7 @@ void mexFunction( int num_output, mxArray *output[],
 
         output[3] = mxCreateCellMatrix(num_obj, 1);
 
-        for (int i = 0; i < num_obj; ++i)
+        for (unsigned int i = 0; i < num_obj; ++i)
         {
             try
             {
