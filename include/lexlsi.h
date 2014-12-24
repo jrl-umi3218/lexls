@@ -1,4 +1,4 @@
-// Time-stamp: <2014-12-18 17:58:36 drdv>
+// Time-stamp: <2014-12-24 11:31:16 drdv>
 #ifndef LEXLSI
 #define LEXLSI
 
@@ -661,6 +661,8 @@ namespace LexLS
             iterRemove = 0;
             numberOfFactorizations = 0;
 
+            step_length = 0;
+
             x.setZero();
             dx.setZero();
 
@@ -831,6 +833,8 @@ namespace LexLS
                 }
             }
 
+            step_length = alpha; // record the value of alpha
+
             if (alpha > 0) // take a step
             {
                 x += alpha*dx;
@@ -861,7 +865,61 @@ namespace LexLS
             std::ofstream file(file_name, std::ios::out | std::ios::app);
             file.precision(15);
 
-            file << "operation_("<<iter+1<<") = " << operation << ";\n"; 
+            if (flag_clear_file)
+                file << "% phase 1 (x0_is_initialized = "<<x0_is_initialized<<") \n"; 
+
+            if (iter == 1)
+                file << "% here lexlse is not solved\n"; 
+
+            file << "% ---------------------------------------------\n"; 
+            file << "operation_("<<iter+1<<")       = " << operation << ";\n"; 
+            file << "nFactorizations_("<<iter+1<<") = " << getNumberOfFactorizations() << ";\n";
+            if (!flag_clear_file)
+                file << "stepLength_("<<iter+1<<")      = " << step_length << ";\n";
+
+            if ((getNumberOfFactorizations() > 0) && iter != 1)
+            {
+                file << "% ---------------------------------------------\n";
+                file << "% solve lexlse with previous active set \n"; 
+
+                dVectorType xStar = lexlse.get_x();
+                
+                file << "xStar_(:,"<<iter+1<<") = [ "; 
+                for (Index k=0; k<nVar; k++)
+                    file << xStar(k) << " "; 
+                file << "]'; \n"; 
+            }
+
+            file << "% ---------------------------------------------\n";
+
+            if ((x0_is_initialized) && (iter == 1))
+            {
+                // when x0 is specified by the user, the step direction is not recomputed at iter == 1
+            }
+            else
+            {
+                file << "dx_(:,"<<iter+1<<") = [ "; 
+                for (Index k=0; k<nVar; k++)
+                    file << dx(k) << " "; 
+                file << "]'; \n"; 
+
+                for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
+                {
+                    dVectorType dw_ = Obj[ObjIndex].get_dw();
+                    
+                    file << "dw_{"<<ObjIndex+1<<"}(:,"<<iter+1<<") = [ "; 
+                    for (Index k=0; k<Obj[ObjIndex].getDim(); k++)
+                    {
+                        file << dw_(k) << " ";
+                    }
+                    file << "]';\n";
+                }
+            }
+
+            file << "x_(:,"<<iter+1<<") = [ "; 
+            for (Index k=0; k<nVar; k++)
+                file << x(k) << " "; 
+            file << "]'; \n"; 
 
             for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
             {
@@ -874,25 +932,45 @@ namespace LexLS
                 }
                 file << "]';\n";
             }
+            
+            if ((x0_is_initialized) && (iter == 1))
+            {
+                // when x0 is specified by the user, the step direction is not recomputed at iter == 1
+            }
+            else
+            {
+                file << "% ---------------------------------------------\n";
+                for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
+                {
+                    file << "a_{"<<ObjIndex+1<<"}(:,"<<iter+1<<") = [ "; 
+                    for (Index k=0; k<Obj[ObjIndex].getDim(); k++)
+                        file << (Index) Obj[ObjIndex].getCtrType(k) << " ";
+                    file << "]';\n";
+                }
+            }
 
+            /*
             file << "nw_(:,"<<iter+1<<") = [ "; 
             for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
                 file << std::sqrt(Obj[ObjIndex].getResidualSquaredNorm()) << " "; 
             file << "]';\n";
+            */
 
-            for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
+            /*
+            MatrixType L = getLambda();
+            
+            file << "L_{"<<iter+1<<"} = [";
+            for (Index i=0; i<L.rows(); i++)
             {
-                file << "a_{"<<ObjIndex+1<<"}(:,"<<iter+1<<") = [ "; 
-                for (Index k=0; k<Obj[ObjIndex].getDim(); k++)
-                    file << (Index) Obj[ObjIndex].getCtrType(k) << " ";
-                file << "]';\n";
+                for (Index j=0; j<L.cols(); j++)
+                {
+                    file << L(i,j) << " ";
+                }
+                file << "\n";
             }
-
-            file << "x_(:,"<<iter+1<<") = [ "; 
-            for (Index k=0; k<nVar; k++)
-                file << x(k) << " "; 
-            file << "]'; \n"; 
-
+            file << "]; \n";
+            */
+            
             file << "\n";
 
             file.close();
@@ -950,6 +1028,13 @@ namespace LexLS
             \note This is later used in phase1().
         */
         bool x0_is_initialized;
+
+        /*
+          \brief Equal to alpha in verifyWorkingSet()
+
+          \note For output/debugging purposes
+        */
+        RealScalar step_length;
     
         // ==================================================================
         // definition of vectors

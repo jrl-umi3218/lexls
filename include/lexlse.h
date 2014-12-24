@@ -1,4 +1,4 @@
-// Time-stamp: <2014-12-18 15:08:08 drdv>
+// Time-stamp: <2014-12-18 18:02:31 drdv>
 #ifndef LEXLSE
 #define LEXLSE
 
@@ -263,7 +263,7 @@ namespace LexLS
                     if (ObjRank > 0)
                     {                        
                         // -----------------------------------------------------------------------
-                        // conditioninig estimation (here we could use that 1/sigma = norm(inv(R)))
+                        // conditioninig estimation
                         // -----------------------------------------------------------------------
                         dVectorType rhs_tmp = LQR.col(nVar).segment(FirstRowIndex,ObjRank);
 
