@@ -1,4 +1,4 @@
-// Time-stamp: <2014-12-18 18:02:31 drdv>
+// Time-stamp: <2014-12-31 00:14:52 drdv>
 #ifndef LEXLSE
 #define LEXLSE
 
@@ -476,7 +476,7 @@ namespace LexLS
             \todo Replace applyOnTheLeft(householderSequence(H,h)) with my implementation
         */
         bool ObjectiveSensitivity(Index ObjIndex, 
-                                  Index &CtrIndex2Remove, Index &ObjIndex2Remove, 
+                                  Index &CtrIndex2Remove, int &ObjIndex2Remove, 
                                   RealScalar tolWrongSignLambda, RealScalar tolCorrectSignLambda,
                                   dVectorType &residual)
         {
@@ -546,7 +546,8 @@ namespace LexLS
                 rhs.head(ColDim).noalias() = -LQR.block(FirstRowIndex, 0, ObjDim, ColDim).transpose() * \
                     Lambda.segment(FirstRowIndex, ObjDim);
                 
-                for (Index k=ObjIndex-1; k>=0; k--)
+                //for (int k=ObjIndex-1; k>=0; k--)
+                for (Index k=ObjIndex; k--; ) //ObjIndex-1, ..., 0. 
                 {
                     FirstRowIndex = ObjInfo[k].FirstRowIndex;
                     FirstColIndex = ObjInfo[k].FirstColIndex;
@@ -666,7 +667,8 @@ namespace LexLS
                 rhs.head(ColDim).noalias() = -LQR.block(FirstRowIndex, 0, ObjDim, ColDim).transpose() * \
                     Lambda.segment(FirstRowIndex, ObjDim);
                 
-                for (Index k=ObjIndex-1; k>=0; k--)
+                //for (int k=ObjIndex-1; k>=0; k--)
+                for (Index k=ObjIndex; k--; ) //ObjIndex-1, ..., 0. 
                 {
                     FirstRowIndex = ObjInfo[k].FirstRowIndex;
                     FirstColIndex = ObjInfo[k].FirstColIndex;
@@ -721,7 +723,7 @@ namespace LexLS
            than the largest multiplier with a wrong sign from previous groups of Lagrange
            multipliers.
         */
-        bool findDescentDirection(Index FirstRowIndex,
+        bool findDescentDirection(int FirstRowIndex,
                                   Index ObjDim,
                                   RealScalar &maxAbsValue,   // modified
                                   Index &CtrIndex,           // modified
@@ -802,7 +804,8 @@ namespace LexLS
         void solve()
         {   	
             Index ObjRank, AccumulatedRanks = 0;
-            for(Index k=nObj-1; k>=0; k--) 
+            //for(Index k=nObj-1; k>=0; k--) 
+            for (Index k=nObj; k--; ) //nObj-1, ..., 0. 
             {
                 ObjRank = ObjInfo[k].rank;
                 if (ObjRank > 0)
@@ -886,7 +889,8 @@ namespace LexLS
             GivensRotationSequence gs(nVarFree*nVarRank);
             for (Index i=0; i<nVarFree; i++)
             {
-                for (Index j=nVarRank-1; j>=0; j--)
+                //for (int j=nVarRank-1; j>=0; j--)
+                for (Index j=nVarRank; j--; ) //nVarRank-1, ..., 0. 
                 {
                     GivensRotation GR(RT.coeffRef(j,j),RT.coeffRef(j,nVarRank+i),j,nVarRank+i);
                     RT.topRows(j+1).applyOnTheRight(GR.i,GR.j,GR.G);
@@ -903,7 +907,8 @@ namespace LexLS
             // -------------------------------------------------------------------------
             // apply sequence of Givens rotations on the RHS vector
             // -------------------------------------------------------------------------
-            for (Index i=gs.size()-1; i>=0; i--)
+            //for (Index i=gs.size()-1; i>=0; i--)
+            for (Index i=gs.size(); i--; ) //gs.size()-1, ..., 0. 
                 rhs.applyOnTheLeft(gs.get_i(i), gs.get_j(i), gs.get(i));
 
             // -------------------------------------------------------------------------

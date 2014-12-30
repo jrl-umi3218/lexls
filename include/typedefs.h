@@ -1,4 +1,4 @@
-// Time-stamp: <2014-12-12 12:19:03 drdv>
+// Time-stamp: <2014-12-31 00:28:18 drdv>
 #ifndef TYPEDEFS
 #define TYPEDEFS
 
@@ -11,9 +11,7 @@
 
 namespace LexLS
 {
-
-    /// @todo Why not unsigned?
-    typedef int Index;
+    typedef unsigned int Index;
     typedef double RealScalar;
 
     /// @todo Why MatrixType, but dVectortype?

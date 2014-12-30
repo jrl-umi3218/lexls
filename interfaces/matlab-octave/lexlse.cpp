@@ -26,7 +26,7 @@ class LexlseOptions
 
         bool is_variables_fixing_enabled;
 
-        int get_least_norm_solution;
+        unsigned int get_least_norm_solution;
 
         bool is_regularization_set;
         std::vector<double> regularization;
@@ -35,7 +35,7 @@ class LexlseOptions
         LexLS::RegularizationType regularizationType;
 
         bool is_regularizationMaxIterCG_set;
-        int regularizationMaxIterCG;
+        unsigned int regularizationMaxIterCG;
 
         LexlseOptions()
         {
@@ -95,12 +95,12 @@ void mexFunction( int num_output, mxArray *output[],
                                                         options_struct, 
                                                         "regularization");
 
-        getOptionInteger(   &options.get_least_norm_solution, 
+        getOptionUnsignedInteger(   &options.get_least_norm_solution, 
                             options_struct, 
                             "get_least_norm_solution");
 
-        int regularization_type = 0;
-        options.is_regularization_type_set = getOptionInteger( &regularization_type, 
+        unsigned int regularization_type = 0;
+        options.is_regularization_type_set = getOptionUnsignedInteger( &regularization_type, 
                                                                options_struct, 
                                                                "regularizationType");
         if (options.is_regularization_type_set)
@@ -108,7 +108,7 @@ void mexFunction( int num_output, mxArray *output[],
             options.regularizationType = static_cast <LexLS::RegularizationType> (regularization_type);
         }
 
-        options.is_regularizationMaxIterCG_set = getOptionInteger(   &options.regularizationMaxIterCG, 
+        options.is_regularizationMaxIterCG_set = getOptionUnsignedInteger(   &options.regularizationMaxIterCG, 
                                                                      options_struct, 
                                                                      "regularizationMaxIterCG");
 
@@ -213,7 +213,8 @@ void mexFunction( int num_output, mxArray *output[],
             for (int i = 0; i < fixed_var_num; ++i)
             {
                 LexLS::Index index = static_cast <int> (round(mxGetPr(fixed_var_i)[i])) - 1;
-                if ((index < 0) || (index > num_var))
+                //if ((index < 0) || (index > num_var))
+                if (index > num_var)
                 {
                     mexErrMsgTxt("Index of a fixed variable is out of bounds!");
                 }

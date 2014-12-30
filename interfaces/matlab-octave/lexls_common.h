@@ -221,7 +221,7 @@ bool getOptionBool(bool *option_value, const mxArray *option_struct, const char 
 }
 
 
-bool getOptionInteger(int *option_value, const mxArray *option_struct, const char *option_id)
+bool getOptionUnsignedInteger(unsigned int *option_value, const mxArray *option_struct, const char *option_id)
 {
     bool is_parsing_successful = false;
 

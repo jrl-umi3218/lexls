@@ -121,7 +121,7 @@ void mexFunction( int num_output, mxArray *output[],
 
 
 
-            getOptionInteger(   &lexlsi_parameters.max_number_of_iterations, 
+            getOptionUnsignedInteger(   &lexlsi_parameters.max_number_of_iterations, 
                                 options_struct, 
                                 "max_iterations");
 
@@ -131,7 +131,7 @@ void mexFunction( int num_output, mxArray *output[],
                             options_struct, 
                             "cycling_handling");
 
-            getOptionInteger(   &lexlsi_parameters.cycling_max_counter, 
+            getOptionUnsignedInteger(   &lexlsi_parameters.cycling_max_counter, 
                                 options_struct, 
                                 "cycling_max_counter");
 
@@ -151,8 +151,8 @@ void mexFunction( int num_output, mxArray *output[],
                             options_struct, 
                             "enable_simple_bounds");
 
-            int regularization_type = 0;
-            if (getOptionInteger( &regularization_type, 
+            unsigned int regularization_type = 0;
+            if (getOptionUnsignedInteger( &regularization_type, 
                               options_struct, 
                               "regularizationType"))
             {
@@ -160,7 +160,7 @@ void mexFunction( int num_output, mxArray *output[],
             }
 
 
-            getOptionInteger(   &lexlsi_parameters.regularizationMaxIterCG, 
+            getOptionUnsignedInteger(   &lexlsi_parameters.regularizationMaxIterCG, 
                                 options_struct, 
                                 "regularizationMaxIterCG");
 

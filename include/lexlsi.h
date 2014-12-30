@@ -1,4 +1,4 @@
-// Time-stamp: <2014-12-24 11:31:16 drdv>
+// Time-stamp: <2014-12-30 22:47:52 drdv>
 #ifndef LEXLSI
 #define LEXLSI
 
@@ -740,7 +740,8 @@ namespace LexLS
         */
         bool findActiveCtr2Remove(Index &ObjIndex2Remove, Index &CtrIndex2Remove)
         {
-            bool DescentDirectionExists = false;            
+            bool DescentDirectionExists = false;
+            int ObjIndex2Remove_int;
             for (Index ObjIndex=0; ObjIndex<nObj-ObjOffset; ObjIndex++) // loop over objectives of LexLSE problem
             {
                 // The real residual Obj[ObjIndex].getOptimalResidual() is an input but it might not be used inside the function. 
@@ -749,7 +750,7 @@ namespace LexLS
                 // (don't use it if you don't know what you are doing!)
                 DescentDirectionExists = lexlse.ObjectiveSensitivity(ObjIndex, 
                                                                      CtrIndex2Remove, 
-                                                                     ObjIndex2Remove, 
+                                                                     ObjIndex2Remove_int, 
                                                                      parameters.tolWrongSignLambda,
                                                                      parameters.tolCorrectSignLambda,
                                                                      Obj[ObjIndex].getOptimalResidual());
@@ -759,8 +760,8 @@ namespace LexLS
             }
             
             // Note that when the first objective of LexLSI is of type SIMPLE_BOUNDS_OBJECTIVE_HP,
-            // and if a constraint is to be removed from it, ObjIndex2Remove = -1 (see end of LexLSE.ObjectiveSensitivity(...)).
-            ObjIndex2Remove += ObjOffset; // objective of LexLSI problem
+            // and if a constraint is to be removed from it, ObjIndex2Remove_int = -1 (see end of LexLSE.ObjectiveSensitivity(...)).
+            ObjIndex2Remove = ObjIndex2Remove_int + ObjOffset; // objective of LexLSI problem
 
             return DescentDirectionExists;
         }
@@ -787,7 +788,7 @@ namespace LexLS
                 
                 lexlse.factorize();
                 lexlse.solve();
-
+                
                 formStep();
 
                 numberOfFactorizations++;
@@ -872,6 +873,7 @@ namespace LexLS
                 file << "% here lexlse is not solved\n"; 
 
             file << "% ---------------------------------------------\n"; 
+            file << "% iter              = " << iter << "\n"; 
             file << "operation_("<<iter+1<<")       = " << operation << ";\n"; 
             file << "nFactorizations_("<<iter+1<<") = " << getNumberOfFactorizations() << ";\n";
             if (!flag_clear_file)
