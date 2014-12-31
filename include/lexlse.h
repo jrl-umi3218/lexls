@@ -1,4 +1,4 @@
-// Time-stamp: <2014-12-31 00:14:52 drdv>
+// Time-stamp: <2014-12-31 12:46:37 drdv>
 #ifndef LEXLSE
 #define LEXLSE
 
@@ -83,7 +83,7 @@ namespace LexLS
             hh_scalars.resize(maxObjDimSum);
             CtrType.resize(maxObjDimSum, CONSTRAINT_TYPE_UNKNOWN);
 
-            LQR.resize(maxObjDimSum,nVar+1); // store the RHS as well, thus the "+1"
+            LOD.resize(maxObjDimSum,nVar+1); // store the RHS as well, thus the "+1"
             
             NullSpace.resize(nVar,nVar+1);
             array.resize(nVar,nVar+1);
@@ -110,7 +110,6 @@ namespace LexLS
         */
         void factorize()
         { 
-            /// @todo unused variable normTrailingRHS deleted
             RealScalar maxColNormValue, tau, PivotValue;
             Index RemainingRows, ObjRank, ObjDim, TotalRank, maxColNormIndex;
 
@@ -132,7 +131,7 @@ namespace LexLS
                     coeff = FixedVarIndex.coeffRef(k);
                     ColPermutations.coeffRef(k) = coeff;
                     if (k != coeff) 
-                        LQR.col(k).head(nCtr).swap(LQR.col(coeff).head(nCtr));
+                        LOD.col(k).head(nCtr).swap(LOD.col(coeff).head(nCtr));
 
                     for (Index i=k+1; i<nVarFixed; i++)
                     {
@@ -143,7 +142,7 @@ namespace LexLS
                         }
                     }
                 }                
-                LQR.col(nVar).head(nCtr).noalias() -= LQR.block(0,0,nCtr,nVarFixed)*x.head(nVarFixed);
+                LOD.col(nVar).head(nCtr).noalias() -= LOD.block(0,0,nCtr,nVarFixed)*x.head(nVarFixed);
             }
             // --------------------------------------------------------------------------
 
@@ -170,11 +169,6 @@ namespace LexLS
             dVectorBlockType hhWorkspace(dWorkspace, nVar, nVar+1);
             // ----------------------------------------------------
 
-            // DEBUG: to remove
-            DedicatedVariables.resize(nVar);            
-            for (Index k=0; k<nVar; k++)
-                DedicatedVariables.coeffRef(k) = k;
-            
             for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++) // loop over all (explicitly defined) objectives
             {    
                 FirstRowIndex = ObjInfo[ObjIndex].FirstRowIndex;
@@ -182,7 +176,7 @@ namespace LexLS
                 ObjDim        = ObjInfo[ObjIndex].dim;
 
                 for(Index k=ColIndex; k<nVar; k++) // initially compute the norms of the columns
-                    ColNorms.coeffRef(k) = LQR.col(k).segment(FirstRowIndex,ObjDim).squaredNorm();
+                    ColNorms.coeffRef(k) = LOD.col(k).segment(FirstRowIndex,ObjDim).squaredNorm();
 
                 // QR factorization of constraints involved in objective ObjIndex using the remaining variables 
                 for (Index counter=0; counter<ObjDim; counter++) // loop over all constraints in a given objective
@@ -195,7 +189,7 @@ namespace LexLS
 	
                     // the next two lines are for numerical stability 
                     // (I use them because this is what is done in ColPivHouseholderQR.h)
-                    maxColNormValue = LQR.col(maxColNormIndex).segment(RowIndex,RemainingRows).squaredNorm();
+                    maxColNormValue = LOD.col(maxColNormIndex).segment(RowIndex,RemainingRows).squaredNorm();
                     ColNorms.coeffRef(maxColNormIndex) = maxColNormValue;
                     
                     // After we break, elimination is performed if there are objectives with lower priority and ObjInfo[ObjIndex].rank > 0
@@ -208,10 +202,8 @@ namespace LexLS
                     ColPermutations.coeffRef(ColIndex) = maxColNormIndex;
                     if(ColIndex != maxColNormIndex)
                     {
-                        LQR.col(ColIndex).head(nCtr).swap(LQR.col(maxColNormIndex).head(nCtr));
+                        LOD.col(ColIndex).head(nCtr).swap(LOD.col(maxColNormIndex).head(nCtr));
                         std::swap(ColNorms.coeffRef(ColIndex), ColNorms.coeffRef(maxColNormIndex));
-
-                        std::swap(DedicatedVariables.coeffRef(ColIndex), DedicatedVariables.coeffRef(maxColNormIndex)); // DEBUG
 
                         NullSpace.col(ColIndex).head(FirstColIndex).swap(NullSpace.col(maxColNormIndex).head(FirstColIndex)); // FOR REGULARIZATION
                     }
@@ -222,10 +214,10 @@ namespace LexLS
                     // when RemainingRows = 1, since sqrt(maxColNormValue) >= LinearDependenceTolerance, the Householder matrix is the identity (tau = 0)
                     if (RemainingRows > 1) 
                     {
-                        LQR.col(ColIndex).segment(RowIndex,RemainingRows).makeHouseholderInPlace(tau,PivotValue);
-                        LQR.coeffRef(RowIndex,ColIndex) = PivotValue;
-                        LQR.block(RowIndex,ColIndex+1,RemainingRows,RemainingColumns) // apply transformation on the RHS as well
-                            .applyHouseholderOnTheLeft(LQR.col(ColIndex).segment(RowIndex+1,RemainingRows-1), 
+                        LOD.col(ColIndex).segment(RowIndex,RemainingRows).makeHouseholderInPlace(tau,PivotValue);
+                        LOD.coeffRef(RowIndex,ColIndex) = PivotValue;
+                        LOD.block(RowIndex,ColIndex+1,RemainingRows,RemainingColumns) // apply transformation on the RHS as well
+                            .applyHouseholderOnTheLeft(LOD.col(ColIndex).segment(RowIndex+1,RemainingRows-1), 
                                                        tau, 
                                                        &hhWorkspace.coeffRef(0));
                         hh_scalars.coeffRef(FirstRowIndex+counter) = tau;
@@ -235,14 +227,14 @@ namespace LexLS
                     ColIndex++;
                     RemainingColumns = nVar - ColIndex;
 
-                    // terminate the QR factorization (after the elimination step below, the LQR factorization is terminated as well)
+                    // terminate the QR factorization (after the elimination step below, the LOD is terminated as well)
                     if (RemainingColumns == 0)
                         break; 
 
                     // update our table of squared norms of the columns 
                     // (note that above ColIndex is incremented and RemainingColumns is decreased)
                     if (RemainingRows > 0)
-                        ColNorms.tail(RemainingColumns) -= LQR.row(RowIndex).segment(ColIndex,RemainingColumns).cwiseAbs2();
+                        ColNorms.tail(RemainingColumns) -= LOD.row(RowIndex).segment(ColIndex,RemainingColumns).cwiseAbs2();
 
                 } // END for (counter=0; counter<ObjDim; counter++)
 
@@ -265,10 +257,10 @@ namespace LexLS
                         // -----------------------------------------------------------------------
                         // conditioninig estimation
                         // -----------------------------------------------------------------------
-                        dVectorType rhs_tmp = LQR.col(nVar).segment(FirstRowIndex,ObjRank);
+                        dVectorType rhs_tmp = LOD.col(nVar).segment(FirstRowIndex,ObjRank);
 
                         RealScalar conditioning_estimate = rhs_tmp.squaredNorm();
-                        LQR.block(FirstRowIndex, FirstColIndex, ObjRank, ObjRank).
+                        LOD.block(FirstRowIndex, FirstColIndex, ObjRank, ObjRank).
                             triangularView<Eigen::Upper>().solveInPlace<Eigen::OnTheLeft>(rhs_tmp);
 
                         conditioning_estimate /= rhs_tmp.squaredNorm();
@@ -412,15 +404,15 @@ namespace LexLS
                         FirstRowIndexNextObjective = FirstRowIndex + ObjDim; 
                         RemainingRows = nCtr-FirstRowIndexNextObjective; // VARIABLE REDEFINITION: remaining rows after the current objective
                         
-                        // update the trailing block of the matrix LQR
+                        // update the trailing block of the matrix LOD
                         // handle the RHS vector as well, hence the "+1" (recall that RemainingColumns = nVar-ColIndex)
-                        // here, we cannot use directly LQR.bottomRightCorner(RemainingRows,RemainingColumns+1).noalias()
+                        // here, we cannot use directly LOD.bottomRightCorner(RemainingRows,RemainingColumns+1).noalias()
 
-                        dBlockType LeftBlock(LQR,FirstRowIndexNextObjective, FirstColIndex, RemainingRows, ObjRank);
-                        dBlockType UpBlock(LQR,FirstRowIndex,ColIndex,ObjRank,RemainingColumns+1);
-                        dBlockType TrailingBlock(LQR,FirstRowIndexNextObjective,ColIndex,RemainingRows,RemainingColumns+1);
+                        dBlockType LeftBlock(LOD,FirstRowIndexNextObjective, FirstColIndex, RemainingRows, ObjRank);
+                        dBlockType UpBlock(LOD,FirstRowIndex,ColIndex,ObjRank,RemainingColumns+1);
+                        dBlockType TrailingBlock(LOD,FirstRowIndexNextObjective,ColIndex,RemainingRows,RemainingColumns+1);
                         
-                        LQR.block(FirstRowIndex,FirstColIndex,ObjRank,ObjRank)
+                        LOD.block(FirstRowIndex,FirstColIndex,ObjRank,ObjRank)
                             .triangularView<Eigen::Upper>()
                             .solveInPlace<Eigen::OnTheRight>(LeftBlock);
 
@@ -449,7 +441,7 @@ namespace LexLS
                     for (Index k=ObjIndex+1; k<nObj; k++) 
                         ObjInfo[k].FirstColIndex = ObjInfo[k-1].FirstColIndex + ObjInfo[k-1].rank; // of course, ObjInfo[>ObjIndex].rank = 0
                     
-                    break; // terminate the LQR factorization
+                    break; // terminate the LOD
                 }
 
             } // END for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
@@ -517,11 +509,11 @@ namespace LexLS
             {
                 // copy only what is needed to compute the residual w = A*x-b (i.e., -y_hat)
                 Lambda.segment(FirstRowIndex+ObjRank, ObjDim-ObjRank) = \
-                    -LQR.col(nVar).segment(FirstRowIndex+ObjRank, ObjDim-ObjRank);
+                    -LOD.col(nVar).segment(FirstRowIndex+ObjRank, ObjDim-ObjRank);
                 
                 // compute the optimal residual associated with objective ObjIndex (apply Q_{ObjIndex} on the left)
                 Lambda.segment(FirstRowIndex, ObjDim)
-                    .applyOnTheLeft(householderSequence(LQR.block(FirstRowIndex, 
+                    .applyOnTheLeft(householderSequence(LOD.block(FirstRowIndex, 
                                                                   FirstColIndex, 
                                                                   ObjDim, 
                                                                   ObjRank),
@@ -543,7 +535,7 @@ namespace LexLS
             if (ObjIndex>0) // the first objective has only Lagrange multipliers equal to the optimal residual   
             {
                 // e.g., for the fourth objective, here we perform [L41, L42, L43]' * {optimal residual from above}
-                rhs.head(ColDim).noalias() = -LQR.block(FirstRowIndex, 0, ObjDim, ColDim).transpose() * \
+                rhs.head(ColDim).noalias() = -LOD.block(FirstRowIndex, 0, ObjDim, ColDim).transpose() * \
                     Lambda.segment(FirstRowIndex, ObjDim);
                 
                 //for (int k=ObjIndex-1; k>=0; k--)
@@ -560,13 +552,13 @@ namespace LexLS
                     
                     // apply Q_k' on the left
                     Lambda.segment(FirstRowIndex, ObjDim)
-                        .applyOnTheLeft(householderSequence(LQR.block(FirstRowIndex, 
+                        .applyOnTheLeft(householderSequence(LOD.block(FirstRowIndex, 
                                                                       FirstColIndex, 
                                                                       ObjDim, 
                                                                       ObjRank),
                                                             hh_scalars.segment(FirstRowIndex,ObjDim)));
                     
-                    rhs.head(ColDim).noalias() -= LQR.block(FirstRowIndex, 0, ObjDim, ColDim).transpose() * \
+                    rhs.head(ColDim).noalias() -= LOD.block(FirstRowIndex, 0, ObjDim, ColDim).transpose() * \
                         Lambda.segment(FirstRowIndex, ObjDim);
                     
                     // check for wrong sign of the Lagrange multipliers
@@ -586,7 +578,7 @@ namespace LexLS
             
             if (nVarFixed>0) // Handle fixed variables (if any)
             {
-                LambdaFixed = -LQR.block(0, 0, nLambda, nVarFixed).transpose() * Lambda;
+                LambdaFixed = -LOD.block(0, 0, nLambda, nVarFixed).transpose() * Lambda;
 
                 // check for wrong sign of the Lagrange multipliers
                 tmp_bool = findDescentDirection(-1,
@@ -651,11 +643,11 @@ namespace LexLS
             
             // copy only what is needed to compute the residual w = A*x-b (i.e., -y_hat)
             Lambda.segment(FirstRowIndex+ObjRank, ObjDim-ObjRank) =     \
-                -LQR.col(nVar).segment(FirstRowIndex+ObjRank, ObjDim-ObjRank);
+                -LOD.col(nVar).segment(FirstRowIndex+ObjRank, ObjDim-ObjRank);
             
             // compute the optimal residual associated with objective ObjIndex (apply Q_{ObjIndex} on the left)
             Lambda.segment(FirstRowIndex, ObjDim)
-                .applyOnTheLeft(householderSequence(LQR.block(FirstRowIndex, 
+                .applyOnTheLeft(householderSequence(LOD.block(FirstRowIndex, 
                                                               FirstColIndex, 
                                                               ObjDim, 
                                                               ObjRank),
@@ -664,7 +656,7 @@ namespace LexLS
             if (ObjIndex>0) // the first objective has only Lagrange multipliers equal to the optimal residual   
             {
                 // e.g., for the fourth objective, here we perform [L41, L42, L43]' * {optimal residual from above}
-                rhs.head(ColDim).noalias() = -LQR.block(FirstRowIndex, 0, ObjDim, ColDim).transpose() * \
+                rhs.head(ColDim).noalias() = -LOD.block(FirstRowIndex, 0, ObjDim, ColDim).transpose() * \
                     Lambda.segment(FirstRowIndex, ObjDim);
                 
                 //for (int k=ObjIndex-1; k>=0; k--)
@@ -681,20 +673,20 @@ namespace LexLS
                     
                     // apply Q_k' on the left
                     Lambda.segment(FirstRowIndex, ObjDim)
-                        .applyOnTheLeft(householderSequence(LQR.block(FirstRowIndex, 
+                        .applyOnTheLeft(householderSequence(LOD.block(FirstRowIndex, 
                                                                       FirstColIndex, 
                                                                       ObjDim, 
                                                                       ObjRank),
                                                             hh_scalars.segment(FirstRowIndex,ObjDim)));
                     
-                    rhs.head(ColDim).noalias() -= LQR.block(FirstRowIndex, 0, ObjDim, ColDim).transpose() * \
+                    rhs.head(ColDim).noalias() -= LOD.block(FirstRowIndex, 0, ObjDim, ColDim).transpose() * \
                         Lambda.segment(FirstRowIndex, ObjDim);
 
                 } // END for (Index k=ObjIndex-1; k>=0; k--)
             }
             
             if (nVarFixed>0) // Handle fixed variables (if any)
-                LambdaFixed = -LQR.block(0, 0, nLambda, nVarFixed).transpose() * Lambda;
+                LambdaFixed = -LOD.block(0, 0, nLambda, nVarFixed).transpose() * Lambda;
             
             rhs.setZero(); // for convenience (easier to analyze the Lagrange multipliers by hand) 
 
@@ -812,17 +804,17 @@ namespace LexLS
                 {
                     dVectorBlockType x_k(x, ObjInfo[k].FirstColIndex, ObjRank);
 
-                    x_k = LQR.col(nVar).segment(ObjInfo[k].FirstRowIndex, ObjRank);
+                    x_k = LOD.col(nVar).segment(ObjInfo[k].FirstRowIndex, ObjRank);
                     
                     if (AccumulatedRanks > 0) // Do not enter here the first time ObjRank != 0
                     {
-                        x_k.noalias() -= LQR.block(ObjInfo[k].FirstRowIndex,
+                        x_k.noalias() -= LOD.block(ObjInfo[k].FirstRowIndex,
                                                    ObjInfo[k+1].FirstColIndex,
                                                    ObjRank,
                                                    AccumulatedRanks) * x.segment(ObjInfo[k+1].FirstColIndex, AccumulatedRanks);
                     }
                     
-                    LQR.block(ObjInfo[k].FirstRowIndex, ObjInfo[k].FirstColIndex, ObjRank, ObjRank)
+                    LOD.block(ObjInfo[k].FirstRowIndex, ObjInfo[k].FirstColIndex, ObjRank, ObjRank)
                         .triangularView<Eigen::Upper>().solveInPlace(x_k);
                     
                     AccumulatedRanks += ObjRank;
@@ -875,9 +867,9 @@ namespace LexLS
                 ObjRank       = ObjInfo[ObjIndex].rank;
                 
                 RT.block(counter, counter, ObjRank, col_dim)
-                    .triangularView<Eigen::Upper>() = LQR.block(FirstRowIndex,FirstColIndex,ObjRank,col_dim);
+                    .triangularView<Eigen::Upper>() = LOD.block(FirstRowIndex,FirstColIndex,ObjRank,col_dim);
                 
-                rhs.segment(counter,ObjRank) = LQR.col(nVar).segment(FirstRowIndex,ObjRank);
+                rhs.segment(counter,ObjRank) = LOD.col(nVar).segment(FirstRowIndex,ObjRank);
 
                 counter += ObjRank;
                 col_dim -= ObjRank;
@@ -960,7 +952,7 @@ namespace LexLS
                 ObjRank       = ObjInfo[ObjIndex].rank;
               
                 RT.block(counter, counter, ObjRank, col_dim+1)
-                    .triangularView<Eigen::Upper>() = LQR.block(FirstRowIndex,FirstColIndex,ObjRank,col_dim+1);
+                    .triangularView<Eigen::Upper>() = LOD.block(FirstRowIndex,FirstColIndex,ObjRank,col_dim+1);
 
                 counter += ObjRank;
                 col_dim -= ObjRank;
@@ -985,8 +977,8 @@ namespace LexLS
                 FirstColIndex = ObjInfo[ObjIndex].FirstColIndex;
                 ObjRank       = ObjInfo[ObjIndex].rank;
 
-                x.segment(nVarFixed+counter,ObjRank) = LQR.col(nVar).segment(FirstRowIndex,ObjRank) - 
-                    LQR.block(FirstRowIndex,nVarRank+nVarFixed,ObjRank,nVarFree)*x.tail(nVarFree);
+                x.segment(nVarFixed+counter,ObjRank) = LOD.col(nVar).segment(FirstRowIndex,ObjRank) - 
+                    LOD.block(FirstRowIndex,nVarRank+nVarFixed,ObjRank,nVarFree)*x.tail(nVarFree);
                                             
                 counter += ObjRank;
             }
@@ -1048,8 +1040,8 @@ namespace LexLS
                 FirstColIndex = ObjInfo[ObjIndex].FirstColIndex;
                 ObjRank       = ObjInfo[ObjIndex].rank;
 
-                x.segment(nVarFixed+counter,ObjRank) = LQR.col(nVar).segment(FirstRowIndex,ObjRank) - 
-                    LQR.block(FirstRowIndex,nVarRank+nVarFixed,ObjRank,nVarFree)*x.tail(nVarFree);
+                x.segment(nVarFixed+counter,ObjRank) = LOD.col(nVar).segment(FirstRowIndex,ObjRank) - 
+                    LOD.block(FirstRowIndex,nVarRank+nVarFixed,ObjRank,nVarFree)*x.tail(nVarFree);
                                             
                 counter += ObjRank;
             }
@@ -1111,7 +1103,7 @@ namespace LexLS
                 ObjRank       = ObjInfo[ObjIndex].rank;
               
                 RT.block(counter, counter, ObjRank, col_dim+1)
-                    .triangularView<Eigen::Upper>() = LQR.block(FirstRowIndex,FirstColIndex,ObjRank,col_dim+1);
+                    .triangularView<Eigen::Upper>() = LOD.block(FirstRowIndex,FirstColIndex,ObjRank,col_dim+1);
 
                 counter += ObjRank;
                 col_dim -= ObjRank;
@@ -1135,8 +1127,8 @@ namespace LexLS
                 FirstColIndex = ObjInfo[ObjIndex].FirstColIndex;
                 ObjRank       = ObjInfo[ObjIndex].rank;
 
-                x.segment(nVarFixed+counter,ObjRank) = LQR.col(nVar).segment(FirstRowIndex,ObjRank) - 
-                    LQR.block(FirstRowIndex,nVarRank+nVarFixed,ObjRank,nVarFree)*x.tail(nVarFree);
+                x.segment(nVarFixed+counter,ObjRank) = LOD.col(nVar).segment(FirstRowIndex,ObjRank) - 
+                    LOD.block(FirstRowIndex,nVarRank+nVarFixed,ObjRank,nVarFree)*x.tail(nVarFree);
                                             
                 counter += ObjRank;
             }
@@ -1294,7 +1286,7 @@ namespace LexLS
         */
         void setProblem(const MatrixType& data)
         {
-            LQR = data;
+            LOD = data;
         }
 
         /** 
@@ -1308,20 +1300,20 @@ namespace LexLS
             if (ObjIndex >= nObj)                
                 throw Exception("ObjIndex >= nObj");
             
-            LQR.block(ObjInfo[ObjIndex].FirstRowIndex,0,ObjInfo[ObjIndex].dim,nVar+1) = data;
+            LOD.block(ObjInfo[ObjIndex].FirstRowIndex,0,ObjInfo[ObjIndex].dim,nVar+1) = data;
         }
 
         /** 
             \brief Set one constraint
 
-            \param[in] CtrIndex Index of row in LQR (regardless of objective)
+            \param[in] CtrIndex Index of row in LOD (regardless of objective)
             \param[in] row      Constraint vector (LHS)
             \param[in] rhs      RHS vector
         */
         void setCtr(Index CtrIndex, const dRowVectorType& row, RealScalar rhs)
         {
-            LQR.row(CtrIndex).head(nVar) = row;
-            LQR.coeffRef(CtrIndex,nVar)  = rhs;
+            LOD.row(CtrIndex).head(nVar) = row;
+            LOD.coeffRef(CtrIndex,nVar)  = rhs;
         }
         
         /** 
@@ -1334,7 +1326,7 @@ namespace LexLS
         }
         
         /**
-           \brief Form the residuals (A*x-RHS) through the LQR factorizetion. The residual of the
+           \brief Form the residuals (A*x-RHS) through the LOD. The residual of the
            fixed variables is always zero (and is not included).
 
            \note This function could compute an incorect residual depending on #LinearDependenceTolerance.
@@ -1352,10 +1344,10 @@ namespace LexLS
                 ObjRank       = ObjInfo[ObjIndex].rank;
                 
                 w.segment(FirstRowIndex, ObjRank).setZero(); // Zero-out first ObjRank elements
-                w.segment(FirstRowIndex+ObjRank, ObjDim-ObjRank) = -LQR.col(nVar).segment(FirstRowIndex+ObjRank, ObjDim-ObjRank);
+                w.segment(FirstRowIndex+ObjRank, ObjDim-ObjRank) = -LOD.col(nVar).segment(FirstRowIndex+ObjRank, ObjDim-ObjRank);
                 
                 w.segment(FirstRowIndex, ObjDim)
-                    .applyOnTheLeft(householderSequence(LQR.block(FirstRowIndex, 
+                    .applyOnTheLeft(householderSequence(LOD.block(FirstRowIndex, 
                                                                   FirstColIndex, 
                                                                   ObjDim, 
                                                                   ObjRank),
@@ -1396,14 +1388,6 @@ namespace LexLS
         Index getRank(Index ObjIndex) const
         {
             return ObjInfo[ObjIndex].rank;
-        }
-
-        /** 
-            \brief Return the constraint matrix
-        */
-        MatrixType& getLQR()
-        {
-            return LQR;
         }
 
         Index get_nObj()
@@ -1458,7 +1442,6 @@ namespace LexLS
             hh_scalars.setZero();
 
             NullSpace.setZero();
-
             array.setZero();
 
             P.setIdentity();
@@ -1479,8 +1462,8 @@ namespace LexLS
             // -------------------------------------------------------------------------
             // create blocks
             // -------------------------------------------------------------------------
-            dBlockType Rk(      LQR, FirstRowIndex,         FirstColIndex,                  ObjRank,                  ObjRank);
-            dBlockType Tk(      LQR, FirstRowIndex, FirstColIndex+ObjRank,                  ObjRank,         RemainingColumns);
+            dBlockType Rk(      LOD, FirstRowIndex,         FirstColIndex,                  ObjRank,                  ObjRank);
+            dBlockType Tk(      LOD, FirstRowIndex, FirstColIndex+ObjRank,                  ObjRank,         RemainingColumns);
             dBlockType up(NullSpace,             0,         FirstColIndex,  FirstColIndex-nVarFixed, RemainingColumns+ObjRank);
             dBlockType  D(    array,             0,                     0, RemainingColumns+ObjRank, RemainingColumns+ObjRank);
 
@@ -1497,8 +1480,8 @@ namespace LexLS
                 D.coeffRef(i,i) += mu;
 
             // ==============================================================================================
-            d.head(ObjRank).noalias() = Rk.triangularView<Eigen::Upper>().transpose()*LQR.col(nVar).segment(FirstRowIndex,ObjRank);
-            d.tail(RemainingColumns).noalias() = Tk.transpose()*LQR.col(nVar).segment(FirstRowIndex,ObjRank);
+            d.head(ObjRank).noalias() = Rk.triangularView<Eigen::Upper>().transpose()*LOD.col(nVar).segment(FirstRowIndex,ObjRank);
+            d.tail(RemainingColumns).noalias() = Tk.transpose()*LOD.col(nVar).segment(FirstRowIndex,ObjRank);
 
             d.noalias() += mu * up.transpose() * NullSpace.col(nVar).head(FirstColIndex-nVarFixed);
 
@@ -1506,8 +1489,8 @@ namespace LexLS
 
             Eigen::LLT<MatrixType> chol(D);
             chol.solveInPlace(d);
-            LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias()  = Rk.triangularView<Eigen::Upper>() * d.head(ObjRank);
-            LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias() += Tk * d.tail(RemainingColumns);
+            LOD.col(nVar).segment(FirstRowIndex,ObjRank).noalias()  = Rk.triangularView<Eigen::Upper>() * d.head(ObjRank);
+            LOD.col(nVar).segment(FirstRowIndex,ObjRank).noalias() += Tk * d.tail(RemainingColumns);
         }
 
         /** 
@@ -1522,8 +1505,8 @@ namespace LexLS
             // -------------------------------------------------------------------------
             // create blocks
             // -------------------------------------------------------------------------
-            dBlockType Rk(      LQR, FirstRowIndex,         FirstColIndex,                         ObjRank,                         ObjRank);
-            dBlockType Tk(      LQR, FirstRowIndex, FirstColIndex+ObjRank,                         ObjRank,                RemainingColumns);
+            dBlockType Rk(      LOD, FirstRowIndex,         FirstColIndex,                         ObjRank,                         ObjRank);
+            dBlockType Tk(      LOD, FirstRowIndex, FirstColIndex+ObjRank,                         ObjRank,                RemainingColumns);
             dBlockType up(NullSpace,             0,         FirstColIndex,         FirstColIndex-nVarFixed,      RemainingColumns + ObjRank);
             dBlockType  D(    array,             0,                     0, FirstColIndex-nVarFixed+ObjRank, FirstColIndex-nVarFixed+ObjRank);
 
@@ -1545,7 +1528,7 @@ namespace LexLS
             for (Index i=0; i<FirstColIndex-nVarFixed+ObjRank; i++)
                 D.coeffRef(i,i) += mu;
 
-            d.head(ObjRank) = LQR.col(nVar).segment(FirstRowIndex,ObjRank);
+            d.head(ObjRank) = LOD.col(nVar).segment(FirstRowIndex,ObjRank);
             d.segment(ObjRank,FirstColIndex-nVarFixed) = damp_factor*NullSpace.col(nVar).head(FirstColIndex-nVarFixed);
 
             // -------------------------------------------------------------------------
@@ -1559,7 +1542,7 @@ namespace LexLS
                 D.coeffRef(i,i) -= mu;
 
             d = D.selfadjointView<Eigen::Lower>() * d;
-            LQR.col(nVar).segment(FirstRowIndex,ObjRank) = d.head(ObjRank);
+            LOD.col(nVar).segment(FirstRowIndex,ObjRank) = d.head(ObjRank);
         }
 
         /** 
@@ -1572,7 +1555,7 @@ namespace LexLS
             // -------------------------------------------------------------------------
             // create blocks
             // -------------------------------------------------------------------------
-            dBlockType  Rk(      LQR, FirstRowIndex, FirstColIndex,                 ObjRank, ObjRank);
+            dBlockType  Rk(      LOD, FirstRowIndex, FirstColIndex,                 ObjRank, ObjRank);
             dBlockType  up(NullSpace,             0, FirstColIndex, FirstColIndex-nVarFixed, ObjRank);
             dBlockType   D(    array,             0,             0,                 ObjRank, ObjRank);
 
@@ -1587,13 +1570,13 @@ namespace LexLS
 
             d.noalias()  = up.transpose() * NullSpace.col(nVar).head(FirstColIndex-nVarFixed);
             d *= mu;
-            d.noalias() += Rk.triangularView<Eigen::Upper>().transpose()*LQR.col(nVar).segment(FirstRowIndex,ObjRank);
+            d.noalias() += Rk.triangularView<Eigen::Upper>().transpose()*LOD.col(nVar).segment(FirstRowIndex,ObjRank);
 
             // -------------------------------------------------------------------------
 
             Eigen::LLT<MatrixType> chol(D);
             chol.solveInPlace(d);
-            LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias() = Rk.triangularView<Eigen::Upper>() * d;
+            LOD.col(nVar).segment(FirstRowIndex,ObjRank).noalias() = Rk.triangularView<Eigen::Upper>() * d;
         }
 
         /** 
@@ -1606,7 +1589,7 @@ namespace LexLS
             // -------------------------------------------------------------------------
             // create blocks
             // -------------------------------------------------------------------------
-            dBlockType Rk( LQR, FirstRowIndex, FirstColIndex, ObjRank, ObjRank);
+            dBlockType Rk( LOD, FirstRowIndex, FirstColIndex, ObjRank, ObjRank);
             dBlockType  D(array,            0,             0, ObjRank, ObjRank);
 
             dBlockType2Vector d(array, 0, nVar, ObjRank, 1);
@@ -1616,13 +1599,13 @@ namespace LexLS
             for (Index i=0; i<ObjRank; i++)
                 D.coeffRef(i,i) += mu;
 
-            d.noalias() = Rk.triangularView<Eigen::Upper>().transpose()*LQR.col(nVar).segment(FirstRowIndex,ObjRank);
+            d.noalias() = Rk.triangularView<Eigen::Upper>().transpose()*LOD.col(nVar).segment(FirstRowIndex,ObjRank);
 
             // -------------------------------------------------------------------------
 
             Eigen::LLT<MatrixType> chol(D);
             chol.solveInPlace(d);
-            LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias() = Rk.triangularView<Eigen::Upper>() * d;
+            LOD.col(nVar).segment(FirstRowIndex,ObjRank).noalias() = Rk.triangularView<Eigen::Upper>() * d;
         }
 
         /** 
@@ -1635,8 +1618,8 @@ namespace LexLS
             // -------------------------------------------------------------------------
             // create blocks
             // -------------------------------------------------------------------------
-            dBlockType Rk(  LQR, FirstRowIndex,         FirstColIndex, ObjRank,          ObjRank);
-            dBlockType Tk(  LQR, FirstRowIndex, FirstColIndex+ObjRank, ObjRank, RemainingColumns);
+            dBlockType Rk(  LOD, FirstRowIndex,         FirstColIndex, ObjRank,          ObjRank);
+            dBlockType Tk(  LOD, FirstRowIndex, FirstColIndex+ObjRank, ObjRank, RemainingColumns);
             dBlockType  D(array,             0,                     0, ObjRank,          ObjRank);
             
             dBlockType2Vector d(array, 0, nVar, ObjRank, 1);
@@ -1649,7 +1632,7 @@ namespace LexLS
             for (Index i=0; i<ObjRank; i++)
                 D.coeffRef(i,i) += mu;
 
-            d = LQR.col(nVar).segment(FirstRowIndex,ObjRank);
+            d = LOD.col(nVar).segment(FirstRowIndex,ObjRank);
 
             Eigen::LLT<MatrixType> chol(D);
             chol.solveInPlace(d);
@@ -1658,7 +1641,7 @@ namespace LexLS
 
             for (Index i=0; i<ObjRank; i++)
                 D.coeffRef(i,i) -= mu;
-            LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias() = D.selfadjointView<Eigen::Lower>() * d;
+            LOD.col(nVar).segment(FirstRowIndex,ObjRank).noalias() = D.selfadjointView<Eigen::Lower>() * d;
         }
 
         /** 
@@ -1669,8 +1652,8 @@ namespace LexLS
             // -------------------------------------------------------------------------
             // create blocks
             // -------------------------------------------------------------------------
-            dBlockType Rk(LQR, FirstRowIndex,         FirstColIndex, ObjRank,          ObjRank);
-            dBlockType Tk(LQR, FirstRowIndex, FirstColIndex+ObjRank, ObjRank, RemainingColumns);
+            dBlockType Rk(LOD, FirstRowIndex,         FirstColIndex, ObjRank,          ObjRank);
+            dBlockType Tk(LOD, FirstRowIndex, FirstColIndex+ObjRank, ObjRank, RemainingColumns);
 
             // ----------------------------------------------------------------------------------------------
             // generate x0
@@ -1681,8 +1664,8 @@ namespace LexLS
 
             cg_tikhonov(sol_x, FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
 
-            LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias()  = Rk.triangularView<Eigen::Upper>()*sol_x.head(ObjRank);
-            LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias() += Tk*sol_x.tail(RemainingColumns);
+            LOD.col(nVar).segment(FirstRowIndex,ObjRank).noalias()  = Rk.triangularView<Eigen::Upper>()*sol_x.head(ObjRank);
+            LOD.col(nVar).segment(FirstRowIndex,ObjRank).noalias() += Tk*sol_x.tail(RemainingColumns);
         }
 
         /** 
@@ -1697,8 +1680,8 @@ namespace LexLS
             // -------------------------------------------------------------------------
             // create blocks
             // -------------------------------------------------------------------------
-            dBlockType Rk(  LQR, FirstRowIndex,         FirstColIndex, ObjRank,          ObjRank);
-            dBlockType Tk(  LQR, FirstRowIndex, FirstColIndex+ObjRank, ObjRank, RemainingColumns);
+            dBlockType Rk(  LOD, FirstRowIndex,         FirstColIndex, ObjRank,          ObjRank);
+            dBlockType Tk(  LOD, FirstRowIndex, FirstColIndex+ObjRank, ObjRank, RemainingColumns);
             dBlockType  D(array,             0,                     0, ObjRank,          ObjRank);
             
             dBlockType2Vector d(array, 0, nVar, ObjRank, 1);
@@ -1712,7 +1695,7 @@ namespace LexLS
             for (Index i=0; i<ObjRank; i++)
                 D.coeffRef(i,i) += mu;
 
-            d = LQR.col(nVar).segment(FirstRowIndex,ObjRank);
+            d = LOD.col(nVar).segment(FirstRowIndex,ObjRank);
 
             Eigen::LLT<MatrixType> chol(D);
             chol.solveInPlace(d);
@@ -1724,8 +1707,8 @@ namespace LexLS
 
             cg_tikhonov(sol, FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
 
-            LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias()  = Rk.triangularView<Eigen::Upper>()*sol.head(ObjRank);
-            LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias() += Tk*sol.tail(RemainingColumns);
+            LOD.col(nVar).segment(FirstRowIndex,ObjRank).noalias()  = Rk.triangularView<Eigen::Upper>()*sol.head(ObjRank);
+            LOD.col(nVar).segment(FirstRowIndex,ObjRank).noalias() += Tk*sol.tail(RemainingColumns);
         }
 
         /** 
@@ -1736,8 +1719,8 @@ namespace LexLS
             // -------------------------------------------------------------------------
             // create blocks
             // -------------------------------------------------------------------------
-            dBlockType Rk(LQR, FirstRowIndex,         FirstColIndex, ObjRank,          ObjRank);
-            dBlockType Tk(LQR, FirstRowIndex, FirstColIndex+ObjRank, ObjRank, RemainingColumns);
+            dBlockType Rk(LOD, FirstRowIndex,         FirstColIndex, ObjRank,          ObjRank);
+            dBlockType Tk(LOD, FirstRowIndex, FirstColIndex+ObjRank, ObjRank, RemainingColumns);
 
             // ----------------------------------------------------------------------------------------------
             // generate x0
@@ -1748,8 +1731,8 @@ namespace LexLS
 
             cg_RT(sol, FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
 
-            LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias()  = Rk.triangularView<Eigen::Upper>()*sol.head(ObjRank);
-            LQR.col(nVar).segment(FirstRowIndex,ObjRank).noalias() += Tk*sol.tail(RemainingColumns);
+            LOD.col(nVar).segment(FirstRowIndex,ObjRank).noalias()  = Rk.triangularView<Eigen::Upper>()*sol.head(ObjRank);
+            LOD.col(nVar).segment(FirstRowIndex,ObjRank).noalias() += Tk*sol.tail(RemainingColumns);
         }
 
         /*
@@ -1771,8 +1754,8 @@ namespace LexLS
             // -------------------------------------------------------------------------
             // create blocks
             // -------------------------------------------------------------------------
-            dBlockType Rk(      LQR, FirstRowIndex,         FirstColIndex,                 ObjRank,                    ObjRank);
-            dBlockType Tk(      LQR, FirstRowIndex, FirstColIndex+ObjRank,                 ObjRank,           RemainingColumns);
+            dBlockType Rk(      LOD, FirstRowIndex,         FirstColIndex,                 ObjRank,                    ObjRank);
+            dBlockType Tk(      LOD, FirstRowIndex, FirstColIndex+ObjRank,                 ObjRank,           RemainingColumns);
             dBlockType Sk(NullSpace,             0,         FirstColIndex, FirstColIndex-nVarFixed, RemainingColumns + ObjRank);
 
             dBlockType2Vector r(rqsp_work, 0, 0, ObjRank + FirstColIndex-nVarFixed + ObjRank + RemainingColumns, 1);
@@ -1787,7 +1770,7 @@ namespace LexLS
                   |  0 |   |  Ik   |
             */
             // ------------------------------------------------------------------------------------------------
-            r.head(ObjRank).noalias()  = LQR.col(nVar).segment(FirstRowIndex,ObjRank) - Tk*sol_x.tail(RemainingColumns);
+            r.head(ObjRank).noalias()  = LOD.col(nVar).segment(FirstRowIndex,ObjRank) - Tk*sol_x.tail(RemainingColumns);
             r.head(ObjRank).noalias() -= Rk.triangularView<Eigen::Upper>()*sol_x.head(ObjRank);
 
             r.segment(ObjRank,FirstColIndex-nVarFixed).noalias() = NullSpace.col(nVar).head(FirstColIndex-nVarFixed) - Sk * sol_x;
@@ -1868,8 +1851,8 @@ namespace LexLS
             // create blocks
             // -------------------------------------------------------------------------
 
-            dBlockType Rk( LQR, FirstRowIndex,         FirstColIndex, ObjRank,          ObjRank);
-            dBlockType Tk( LQR, FirstRowIndex, FirstColIndex+ObjRank, ObjRank, RemainingColumns);
+            dBlockType Rk( LOD, FirstRowIndex,         FirstColIndex, ObjRank,          ObjRank);
+            dBlockType Tk( LOD, FirstRowIndex, FirstColIndex+ObjRank, ObjRank, RemainingColumns);
 
             dBlockType2Vector r(rqsp_work, 0, 0, ObjRank + FirstColIndex + ObjRank + RemainingColumns, 1);
             dBlockType2Vector q(rqsp_work, 0, 1, ObjRank + FirstColIndex + ObjRank + RemainingColumns, 1);
@@ -1883,7 +1866,7 @@ namespace LexLS
                   |  0 |   |  Ik   |
             */
             // ------------------------------------------------------------------------------------------------
-            r.head(ObjRank).noalias()  = LQR.col(nVar).segment(FirstRowIndex,ObjRank) - Tk*sol_x.tail(RemainingColumns);
+            r.head(ObjRank).noalias()  = LOD.col(nVar).segment(FirstRowIndex,ObjRank) - Tk*sol_x.tail(RemainingColumns);
             r.head(ObjRank).noalias() -= Rk.triangularView<Eigen::Upper>()*sol_x.head(ObjRank);
 
             r.tail(ObjRank+RemainingColumns).noalias() = -damp_factor*sol_x;
@@ -1942,8 +1925,8 @@ namespace LexLS
         */
         void accumulate_nullspace_basis(Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
         {
-            dBlockType            Rk(      LQR, FirstRowIndex,           FirstColIndex,                         ObjRank,            ObjRank);
-            dBlockType       UpBlock(      LQR, FirstRowIndex, FirstColIndex + ObjRank,                         ObjRank, RemainingColumns+1);
+            dBlockType            Rk(      LOD, FirstRowIndex,           FirstColIndex,                         ObjRank,            ObjRank);
+            dBlockType       UpBlock(      LOD, FirstRowIndex, FirstColIndex + ObjRank,                         ObjRank, RemainingColumns+1);
             dBlockType     LeftBlock(NullSpace,             0,           FirstColIndex, FirstColIndex-nVarFixed+ObjRank,            ObjRank);
             dBlockType TrailingBlock(NullSpace,             0, FirstColIndex + ObjRank, FirstColIndex-nVarFixed+ObjRank, RemainingColumns+1);
 
@@ -2053,13 +2036,6 @@ namespace LexLS
         */
         iVectorType FixedVarIndex;
 
-        /** 
-            \brief For debugging purposes only (FIXME: to remove) 
-
-            \note Cannot be used with simpli-bounded first objective
-        */
-        iVectorType DedicatedVariables;
-
         // ==================================================================
         // definition of vectors of doubles
         // ==================================================================
@@ -2087,7 +2063,7 @@ namespace LexLS
             w               maxObjDimSum
             \endverbatim
 
-            \note #LQR and #x are kept separately for convenience. 
+            \note #LOD and #x are kept separately for convenience. 
         */
         dVectorType dWorkspace;
 
@@ -2126,17 +2102,17 @@ namespace LexLS
         /** 
             \brief Constraint matrix 
 
-            \note On input, LQR contains the matrix of constraints (the last column contains the RHS
-            vector) of the lexicographic problem. On output, LQR contains the matrices L, Q and R
-            from the LQR factorization of the constraint matrix. The orthonormal matrices Q are
+            \note On input, LOD contains the matrix of constraints (the last column contains the RHS
+            vector) of the lexicographic problem. On output, LOD contains the matrices L, Q and R
+            from the LOD of the constraint matrix. The orthonormal matrices Q are
             stored in Householder factored form below the main diagonal of the leading triangular
             matrices of each objective, while the last column contains (LQ)^{-1}*RHS.
 
-            \note The row-size of LQR is set to the the maximum number of envisioned constraints
+            \note The row-size of LOD is set to the the maximum number of envisioned constraints
             (excluding "fixing constraints"). This is usefull in the context of LexLSI where one
             instance of LexLSE is used to solve problems with different dimensoins.
         */
-        MatrixType LQR;
+        MatrixType LOD;
 
         /** 
             \brief nVar x (nVar+1) matrix containing the remaining null-space + right-hand-side

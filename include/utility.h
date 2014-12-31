@@ -1,4 +1,4 @@
-// Time-stamp: <2014-12-11 16:52:45 drdv>
+// Time-stamp: <2014-12-31 12:54:18 drdv>
 #ifndef UTILITY
 #define UTILITY
 
@@ -278,7 +278,7 @@ namespace LexLS
     */
     inline void print_eigen_matrix(MatrixType M, const char* variable_name)
     {
-        printf(" %s(%d,%d) = \n",variable_name,(Index)M.rows(),(Index)M.cols());
+        printf(" %s(%lu,%lu) = \n",variable_name,M.rows(),M.cols());
         for (Index d1=0; d1<M.rows(); d1++)
         {
             for (Index d2=0; d2<M.cols(); d2++)
