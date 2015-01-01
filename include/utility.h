@@ -1,4 +1,3 @@
-// Time-stamp: <2014-12-31 12:54:18 drdv>
 #ifndef UTILITY
 #define UTILITY
 

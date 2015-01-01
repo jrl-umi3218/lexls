@@ -1,4 +1,3 @@
-// Time-stamp: <2014-12-24 11:31:07 drdv>
 #ifndef OBJECTIVE
 #define OBJECTIVE
 

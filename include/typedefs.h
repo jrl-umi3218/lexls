@@ -1,4 +1,3 @@
-// Time-stamp: <2014-12-31 00:28:18 drdv>
 #ifndef TYPEDEFS
 #define TYPEDEFS
 

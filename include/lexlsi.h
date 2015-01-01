@@ -1,4 +1,3 @@
-// Time-stamp: <2014-12-30 22:47:52 drdv>
 #ifndef LEXLSI
 #define LEXLSI
 

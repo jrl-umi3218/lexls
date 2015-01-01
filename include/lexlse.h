@@ -1,4 +1,3 @@
-// Time-stamp: <2014-12-31 12:46:37 drdv>
 #ifndef LEXLSE
 #define LEXLSE
 
@@ -2157,6 +2156,6 @@ namespace LexLS
 
     }; // end class LexLSE
 
-} // end namespace Eigen
+} // end namespace LexLS
 
 #endif // LEXLSE

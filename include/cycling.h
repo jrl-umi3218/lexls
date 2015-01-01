@@ -1,4 +1,3 @@
-// Time-stamp: <2014-12-15 18:35:19 drdv>
 #ifndef CYCLING
 #define CYCLING
 

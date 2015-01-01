@@ -1,4 +1,3 @@
-// Time-stamp: <2014-12-13 11:52:39 drdv>
 #ifndef WORKING_SET
 #define WORKING_SET
 
