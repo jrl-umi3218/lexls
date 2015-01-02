@@ -447,11 +447,6 @@ namespace LexLS
             return x;
         }
 
-        dVectorType& getResidual(Index ObjIndex)
-        {
-            return Obj[ObjIndex].getResidual();
-        }
-
         /** 
             \brief Outputs the Lagrange multipliers associated to the constraintes involved in all objectives
 
@@ -479,6 +474,11 @@ namespace LexLS
             }
 
             return L;
+        }
+
+        dVectorType& getResidual(Index ObjIndex)
+        {
+            return Obj[ObjIndex].getResidual();
         }
 
         /** 
@@ -784,10 +784,9 @@ namespace LexLS
             if (iter != 0) // iter == 0 is handled in phase1()
             {
                 formLexLSE();
-                
+
                 lexlse.factorize();
                 lexlse.solve();
-                
                 formStep();
 
                 numberOfFactorizations++;
@@ -949,28 +948,6 @@ namespace LexLS
                     file << "]';\n";
                 }
             }
-
-            /*
-            file << "nw_(:,"<<iter+1<<") = [ "; 
-            for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
-                file << std::sqrt(Obj[ObjIndex].getResidualSquaredNorm()) << " "; 
-            file << "]';\n";
-            */
-
-            /*
-            MatrixType L = getLambda();
-            
-            file << "L_{"<<iter+1<<"} = [";
-            for (Index i=0; i<L.rows(); i++)
-            {
-                for (Index j=0; j<L.cols(); j++)
-                {
-                    file << L(i,j) << " ";
-                }
-                file << "\n";
-            }
-            file << "]; \n";
-            */
             
             file << "\n";
 

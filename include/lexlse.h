@@ -79,7 +79,6 @@ namespace LexLS
             for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
                 maxObjDimSum += maxObjDim[ObjIndex];
 
-            hh_scalars.resize(maxObjDimSum);
             CtrType.resize(maxObjDimSum, CONSTRAINT_TYPE_UNKNOWN);
 
             LOD.resize(maxObjDimSum,nVar+1); // store the RHS as well, thus the "+1"
@@ -87,6 +86,10 @@ namespace LexLS
             NullSpace.resize(nVar,nVar+1);
             array.resize(nVar,nVar+1);
 
+            gSequences.resize(nObj);
+            for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
+                gSequences[ObjIndex].reserve(maxObjDim[ObjIndex] * nVar);
+            
             Index dim = std::max(maxObjDimSum,nVar);
             dWorkspace.resize(2*dim + nVar + 1);
             
@@ -98,7 +101,7 @@ namespace LexLS
         }
        
         /** 
-            \brief Factorize using Householder QR (with column pivoting) + classical implementation of Gauss elimination
+            \brief Factorize using Givens QR (with column pivoting) + classical implementation of Gauss elimination
 
             \note This is an unblocked implementation of both the QR decomposition (essentially,
             Eigen's ColPivHouseholderQR) and the Gauss elimination.
@@ -109,7 +112,7 @@ namespace LexLS
         */
         void factorize()
         { 
-            RealScalar maxColNormValue, tau, PivotValue;
+            RealScalar maxColNormValue;
             Index RemainingRows, ObjRank, ObjDim, TotalRank, maxColNormIndex;
 
             Index RowIndex;                   // Current constraint
@@ -208,18 +211,17 @@ namespace LexLS
                     }
 
                     // --------------------------------------------------------------------------
-                    // apply Householder transformations (on the RHS as well)
+                    // apply Givens rotations (on the RHS as well)
                     // --------------------------------------------------------------------------
-                    // when RemainingRows = 1, since sqrt(maxColNormValue) >= LinearDependenceTolerance, the Householder matrix is the identity (tau = 0)
                     if (RemainingRows > 1) 
                     {
-                        LOD.col(ColIndex).segment(RowIndex,RemainingRows).makeHouseholderInPlace(tau,PivotValue);
-                        LOD.coeffRef(RowIndex,ColIndex) = PivotValue;
-                        LOD.block(RowIndex,ColIndex+1,RemainingRows,RemainingColumns) // apply transformation on the RHS as well
-                            .applyHouseholderOnTheLeft(LOD.col(ColIndex).segment(RowIndex+1,RemainingRows-1), 
-                                                       tau, 
-                                                       &hhWorkspace.coeffRef(0));
-                        hh_scalars.coeffRef(FirstRowIndex+counter) = tau;
+                        for (Index k=1; k<RemainingRows; k++)
+                        {
+                            GivensRotation GR(LOD.coeffRef(RowIndex,ColIndex),LOD.coeffRef(RowIndex+k,ColIndex),counter,counter+k);
+                            LOD.block(FirstRowIndex,ColIndex,ObjDim,RemainingColumns+1).applyOnTheLeft(GR.i,GR.j,GR.G.transpose());
+
+                            gSequences[ObjIndex].push(GR); // (GR.i,GR.j) are relative to FirstRowIndex
+                        }
                     }
                     // --------------------------------------------------------------------------
 
@@ -463,8 +465,6 @@ namespace LexLS
 
             \note Upon exit, the lagrange multipliers associated with objective ObjIndex can be accessed using
             dWorkspace.head(nVarFixed + nLambda)
-
-            \todo Replace applyOnTheLeft(householderSequence(H,h)) with my implementation
         */
         bool ObjectiveSensitivity(Index ObjIndex, 
                                   Index &CtrIndex2Remove, int &ObjIndex2Remove, 
@@ -511,12 +511,12 @@ namespace LexLS
                     -LOD.col(nVar).segment(FirstRowIndex+ObjRank, ObjDim-ObjRank);
                 
                 // compute the optimal residual associated with objective ObjIndex (apply Q_{ObjIndex} on the left)
-                Lambda.segment(FirstRowIndex, ObjDim)
-                    .applyOnTheLeft(householderSequence(LOD.block(FirstRowIndex, 
-                                                                  FirstColIndex, 
-                                                                  ObjDim, 
-                                                                  ObjRank),
-                                                        hh_scalars.segment(FirstRowIndex,ObjDim))); 
+                for (Index i=gSequences[ObjIndex].size(); i--; )
+                {
+                    Lambda.segment(FirstRowIndex, ObjDim).applyOnTheLeft(gSequences[ObjIndex].get_i(i), 
+                                                                         gSequences[ObjIndex].get_j(i), 
+                                                                         gSequences[ObjIndex].get(i));
+                }
             }
             
             // check for wrong sign of the Lagrange multipliers
@@ -549,13 +549,13 @@ namespace LexLS
                     
                     Lambda.segment(FirstRowIndex, ObjRank) = rhs.segment(FirstColIndex, ObjRank);
                     
-                    // apply Q_k' on the left
-                    Lambda.segment(FirstRowIndex, ObjDim)
-                        .applyOnTheLeft(householderSequence(LOD.block(FirstRowIndex, 
-                                                                      FirstColIndex, 
-                                                                      ObjDim, 
-                                                                      ObjRank),
-                                                            hh_scalars.segment(FirstRowIndex,ObjDim)));
+                    // apply Q_k on the left
+                    for (Index i=gSequences[k].size(); i--; )
+                    {
+                        Lambda.segment(FirstRowIndex, ObjDim).applyOnTheLeft(gSequences[k].get_i(i), 
+                                                                             gSequences[k].get_j(i), 
+                                                                             gSequences[k].get(i));
+                    }
                     
                     rhs.head(ColDim).noalias() -= LOD.block(FirstRowIndex, 0, ObjDim, ColDim).transpose() * \
                         Lambda.segment(FirstRowIndex, ObjDim);
@@ -605,6 +605,7 @@ namespace LexLS
             
         } // END ObjectiveSensitivity(...)
 
+
         /** 
             \brief Can be used to form the matrix of Lagrange multipliers (for debugging purposes).
 
@@ -645,12 +646,12 @@ namespace LexLS
                 -LOD.col(nVar).segment(FirstRowIndex+ObjRank, ObjDim-ObjRank);
             
             // compute the optimal residual associated with objective ObjIndex (apply Q_{ObjIndex} on the left)
-            Lambda.segment(FirstRowIndex, ObjDim)
-                .applyOnTheLeft(householderSequence(LOD.block(FirstRowIndex, 
-                                                              FirstColIndex, 
-                                                              ObjDim, 
-                                                              ObjRank),
-                                                    hh_scalars.segment(FirstRowIndex,ObjDim))); 
+            for (Index i=gSequences[ObjIndex].size(); i--; )
+            {
+                Lambda.segment(FirstRowIndex, ObjDim).applyOnTheLeft(gSequences[ObjIndex].get_i(i), 
+                                                                     gSequences[ObjIndex].get_j(i), 
+                                                                     gSequences[ObjIndex].get(i));
+            }
                         
             if (ObjIndex>0) // the first objective has only Lagrange multipliers equal to the optimal residual   
             {
@@ -670,13 +671,13 @@ namespace LexLS
                     
                     Lambda.segment(FirstRowIndex, ObjRank) = rhs.segment(FirstColIndex, ObjRank);
                     
-                    // apply Q_k' on the left
-                    Lambda.segment(FirstRowIndex, ObjDim)
-                        .applyOnTheLeft(householderSequence(LOD.block(FirstRowIndex, 
-                                                                      FirstColIndex, 
-                                                                      ObjDim, 
-                                                                      ObjRank),
-                                                            hh_scalars.segment(FirstRowIndex,ObjDim)));
+                    // apply Q_k on the left
+                    for (Index i=gSequences[ObjIndex].size(); i--; )
+                    {
+                        Lambda.segment(FirstRowIndex, ObjDim).applyOnTheLeft(gSequences[ObjIndex].get_i(i), 
+                                                                             gSequences[ObjIndex].get_j(i), 
+                                                                             gSequences[ObjIndex].get(i));
+                    }
                     
                     rhs.head(ColDim).noalias() -= LOD.block(FirstRowIndex, 0, ObjDim, ColDim).transpose() * \
                         Lambda.segment(FirstRowIndex, ObjDim);
@@ -690,6 +691,7 @@ namespace LexLS
             rhs.setZero(); // for convenience (easier to analyze the Lagrange multipliers by hand) 
 
         } // END ObjectiveSensitivity(...)
+
         
         /**
            \brief Given a vector of Lagrange multipliers, determine the largest (in absolute value)
@@ -1265,6 +1267,27 @@ namespace LexLS
         }
 
         /** 
+            \brief Outputs Lagrange multipliers
+
+            \todo what about fixed variables?
+        */
+        MatrixType getLambda()
+        {
+            MatrixType L = MatrixType::Zero(nCtr,nObj);
+
+            Index nMeaningful = 0;
+            for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++) // Objectives of LexLSE
+            {
+                ObjectiveSensitivity(ObjIndex);
+
+                nMeaningful += getDim(ObjIndex);
+                L.col(ObjIndex).head(nMeaningful) = dWorkspace.head(nMeaningful);
+            }
+
+            return L;
+        }
+
+        /** 
             \brief Get number of fixed variables
         */        
         Index getFixedVariablesCount()
@@ -1345,12 +1368,12 @@ namespace LexLS
                 w.segment(FirstRowIndex, ObjRank).setZero(); // Zero-out first ObjRank elements
                 w.segment(FirstRowIndex+ObjRank, ObjDim-ObjRank) = -LOD.col(nVar).segment(FirstRowIndex+ObjRank, ObjDim-ObjRank);
                 
-                w.segment(FirstRowIndex, ObjDim)
-                    .applyOnTheLeft(householderSequence(LOD.block(FirstRowIndex, 
-                                                                  FirstColIndex, 
-                                                                  ObjDim, 
-                                                                  ObjRank),
-                                                        hh_scalars.segment(FirstRowIndex,ObjDim)));
+                for (Index i=gSequences[ObjIndex].size(); i--; )
+                {
+                    w.segment(FirstRowIndex,ObjDim).applyOnTheLeft(gSequences[ObjIndex].get_i(i), 
+                                                                   gSequences[ObjIndex].get_j(i), 
+                                                                   gSequences[ObjIndex].get(i));
+                }
             }
                         
             return dWorkspace; // return directly a reference to the working array (use dWorkspace.head(nCtr) outside)
@@ -1438,8 +1461,6 @@ namespace LexLS
             for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
                 ObjInfo[ObjIndex].rank = 0; 
 
-            hh_scalars.setZero();
-
             NullSpace.setZero();
             array.setZero();
 
@@ -1447,6 +1468,10 @@ namespace LexLS
             x.tail(nVar-nVarFixed).setZero(); // x.head(nVarFixed) has already been initialized in fixVariable(...)
 
             regularization.setZero(); // by default there is no regularization
+
+            // remove all Givens rotations from all objectives
+            for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
+                gSequences[ObjIndex].resize0();
         }
 
         /** 
@@ -2074,13 +2099,6 @@ namespace LexLS
         */
         dVectorType x;
 
-        /*
-          \note Householder scalars associated with the QR factorization for a (LexLSE) objective. 
-          
-          \note computed during the factorization.
-        */
-        dVectorType hh_scalars; 
-
         /** 
             \brief A heuristic regularization for each objective
 
@@ -2104,8 +2122,7 @@ namespace LexLS
             \note On input, LOD contains the matrix of constraints (the last column contains the RHS
             vector) of the lexicographic problem. On output, LOD contains the matrices L, Q and R
             from the LOD of the constraint matrix. The orthonormal matrices Q are
-            stored in Householder factored form below the main diagonal of the leading triangular
-            matrices of each objective, while the last column contains (LQ)^{-1}*RHS.
+            stored gSequences.
 
             \note The row-size of LOD is set to the the maximum number of envisioned constraints
             (excluding "fixing constraints"). This is usefull in the context of LexLSI where one
@@ -2143,6 +2160,8 @@ namespace LexLS
             \brief Type of (active) constraints (LOWER_BOUND or UPPER_BOUND)
         */
         std::vector<ConstraintType> CtrType;
+
+        std::vector<GivensRotationSequence> gSequences;
 
         /** 
             \brief Permutation matrix

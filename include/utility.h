@@ -72,6 +72,11 @@ namespace LexLS
 
         GivensRotationSequence(Index dim)
         {
+            reserve(dim);
+        }
+        
+        void reserve(Index dim)
+        {
             seq.reserve(dim);
         }
 
@@ -98,6 +103,11 @@ namespace LexLS
         Index size()
         {
             return seq.size();
+        }
+
+        void resize0()
+        {
+            seq.resize(0);
         }
     
     private:
