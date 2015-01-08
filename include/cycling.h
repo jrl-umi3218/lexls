@@ -169,6 +169,11 @@ namespace LexLS
             relax_step = relax_step_;
         }
 
+        Index get_counter() const
+        {
+            return counter;
+        }
+
         /** 
             \brief Number of relaxations performed
         */ 

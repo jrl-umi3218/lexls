@@ -23,16 +23,18 @@ mxArray * formInfoStructure (
         const LexLS::TerminationStatus lexlsi_status, 
         const int num_activations, 
         const int num_deactivations,
-        const int num_factorizations)
+        const int num_factorizations,
+        const int cycling_counter)
 {
     mxArray * info_struct;
 
-    int num_info_fields = 4; 
+    int num_info_fields = 5; 
     const char *info_field_names[] = {
         "status",
         "number_of_activations",
         "number_of_deactivations",
-        "number_of_factorizations"
+        "number_of_factorizations",
+        "cycling_counter"
     }; 
 
 
@@ -70,6 +72,10 @@ mxArray * formInfoStructure (
     mxArray *info_factorizations = mxCreateNumericMatrix(1, 1, mxINT32_CLASS, mxREAL);
     ((INT32_T *) mxGetData (info_factorizations))[0] = num_factorizations;
     mxSetField (info_struct, 0, "number_of_factorizations", info_factorizations);
+
+    mxArray *info_cycling = mxCreateNumericMatrix(1, 1, mxINT32_CLASS, mxREAL);
+    ((INT32_T *) mxGetData (info_cycling))[0] = cycling_counter;
+    mxSetField (info_struct, 0, "cycling_counter", info_cycling);
 
     return (info_struct);
 }
@@ -499,18 +505,20 @@ void mexFunction( int num_output, mxArray *output[],
         LexLS::Index num_activations;
         LexLS::Index num_deactivations;
         LexLS::Index num_factorizations;
-       
+        LexLS::Index cycling_counter;
+
         try
         {
             num_activations = lexlsi.getAddCount();
             num_deactivations = lexlsi.getRemoveCount();
             num_factorizations = lexlsi.getNumberOfFactorizations();
+            cycling_counter = lexlsi.getCyclingCounter();
         }
         catch (std::exception &e)
         {
             mexErrMsgTxt(e.what());
         }
-        output[1] = formInfoStructure(status, num_activations, num_deactivations, num_factorizations);
+        output[1] = formInfoStructure(status, num_activations, num_deactivations, num_factorizations, cycling_counter);
     }
 
 // output residual

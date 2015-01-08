@@ -482,6 +482,14 @@ namespace LexLS
         }
 
         /** 
+            \brief Get number of cycling relaxations 
+        */
+        Index getCyclingCounter() const
+        {
+            return cycling_handler.get_counter();
+        }
+
+        /** 
             \brief Returns number of iterations in the active-set method
         */
         Index getNumberOfFactorizations() const
@@ -833,7 +841,10 @@ namespace LexLS
                 }
             }
 
-            step_length = alpha; // record the value of alpha
+            if (operation == ADD_CONSTRAINT)
+                step_length = alpha; // record the value of alpha
+            else
+                step_length = -1; // this is used only for debugging purposes
 
             if (alpha > 0) // take a step
             {
@@ -873,6 +884,8 @@ namespace LexLS
 
             file << "% ---------------------------------------------\n"; 
             file << "% iter              = " << iter << "\n"; 
+            file << "% status            = " << status << "\n"; 
+            file << "% counter (cycling) = " << getCyclingCounter() << "\n"; 
             file << "operation_("<<iter+1<<")       = " << operation << ";\n"; 
             file << "nFactorizations_("<<iter+1<<") = " << getNumberOfFactorizations() << ";\n";
             if (!flag_clear_file)
