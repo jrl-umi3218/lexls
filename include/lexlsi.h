@@ -31,6 +31,15 @@ namespace LexLS
         RealScalar tolCorrectSignLambda;
 
         /** 
+            \brief Tolerance: I was using tol = 0, but if I have the same
+            constraint appearing twice in one objective (i.e., both RHS and LHS
+            are the same) there is cycling. For tol = 1e-13 there is no
+            cycling. 
+            @todo what to do with this tolerance?
+        */
+        RealScalar tolFeasibility;
+
+        /** 
             \brief If CyclingHandling == true, cycling handling is performed
         */
         bool CyclingHandling;
@@ -59,6 +68,7 @@ namespace LexLS
             tolLinearDependence     = 1e-12;
             tolWrongSignLambda      = 1e-08;
             tolCorrectSignLambda    = 1e-12;
+            tolFeasibility          = 1e-13;
 
             CyclingHandling         = false;
             cycling_max_counter     = 50;
@@ -720,6 +730,9 @@ namespace LexLS
            \param[out] alpha            scaling factor for the step.
 
            \return true if there are blocking constraints
+
+           @todo Name of a method 'checkBlockingConstraints()' is shared by
+           both this and Objective classes. This may be confusing.
         */      
         bool checkBlockingConstraints(Index &ObjIndexBlocking, 
                                       Index &CtrIndexBlocking, 
@@ -728,7 +741,7 @@ namespace LexLS
         {
             alpha = 1;
             for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
-                if (Obj[ObjIndex].checkBlockingConstraints(CtrIndexBlocking, CtrTypeBlocking, alpha))
+                if (Obj[ObjIndex].checkBlockingConstraints(CtrIndexBlocking, CtrTypeBlocking, alpha, parameters.tolFeasibility))
                     ObjIndexBlocking = ObjIndex;
             
             if (alpha < 1)

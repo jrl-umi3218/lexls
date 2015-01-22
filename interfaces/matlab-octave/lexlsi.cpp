@@ -125,6 +125,9 @@ void mexFunction( int num_output, mxArray *output[],
                             options_struct, 
                             "tolCorrectSignLambda");
 
+            getOptionDouble(&lexlsi_parameters.tolFeasibility, 
+                            options_struct, 
+                            "tolFeasibility");
 
 
             getOptionUnsignedInteger(   &lexlsi_parameters.max_number_of_iterations, 
@@ -409,7 +412,7 @@ void mexFunction( int num_output, mxArray *output[],
             //lexlsi.set_x0(Eigen::Map<LexLS::dVectorType>(mxGetPr(x0), num_var));
             LexLS::dVectorType x0_in(num_var);
 
-            for (int i = 0; i < num_var; ++i)
+            for (LexLS::Index i = 0; i < num_var; ++i)
             {
                 x0_in(i) = (static_cast <const double *> (mxGetPr(x0)))[i];
             }
@@ -430,7 +433,7 @@ void mexFunction( int num_output, mxArray *output[],
             {
                 LexLS::dVectorType residual(num_constr[i]);
 
-                for (int j = 0; j < num_constr[i]; ++j)
+                for (LexLS::Index j = 0; j < num_constr[i]; ++j)
                 {
                     residual(j) = (static_cast <const double *> (mxGetPr(residuals[i])))[j];
                 }
@@ -450,7 +453,7 @@ void mexFunction( int num_output, mxArray *output[],
             }
             else
             {
-                for (int j = 0; j < num_constr[i]; ++j)
+                for (LexLS::Index j = 0; j < num_constr[i]; ++j)
                 {
                     switch (static_cast <int> (round(mxGetPr(active_set[i])[j])))
                     {
@@ -489,7 +492,7 @@ void mexFunction( int num_output, mxArray *output[],
         LexLS::dVectorType& x = lexlsi.get_x();
         output[0] = mxCreateDoubleMatrix(num_var, 1, mxREAL);
         double *x_out = mxGetPr(output[0]);
-        for (int i = 0; i < num_var; ++i)
+        for (LexLS::Index i = 0; i < num_var; ++i)
         {
             x_out[i] = x(i);
         }
@@ -532,7 +535,7 @@ void mexFunction( int num_output, mxArray *output[],
             {
                 LexLS::dVectorType& w = lexlsi.getResidual(i);
                 mxArray * wi = mxCreateDoubleMatrix(num_constr[i], 1, mxREAL);
-                for (int j = 0; j < num_constr[i]; ++j)
+                for (LexLS::Index j = 0; j < num_constr[i]; ++j)
                 {
                     mxGetPr(wi)[j] = w(j);
                 }

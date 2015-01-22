@@ -131,7 +131,7 @@ void mexFunction( int num_output, mxArray *output[],
 
     LexLS::Index num_obj = mxGetNumberOfElements (objectives);
     LexLS::Index number_of_normal_objectives = num_obj;
-    int index_first_normal_obj = 0;
+    LexLS::Index index_first_normal_obj = 0;
 
     mxArray *fixed_var_i = NULL;
     mxArray *fixed_var_b = NULL;
@@ -167,7 +167,7 @@ void mexFunction( int num_output, mxArray *output[],
     constraints.resize(number_of_normal_objectives);
 
 
-    for (int i = index_first_normal_obj, index_obj = 0; 
+    for (LexLS::Index i = index_first_normal_obj, index_obj = 0; 
          index_obj < number_of_normal_objectives; 
          ++index_obj, ++i)
     {
@@ -224,7 +224,7 @@ void mexFunction( int num_output, mxArray *output[],
 
         if (options.is_regularization_set)
         {
-            for (int i = index_first_normal_obj, j = 0; i < num_obj; ++i, ++j)
+            for (LexLS::Index i = index_first_normal_obj, j = 0; i < num_obj; ++i, ++j)
             {
                 lexlse.setRegularization(j, options.regularization[i]);
             }
@@ -241,7 +241,7 @@ void mexFunction( int num_output, mxArray *output[],
         }
 
         // constraints
-        for (int i = 0; i < number_of_normal_objectives; ++i)
+        for (LexLS::Index i = 0; i < number_of_normal_objectives; ++i)
         {
             lexlse.setData(
                 i, 
@@ -276,7 +276,7 @@ void mexFunction( int num_output, mxArray *output[],
         LexLS::dVectorType& x = lexlse.get_x();
         output[0] = mxCreateDoubleMatrix(num_var, 1, mxREAL);
         double *x_out = mxGetPr(output[0]);
-        for (int i = 0; i < num_var; ++i)
+        for (LexLS::Index i = 0; i < num_var; ++i)
         {
             x_out[i] = x(i);
         }
@@ -302,10 +302,10 @@ void mexFunction( int num_output, mxArray *output[],
 
             output[2] = mxCreateCellMatrix(number_of_normal_objectives, 1);
             int index_w = 0;
-            for (int i = 0; i < number_of_normal_objectives; ++i)
+            for (LexLS::Index i = 0; i < number_of_normal_objectives; ++i)
             {
                 mxArray * wi = mxCreateDoubleMatrix(num_constr[i], 1, mxREAL);
-                for (int j = 0; j < num_constr[i]; ++j)
+                for (LexLS::Index j = 0; j < num_constr[i]; ++j)
                 {
                     mxGetPr(wi)[j] = w(index_w);
                     ++index_w;

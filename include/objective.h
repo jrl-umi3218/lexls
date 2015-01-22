@@ -343,7 +343,10 @@ namespace LexLS
            alpha \in [0,1]
            \endverbatim
         */
-        bool checkBlockingConstraints(Index &CtrIndexBlocking, ConstraintType &CtrTypeBlocking, RealScalar &alpha)
+        bool checkBlockingConstraints(  Index &CtrIndexBlocking, 
+                                        ConstraintType &CtrTypeBlocking, 
+                                        RealScalar &alpha,
+                                        const RealScalar tolFeasibility)
         {
             bool condition;
             RealScalar num, den, ratio, rhs, alpha_input = alpha;
@@ -351,9 +354,6 @@ namespace LexLS
             Index CtrIndex, lbIndex, ubIndex;
             ConstraintType CtrType;
 
-            // I was using tol = 0, but if I have the same constraint appearing twice in one objective
-            // (i.e., both RHS and LHS are the same) there is cycling. For tol = 1e-13 there is no cycling. 
-            double tol = 1e-13; // FIXME: what to do with this tolerance?
 
             if (ObjType == DEFAULT_OBJECTIVE)
             {
@@ -377,13 +377,13 @@ namespace LexLS
                 den = Adx.coeffRef(CtrIndex) - dw.coeffRef(CtrIndex);
                 
                 condition = false;
-                if (den < -tol)     // LOWER_BOUND
+                if (den < -tolFeasibility)     // LOWER_BOUND
                 {
                     CtrType   = LOWER_BOUND;
                     rhs       = data.coeffRef(CtrIndex,lbIndex);
                     condition = true;
                 }
-                else if (den > tol) // UPPER_BOUND
+                else if (den > tolFeasibility) // UPPER_BOUND
                 {
                     CtrType   = UPPER_BOUND;
                     rhs       = data.coeffRef(CtrIndex,ubIndex);
