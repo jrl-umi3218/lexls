@@ -15,20 +15,24 @@ namespace LexLS
         */
         Index max_number_of_iterations;
 
+
         /** 
             \brief Tolerance: linear dependence (used when solving an LexLSE problem)
         */
         RealScalar tolLinearDependence;
+
 
         /** 
             \brief Tolerance: absolute value of Lagrange multiplier to be considered with "wrong" sign
         */
         RealScalar tolWrongSignLambda;
 
+
         /** 
             \brief Tolerance: absolute value of Lagrange multiplier to be considered with "correct" sign
         */
         RealScalar tolCorrectSignLambda;
+
 
         /** 
             \brief Tolerance: I was using tol = 0, but if I have the same
@@ -39,22 +43,64 @@ namespace LexLS
         */
         RealScalar tolFeasibility;
 
+
+        /**
+         * @brief Scale lagrange multipliers the norm of the constraint.
+         */
+        bool enable_lagrange_multipliers_scaling;
+
+
         /** 
             \brief If CyclingHandling == true, cycling handling is performed
         */
         bool CyclingHandling;
- 
+
+
+        /** 
+            \brief Type of regularization (Tikhonov, Basic Tikhonov, ...)
+        */
         RegularizationType regularizationType;
 
+
+        /** 
+            \brief Max number of iterations for cg_tikhonov(...)
+
+            \note used only with regularizationType = REGULARIZATION_TIKHONOV_CG
+        */
         Index regularizationMaxIterCG;
 
+        /**
+         * @brief 
+         * @todo add documentation
+         */
+        RealScalar variable_regularization_factor;
+
+
+        /**
+         * @brief 
+         * @todo add documentation
+         * @todo cycling is not always detected
+         */
         Index cycling_max_counter;
+        /**
+         * @brief 
+         * @todo add documentation
+         */
         double cycling_relax_step;
 
-        // use the real residual when computing sensitivity
+
+        /** 
+            \brief use the real residual when computing sensitivity (or not)
+        */
         bool realSensitivityResidual;
 
+
+        /**
+         * @brief 
+         * @todo add documentation
+         */
         std::string output_file_name; // drdv: do I need to initialize?
+
 
         LexLSIParameters()
         {
@@ -70,13 +116,15 @@ namespace LexLS
             tolCorrectSignLambda    = 1e-12;
             tolFeasibility          = 1e-13;
 
+            enable_lagrange_multipliers_scaling = false;
+
             CyclingHandling         = false;
             cycling_max_counter     = 50;
             cycling_relax_step      = 1e-08;
 
             regularizationType      = REGULARIZATION_NONE;
-
             regularizationMaxIterCG = 10;
+            variable_regularization_factor = 0.0;
 
             realSensitivityResidual = false;
         }
@@ -350,11 +398,16 @@ namespace LexLS
         void setParameters(const LexLSIParameters &parameters_)
         {
             parameters = parameters_;
+            LexLSEParameters lexlse_parameters;
 
-            lexlse.setTolerance(parameters.tolLinearDependence);
-            lexlse.setRegularizationType(parameters.regularizationType);
-            lexlse.setRegularizationMaxIterCG(parameters.regularizationMaxIterCG);
-            lexlse.setRealSensitivityResidual(parameters.realSensitivityResidual);
+            lexlse_parameters.tolLinearDependence     = parameters.tolLinearDependence;
+            lexlse_parameters.regularizationType      = parameters.regularizationType;
+            lexlse_parameters.regularizationMaxIterCG = parameters.regularizationMaxIterCG;
+            lexlse_parameters.realSensitivityResidual = parameters.realSensitivityResidual;
+            lexlse_parameters.enable_lagrange_multipliers_scaling = parameters.enable_lagrange_multipliers_scaling;
+            lexlse_parameters.variable_regularization_factor = parameters.variable_regularization_factor;
+
+            lexlse.setParameters(lexlse_parameters);
 
             if (parameters.CyclingHandling)
             {

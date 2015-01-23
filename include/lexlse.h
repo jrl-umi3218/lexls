@@ -5,6 +5,65 @@
 
 namespace LexLS
 {    
+    class LexLSEParameters
+    {
+    public:
+        /** 
+            \brief Tolerance: linear dependence (used when solving an LexLSE problem)
+        */
+        RealScalar tolLinearDependence;
+
+
+        /** 
+            \brief use the real residual when computing sensitivity (or not)
+        */
+        bool realSensitivityResidual;
+
+
+        /** 
+            \brief Max number of iterations for cg_tikhonov(...)
+
+            \note used only with regularizationType = REGULARIZATION_TIKHONOV_CG
+        */
+        Index regularizationMaxIterCG;
+
+
+        /** 
+            \brief Type of regularization (Tikhonov, Basic Tikhonov, ...)
+        */
+        RegularizationType regularizationType;
+
+
+        /**
+         * @brief 
+         * @todo add documentation
+         */
+        RealScalar variable_regularization_factor;
+
+
+        /**
+         * @brief Scale lagrange multipliers the norm of the constraint.
+         */
+        bool enable_lagrange_multipliers_scaling;
+
+
+        LexLSEParameters()
+        {
+            setDefaults();
+        }
+
+        void setDefaults()
+        {
+            tolLinearDependence     = 1e-12;
+            regularizationMaxIterCG = 10;
+            realSensitivityResidual = false;
+            enable_lagrange_multipliers_scaling = false;
+            regularizationType      = REGULARIZATION_NONE;
+            variable_regularization_factor = 0.0;
+        }
+    };
+
+
     /** 
         \brief Definition of a lexicographic least-squares problem with equality constraints
 
@@ -29,12 +88,10 @@ namespace LexLS
         LexLSE(): 
             nVarFixed(0),
             nVarFixedInit(0),
-            LinearDependenceTolerance(1e-12),
-            regularizationMaxIterCG(10),
             isFactorized(false), 
-            isSolved(false),
-            realSensitivityResidual(false),            
-            regularizationType(REGULARIZATION_NONE) {}
+            isSolved(false)
+        {
+        }
         
         /** 
             \param[in] nVar_   Number of variables (only number of elements in x, and not in the residuals w)
@@ -44,12 +101,8 @@ namespace LexLS
         LexLSE(Index nVar_, Index nObj_, Index *ObjDim_):
             nVarFixed(0),
             nVarFixedInit(0),
-            LinearDependenceTolerance(1e-12),
-            regularizationMaxIterCG(10),
             isFactorized(false), 
-            isSolved(false),
-            realSensitivityResidual(false),
-            regularizationType(REGULARIZATION_NONE)
+            isSolved(false)
         {
             resize(nVar_, nObj_, ObjDim_);
             setObjDim(ObjDim_);
@@ -192,7 +245,7 @@ namespace LexLS
                     ColNorms.coeffRef(maxColNormIndex) = maxColNormValue;
                     
                     // After we break, elimination is performed if there are objectives with lower priority and ObjInfo[ObjIndex].rank > 0
-                    if (maxColNormValue < LinearDependenceTolerance)
+                    if (maxColNormValue < parameters.tolLinearDependence)
                         break;
 
                     // --------------------------------------------------------------------------
@@ -210,7 +263,7 @@ namespace LexLS
                     // --------------------------------------------------------------------------
                     // apply Householder transformations (on the RHS as well)
                     // --------------------------------------------------------------------------
-                    // when RemainingRows = 1, since sqrt(maxColNormValue) >= LinearDependenceTolerance, the Householder matrix is the identity (tau = 0)
+                    // when RemainingRows = 1, since sqrt(maxColNormValue) >= parameters.tolLinearDependence, the Householder matrix is the identity (tau = 0)
                     if (RemainingRows > 1) 
                     {
                         LOD.col(ColIndex).segment(RowIndex,RemainingRows).makeHouseholderInPlace(tau,PivotValue);
@@ -244,7 +297,7 @@ namespace LexLS
                 // -----------------------------------------------------------------------
                 // Regularization
                 // -----------------------------------------------------------------------
-                if (1) // constant damping factor
+                if (0.0 == parameters.variable_regularization_factor) // constant damping factor
                 {
                     damp_factor = regularization[ObjIndex];
                 }
@@ -272,7 +325,7 @@ namespace LexLS
                           Stefano Chiaverini, Bruno Siciliano, "Review of the damped least-squares inverse kinematics 
                           with experiments on an industrial robot manipulator, " 1994.
                         */
-                        RealScalar epsilon = 1e-4;
+                        RealScalar epsilon = parameters.variable_regularization_factor;
                         if (conditioning_estimate < epsilon)
                         {
                             damp_factor = std::sqrt((1 - (conditioning_estimate*conditioning_estimate)/(epsilon*epsilon)))*regularization[ObjIndex];
@@ -284,7 +337,7 @@ namespace LexLS
                 
                 if (ObjRank > 0)
                 {
-                    switch(regularizationType){
+                    switch(parameters.regularizationType){
 
                     case REGULARIZATION_TIKHONOV:
 
@@ -304,7 +357,7 @@ namespace LexLS
 
                     case REGULARIZATION_TIKHONOV_CG:
 
-                        //printf("REGULARIZATION_TIKHONOV_CG(%d) \n", regularizationMaxIterCG);
+                        //printf("REGULARIZATION_TIKHONOV_CG(%d) \n", parameters.regularizationMaxIterCG);
 
                         if ( !isEqual(damp_factor,0.0) ) 
                         {
@@ -347,7 +400,7 @@ namespace LexLS
 
                     case REGULARIZATION_RT_NO_Z_CG:
 
-                        //printf("REGULARIZATION_RT_NO_Z_CG(%d) \n", regularizationMaxIterCG);
+                        //printf("REGULARIZATION_RT_NO_Z_CG(%d) \n", parameters.regularizationMaxIterCG);
 
                         if ( !isEqual(damp_factor,0.0) ) 
                         {
@@ -500,7 +553,7 @@ namespace LexLS
 
             // Lambda.segment(FirstRowIndex, ObjRank).setZero(); assumed
 
-            if (realSensitivityResidual) // use the real residual (not recommended)
+            if (parameters.realSensitivityResidual) // use the real residual (not recommended)
             {
                 Lambda.segment(FirstRowIndex, ObjDim) = residual.head(ObjDim);
             }
@@ -751,7 +804,7 @@ namespace LexLS
                     // ====================================================================
                     // here we scale aLambda with the norm of the corresponding constraint
                     // ====================================================================
-                    if (1)
+                    if (parameters.enable_lagrange_multipliers_scaling)
                     {
                         if (FirstRowIndex >= 0) // if not fixed variables
                         {
@@ -1020,7 +1073,9 @@ namespace LexLS
         */
         void solveLeastNorm_3()
         {
-            Index FirstRowIndex, FirstColIndex, ObjRank, counter = 0;
+            Index FirstRowIndex, ObjRank, counter = 0;
+            /// @todo FirstColIndex is not used in this function.
+            // Index FirstColIndex = 0;
             Index nVarRank = 0; // number of variables determined by rank([R,T])
 
             // -------------------------------------------------------------------------
@@ -1055,7 +1110,8 @@ namespace LexLS
             for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
             {
                 FirstRowIndex = ObjInfo[ObjIndex].FirstRowIndex;
-                FirstColIndex = ObjInfo[ObjIndex].FirstColIndex;
+                /// @todo FirstColIndex is not used in this function.
+                //FirstColIndex = ObjInfo[ObjIndex].FirstColIndex;
                 ObjRank       = ObjInfo[ObjIndex].rank;
 
                 x.segment(nVarFixed+counter,ObjRank) = LOD.col(nVar).segment(FirstRowIndex,ObjRank) - 
@@ -1230,15 +1286,6 @@ namespace LexLS
             initialize();
         }
 
-        /** 
-            \brief Set the tolerances
-
-            \param[in] LinearDependenceTolerance_ #LinearDependenceTolerance
-        */      
-        void setTolerance(RealScalar LinearDependenceTolerance_)
-        {
-            LinearDependenceTolerance = LinearDependenceTolerance_;
-        }
 
         /** 
             \brief Set number of fixed variables
@@ -1256,6 +1303,16 @@ namespace LexLS
             FixedVarType.resize(nVarFixed);
         }
 
+
+        /**
+           \brief Sets parameters
+        */
+        void setParameters(const LexLSEParameters &parameters_)
+        {
+            parameters = parameters_;
+        }
+
+
         /** 
             \brief Set (a non-negative) regularization factor for objective ObjIndex
 
@@ -1263,24 +1320,9 @@ namespace LexLS
         */
         void setRegularization(Index ObjIndex, RealScalar RegularizationFactor)
         {
-            // @todo: check whether ObjIndex and RegularizationFactor make sense. 
+            /// @todo: check whether ObjIndex and RegularizationFactor make sense. 
 
             regularization(ObjIndex) = RegularizationFactor;
-        }
-
-        void setRegularizationType(RegularizationType regularizationType_)
-        {
-            regularizationType = regularizationType_;
-        }
-
-        void setRegularizationMaxIterCG(Index regularizationMaxIterCG_)
-        {
-            regularizationMaxIterCG = regularizationMaxIterCG_;
-        }
-        
-        void setRealSensitivityResidual(bool realSensitivityResidual_)
-        {
-            realSensitivityResidual = realSensitivityResidual_;
         }
 
         /** 
@@ -1347,7 +1389,7 @@ namespace LexLS
            \brief Form the residuals (A*x-RHS) through the LOD. The residual of the
            fixed variables is always zero (and is not included).
 
-           \note This function could compute an incorect residual depending on #LinearDependenceTolerance.
+           \note This function could compute an incorect residual depending on #parameters.tolLinearDependence.
         */
         dVectorType& getResidual()
         {
@@ -1814,7 +1856,7 @@ namespace LexLS
             // ------------------------------------------------------------------------------------------------
 
             Index iter = 0;
-            while ( (std::sqrt(gamma) > tol) && (iter < regularizationMaxIterCG) )
+            while ( (std::sqrt(gamma) > tol) && (iter < parameters.regularizationMaxIterCG) )
             {
                 // ------------------------------------------------------------------------------------------------
                 // q = [Rk Tk; Sk ; Ik]*p
@@ -1906,7 +1948,7 @@ namespace LexLS
             // ------------------------------------------------------------------------------------------------
 
             Index iter = 0;
-            while ( (std::sqrt(gamma) > tol) && (iter < regularizationMaxIterCG) )
+            while ( (std::sqrt(gamma) > tol) && (iter < parameters.regularizationMaxIterCG) )
             {
                 // ------------------------------------------------------------------------------------------------
                 // q = [Rk Tk; Ik]*p
@@ -2000,17 +2042,6 @@ namespace LexLS
         */
         Index nCtr;
 
-        /** 
-            \brief Linear dependence tolerance
-        */
-        RealScalar LinearDependenceTolerance;
-
-        /** 
-            \brief Max number of iterations for cg_tikhonov(...)
-
-            \note used only with regularizationType = REGULARIZATION_TIKHONOV_CG
-        */
-        Index regularizationMaxIterCG;
   
         /** 
             \brief Regularization factor used at the current level
@@ -2032,11 +2063,6 @@ namespace LexLS
             \brief isSolved = false while the problem has not been solved
         */
         bool isSolved;
-
-        /** 
-            \brief use the real residual when computing sensitivity (or not)
-        */
-        bool realSensitivityResidual;
 
         // ==================================================================
         // definition of vectors of integers
@@ -2168,11 +2194,9 @@ namespace LexLS
         */
         Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> P;
 
-        /** 
-            \brief Type of regularization (Tikhonov, Basic Tikhonov, ...)
-        */
-        RegularizationType regularizationType;
 
+        /// \brief Parameters of the solver.
+        LexLSEParameters parameters;
     }; // end class LexLSE
 
 } // end namespace LexLS

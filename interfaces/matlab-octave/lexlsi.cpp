@@ -135,6 +135,10 @@ void mexFunction( int num_output, mxArray *output[],
                                 "max_iterations");
 
 
+            getOptionBool(  &lexlsi_parameters.enable_lagrange_multipliers_scaling, 
+                            options_struct, 
+                            "enable_lagrange_multipliers_scaling");
+
 
             getOptionBool(  &lexlsi_parameters.CyclingHandling, 
                             options_struct, 
@@ -173,6 +177,9 @@ void mexFunction( int num_output, mxArray *output[],
                                 options_struct, 
                                 "regularizationMaxIterCG");
 
+            getOptionDouble(&lexlsi_parameters.variable_regularization_factor, 
+                            options_struct, 
+                            "variable_regularization_factor");
 
             getOptionBool(  &lexlsi_parameters.realSensitivityResidual, 
                             options_struct, 
