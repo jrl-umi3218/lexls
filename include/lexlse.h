@@ -521,6 +521,7 @@ namespace LexLS
             
             // check for wrong sign of the Lagrange multipliers
             FoundBetterDescentDirection = findDescentDirection(FirstRowIndex,
+                                                               FirstColIndex,
                                                                ObjDim,
                                                                maxAbsValue,
                                                                CtrIndex2Remove,
@@ -562,6 +563,7 @@ namespace LexLS
                     
                     // check for wrong sign of the Lagrange multipliers
                     tmp_bool = findDescentDirection(FirstRowIndex,
+                                                    FirstColIndex,
                                                     ObjDim,
                                                     maxAbsValue,
                                                     CtrIndex2Remove,
@@ -581,6 +583,7 @@ namespace LexLS
 
                 // check for wrong sign of the Lagrange multipliers
                 tmp_bool = findDescentDirection(-1,
+                                                -1,
                                                 nVarFixed,
                                                 maxAbsValue,
                                                 CtrIndex2Remove,
@@ -715,6 +718,7 @@ namespace LexLS
            multipliers.
         */
         bool findDescentDirection(int FirstRowIndex,
+                                  int FirstColIndex,
                                   Index ObjDim,
                                   RealScalar &maxAbsValue,   // modified
                                   Index &CtrIndex,           // modified
@@ -723,8 +727,8 @@ namespace LexLS
                                   RealScalar tolCorrectSignLambda)
         {
             bool FoundBetterDescentDirection = false;
-            RealScalar aLambda;
-            Index ind;
+            RealScalar aLambda, aCtrNorm;
+            Index ind, nColRemaining;
             ConstraintType *aCtrType;
 
             for (Index k=0; k<ObjDim; k++)
@@ -743,6 +747,21 @@ namespace LexLS
                 if (*aCtrType != EQUALITY_CONSTRAINT && *aCtrType != CORRECT_SIGN_OF_LAMBDA)
                 {
                     aLambda = lambda.coeff(ind);
+
+                    // ====================================================================
+                    // here we scale aLambda with the norm of the corresponding constraint
+                    // ====================================================================
+                    if (1)
+                    {
+                        if (FirstRowIndex >= 0) // if not fixed variables
+                        {
+                            nColRemaining = nVar-(FirstColIndex+k);
+                            aCtrNorm = LOD.row(ind).segment(FirstColIndex+k,nColRemaining).squaredNorm();
+                            aCtrNorm = std::sqrt(aCtrNorm);
+                            aLambda *= aCtrNorm;
+                        }
+                    }
+                    // ====================================================================
 
                     if (*aCtrType == LOWER_BOUND)
                         aLambda = -aLambda;
