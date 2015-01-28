@@ -149,3 +149,31 @@ x0 = zeros(6,1);
 w = active_set_guess;
 
 [x, info, w, active_set] = lexlsi(lexobj, options, active_set_guess, x0, w)
+
+
+
+% test 9
+fprintf('=======================================\n     test 09\n')
+clear;
+options.enable_simple_bounds = 1;
+options.regularization = [0, 0.03];
+options.regularizationType = 1;
+options.variable_regularization_factor = 0.1;
+
+lexobj(1).A = [1; 4; 5];
+lexobj(1).ub = rand(3,1);
+lexobj(1).lb = lexobj(1).ub - rand(3,1);
+
+lexobj(2).A = rand(4,6);
+lexobj(2).ub = rand(4,1);
+lexobj(2).lb = lexobj(2).ub - rand(4,1);
+
+active_set_guess = cell();
+active_set_guess{1} = [0; 1; 2];
+active_set_guess{2} = [];
+
+x0 = zeros(6,1);
+
+w = active_set_guess;
+
+[x, info, w, active_set] = lexlsi(lexobj, options, active_set_guess, x0, w)

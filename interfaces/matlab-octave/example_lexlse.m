@@ -69,7 +69,9 @@ lexobj(2).b = rand(6, 1);
 fprintf('=======================================\n     test 05\n')
 clear lexobj options;
 
-options.enable_fixed_variables = [0, 0.03];
+options.regularization = [0, 0.03];
+options.regularizationType = 1;
+
 
 lexobj(1).A = rand(5, 8);
 lexobj(1).b = rand(5, 1);
@@ -77,4 +79,21 @@ lexobj(1).b = rand(5, 1);
 lexobj(2).A = rand(6, 8);
 lexobj(2).b = rand(6, 1);
 
-[x, info, w] = lexlse(lexobj)
+[x, info, w] = lexlse(lexobj, options)
+
+
+% test 6 (regularization 2)
+fprintf('=======================================\n     test 05\n')
+clear lexobj options;
+
+options.regularization = [0, 0.03];
+options.regularizationType = 1;
+options.variable_regularization_factor = 0.1;
+
+lexobj(1).A = rand(5, 8);
+lexobj(1).b = rand(5, 1);
+
+lexobj(2).A = rand(6, 8);
+lexobj(2).b = rand(6, 1);
+
+[x, info, w] = lexlse(lexobj, options)
