@@ -434,6 +434,10 @@ namespace LexLS
 
                         //printf("REGULARIZATION_TEST \n");
 
+                        if ( !isEqual(damp_factor,0.0) ) 
+                        {
+                            regularize_test(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
+                        }
                         break;
 
                     case REGULARIZATION_NONE:
@@ -473,12 +477,12 @@ namespace LexLS
                             // the .col(0) and .row(0) are important only for efficient computation
                             TrailingBlock.noalias() -= LeftBlock.col(0) * UpBlock.row(0);
                         }
-                        else if (ObjRank >= 2 && ObjRank <= 8)
+                        else if (ObjRank > 2 && ObjRank <= 8)
                         {
                             for (Index k=0; k<RemainingColumns+1; k++)
                                 TrailingBlock.col(k).noalias() -= LeftBlock * UpBlock.col(k);
                         }                        
-                        else if (ObjRank > 8)
+                        else if ((ObjRank == 2) || (ObjRank > 8))
                         {
                             TrailingBlock.noalias() -= LeftBlock * UpBlock;
                         }
@@ -1312,7 +1316,6 @@ namespace LexLS
             parameters = parameters_;
         }
 
-
         /** 
             \brief Set (a non-negative) regularization factor for objective ObjIndex
 
@@ -1704,6 +1707,15 @@ namespace LexLS
             LOD.col(nVar).segment(FirstRowIndex,ObjRank).noalias() = D.selfadjointView<Eigen::Lower>() * d;
         }
 
+        /**
+           \brief For testing purposes
+        */
+        void regularize_test(Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
+        {
+            // just scale the RHS (not a good idea)
+            LOD.col(nVar).segment(FirstRowIndex,ObjRank) *= damp_factor;
+        }
+
         /** 
             \brief Tikhonov regularization using CGLS
         */        
@@ -1998,12 +2010,12 @@ namespace LexLS
             {
                 TrailingBlock.noalias() -= LeftBlock.col(0) * UpBlock.row(0);
             }
-            else if (ObjRank >= 2 && ObjRank <= 8)
+            else if (ObjRank > 2 && ObjRank <= 8)
             {
                 for (Index k=0; k<RemainingColumns+1; k++)
                     TrailingBlock.col(k).noalias() -= LeftBlock * UpBlock.col(k);
-            }                        
-            else if (ObjRank > 8)
+            }
+            else if ((ObjRank == 2) || (ObjRank > 8))
             {
                 TrailingBlock.noalias() -= LeftBlock * UpBlock;
             }

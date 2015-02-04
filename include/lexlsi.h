@@ -352,6 +352,7 @@ namespace LexLS
                 std::cout << "iter = "     << iter 
                           << " (ADD = "    << iterAdd 
                           << ", REMOVE = " << iterRemove 
+                          << ", FACTOR = " << numberOfFactorizations
                           << ", ACTIVE = " << getActiveCtrCount() << ")" << std::endl;
                 std::cout << std::endl;
             }
