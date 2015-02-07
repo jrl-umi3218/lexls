@@ -842,6 +842,29 @@ namespace LexLS
             return FoundBetterDescentDirection;
         }
 
+        // for convenience (@todo introduce enum)
+        void solve(Index solve_option)
+        {
+            switch(solve_option){
+                
+            case 0:
+                solve();
+                break;
+
+            case 1:
+                solveLeastNorm_1();
+                break;
+                
+            case 2:
+                solveLeastNorm_2();
+                break;
+
+            case 3:
+                solveLeastNorm_3();
+                break;
+            }
+        }
+
         /**
            \brief Back-solve accounting for the zero blocks due to singular constraints
            
