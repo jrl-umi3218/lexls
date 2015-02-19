@@ -1,0 +1,474 @@
+\documentclass[12pt,a4paper]{article}
+
+\newcommand{\abs}[1]{\left\lvert#1\right\rvert}
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
+\newcommand{\minimize}[1]{\mathop{\mbox{minimize}}_{#1} \ \ }
+\newcommand{\maximize}[1]{\mathop{\mbox{maximize}}_{#1} \ \ }
+\newcommand{\lex}[1]{\mbox{lex}\mathop{\mbox{minimize}}_{#1} \ \ }
+\newcommand{\st}[0]{\mbox{subject to} \ \ }
+\newcommand{\argmin}[1]{\mbox{arg} \min_{#1} \ }
+
+\usepackage{graphicx,color,psfrag}
+\usepackage{tabularx,colortbl}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{epsfig}
+\usepackage[sans]{dsfont} 
+\usepackage{bbm} 
+\usepackage{amsmath,bm}
+\usepackage{verbatim}  
+\usepackage{color}     
+\usepackage{subfigure} 
+\usepackage{hyperref}  
+\usepackage{scalefnt}
+\usepackage{mathtools}
+
+\usepackage[ruled,vlined]{algorithm2e}
+
+\usepackage{fancyvrb} % use verbatim in align
+
+\usepackage{accents}
+\newcommand{\ubar}[1]{\underaccent{\bar}{#1}}
+
+\usepackage{pifont}
+
+\usepackage[top=2cm, bottom=2cm, left=2cm, right=2cm]{geometry}
+
+\begin{document}
+
+\SaveVerb{DEFAULT_OBJECTIVE}|DEFAULT_OBJECTIVE|
+\SaveVerb{SIMPLE_BOUNDS_OBJECTIVE}|SIMPLE_BOUNDS_OBJECTIVE|
+\SaveVerb{CTR_INACTIVE}|CTR_INACTIVE|
+\SaveVerb{CTR_ACTIVE_EQ}|CTR_ACTIVE_EQ|
+\SaveVerb{CTR_ACTIVE_UB}|CTR_ACTIVE_UB|
+\SaveVerb{CTR_ACTIVE_LB}|CTR_ACTIVE_LB|
+\SaveVerb{type}|type|
+\SaveVerb{true}|true|
+\SaveVerb{false}|false|
+\SaveVerb{determine_ctr_type}|determine_ctr_type|
+\SaveVerb{modify_type_inactive}|modify_type_inactive|
+\SaveVerb{modify_type_active}|modify_type_active|
+\SaveVerb{x_guess_is_provided}|x_guess_is_provided|
+\SaveVerb{modify_x_guess}|modify_x_guess|
+\SaveVerb{update_x_guess}|update_x_guess|
+\SaveVerb{lexlse}|lexlse|
+
+\section{Hot-start related input (a summary)}
+
+$\mathcal{W}^{\mathit{guess}}$ will denote a user guess only for the active {\bf inequality}
+constraints. $\mathcal{W}^{(0)}$ is the actual initial working set which is used to solve
+\UseVerb{lexlse}($\mathcal{W}^{(0)}$). $\mathcal{W}^{(0)}$ contains all equality constraints (which are
+detected internally) and may contain active inequality constraints. $x^{\mathit{guess}}$ denotes the
+initial guess for $x$ specified by the user, while $x^{(0)}$ is the actual initial point used in the
+algorithm (they need not be the same).
+
+\begin{itemize}
+\item {\color{blue}$\{\}$}
+
+  Equality constraints are detected internally and included in $\mathcal{W}^{(0)}$.
+
+\item {\color{blue}$\{\mathcal{W}^{\mathit{guess}}\}$}
+
+  $\mathcal{W}^{(0)} \leftarrow \mathcal{W}^{\mathit{guess}}$. Equality constraints are detected
+  internally and included in $\mathcal{W}^{(0)}$. 
+
+\item {\color{blue}$\{\mathcal{W}^{\mathit{guess}}, x^{\mathit{guess}}\}$} + flags (or when
+  $\mathcal{W}^{\mathit{guess}} = \{\}$, one could simply use {\color{blue}$\{x^{\mathit{guess}}\}$})
+
+  \begin{itemize}
+  \item[\ding{237}] {\bf IF}
+    
+    \begin{itemize}
+    \item \UseVerb{modify_x_guess} = \UseVerb{false}
+    \item \UseVerb{modify_type_inactive} = \UseVerb{false} 
+    \item \UseVerb{modify_type_active} = \UseVerb{false}
+    \end{itemize}
+    %
+    $\mathcal{W}^{(0)} \leftarrow \mathcal{W}^{\mathit{guess}}$. Equality constraints are detected
+    internally and included in $\mathcal{W}^{(0)}$. 
+
+  \item[\ding{237}] {\bf ELSE IF}
+
+    \begin{itemize}
+    \item \UseVerb{modify_x_guess} = \UseVerb{false}
+    \item {\color{blue}\UseVerb{modify_type_inactive} = \UseVerb{true}}
+    \item \UseVerb{modify_type_active} = \UseVerb{false}
+    \end{itemize}
+    % 
+    $\mathcal{W}^{(0)} \leftarrow \mathcal{W}^{\mathit{guess}}$. Additional inequality constraints
+    might be activated as well. Equality constraints are detected internally and included in
+    $\mathcal{W}^{(0)}$.
+
+  \item[\ding{237}] {\bf ELSE IF}
+
+    \begin{itemize}
+    \item \UseVerb{modify_x_guess} = \UseVerb{false}
+    \item \UseVerb{modify_type_inactive} = \UseVerb{false} 
+    \item {\color{blue}\UseVerb{modify_type_active} = \UseVerb{true}}
+    \end{itemize}
+    % 
+    $\mathcal{W}^{(0)} \leftarrow \mathcal{W}^{\mathit{guess}}$. Some inequality constraints
+    might be dropped. Equality constraints are detected internally and included in
+    $\mathcal{W}^{(0)}$.
+
+  \item[\ding{237}] {\bf ELSE IF}
+
+    \begin{itemize}
+    \item {\color{blue}\UseVerb{modify_x_guess} = \UseVerb{true}}
+    \item \UseVerb{modify_type_inactive} = \UseVerb{false} 
+    \item \UseVerb{modify_type_active} = \UseVerb{false}
+    \end{itemize}
+    %
+    $\mathcal{W}^{(0)} \leftarrow \mathcal{W}^{\mathit{guess}}$. Equality constraints are detected
+    internally and included in $\mathcal{W}^{(0)}$. $x^{\mathit{guess}}$ could be modified in order
+    to satisfy simple bounds (associated with the highest priority objective). This modification is
+    performed with the aim of ensuring $v_i^{(0)} = 0$ corresponding to simple bounds.
+
+  \item[\ding{237}] {\bf ELSE}
+
+    A more complex behavior (see below).
+
+  \end{itemize}
+
+\item {\color{blue}$\{\mathcal{W}^{(0)}, x^{(0)}, v^{(0)}\}$}
+
+  Advanced initialization.
+
+\end{itemize}
+
+\clearpage
+
+\section{Types \& flags}
+
+\subsection{Types of objectives}
+
+\begin{enumerate}
+\item \UseVerb{DEFAULT_OBJECTIVE}: consists of general constraints
+%
+  \begin{align} \label{eq.ctr}
+    \ubar{b}_i \leq a_i^Tx -v_i \leq \bar{b}_i.
+  \end{align}
+
+\item \UseVerb{SIMPLE_BOUNDS_OBJECTIVE}: consists of simple bounds (only for highest priority objective)
+%
+  \begin{align} \label{eq.simple_bounds}
+    \ubar{b}_i \leq x_i - v_i \leq \bar{b}_i.
+  \end{align}
+
+\end{enumerate}
+
+\subsection{Types of constraints}
+
+\begin{enumerate}
+\item \UseVerb{CTR_INACTIVE}
+
+  \begin{itemize}
+  \item ({\bf as solver output}) The $i$-th constraint is inactive at the solution. 
+  \item ({\bf as user input}) Specifies that the $i$-th constraint should not be included in
+    the initial working set, unless
+    %
+    \begin{itemize}
+    \item[\ding{237}] $\ubar{b}_i = \bar{b}_i$ (the $i$-th constraint is automatically modified to
+      \UseVerb{CTR_ACTIVE_EQ}).
+    \item[\ding{237}] \UseVerb{modify_type_inactive} = \UseVerb{true} (see Algorithm~\ref{alg.type}).
+    \end{itemize}
+  \end{itemize}
+
+\item \UseVerb{CTR_ACTIVE_EQ}
+
+  \begin{itemize}
+  \item ({\bf as solver output}) The $i$-th constraint is $a_i^Tx - v_i = \ubar{b}_i = \bar{b}_i$.
+  \item ({\bf as user input}) Equality constraints are detected internally in the solver and
+    a user input \UseVerb{CTR_ACTIVE_EQ} is disregarded. When a constraint is set to be of type
+    \UseVerb{CTR_ACTIVE_EQ} it is included in the working set (and can never be deactivated).
+  \end{itemize}
+
+\item \UseVerb{CTR_ACTIVE_LB}
+
+  \begin{itemize}
+  \item ({\bf as solver output}) Lower bound is active ($a_i^Tx^{\star} - v_i^{\star} = \ubar{b}_i$) at the solution.
+  \item ({\bf as user input}) Specifies that the $i$-th constraint should be included in the
+    initial working set as $a_i^Tx - v_i = \ubar{b}_i$, unless
+    \begin{itemize}
+    \item[\ding{237}] $\ubar{b}_i = \bar{b}_i$ (the $i$-th constraint is automatically modified to
+      \UseVerb{CTR_ACTIVE_EQ}).
+    \item[\ding{237}] \UseVerb{modify_type_active} = \UseVerb{true} (see Algorithm~\ref{alg.type}).
+    \end{itemize}
+  \end{itemize}
+
+\item \UseVerb{CTR_ACTIVE_UB}
+
+  \begin{itemize}
+  \item ({\bf as solver output}) Upper bound is active ($a_i^Tx^{\star} - v_i^{\star} = \bar{b}_i$) at the solution.
+  \item ({\bf as user input}) Specifies that the $i$-th constraint should be included in the
+    initial working set as $a_i^Tx - v_i = \bar{b}_i$, unless
+    \begin{itemize}
+    \item[\ding{237}] $\ubar{b}_i = \bar{b}_i$ (the $i$-th constraint is automatically modified to
+      \UseVerb{CTR_ACTIVE_EQ}).
+    \item[\ding{237}] \UseVerb{modify_type_active} = \UseVerb{true} (see Algorithm~\ref{alg.type}).
+    \end{itemize}
+  \end{itemize}
+
+\end{enumerate}
+
+\subsection{Flags}
+
+In this section it is assumed that $\ubar{b}_i \neq \bar{b}_i$ (recall that the type of a constraint
+with $\ubar{b}_i = \bar{b}_i$ is automatically set to \UseVerb{CTR_ACTIVE_EQ}). The flags below are related
+to specifying the initial guess.
+
+\begin{itemize}
+
+\item \UseVerb{modify_type_inactive}
+
+  \begin{itemize}
+  \item[\ding{237}] \UseVerb{false} ({\bf default}): constraints with (user specified) type \UseVerb{CTR_INACTIVE} are not included in $\mathcal{W}^{(0)}$.
+  \item[\ding{237}] \UseVerb{true}: enables the solver to include additional inequality constraints to
+    $\mathcal{W}^{\mathit{guess}}$, that is, some constraints with (user specified) type
+    \UseVerb{CTR_INACTIVE} maybe be activated (see Algorithm~\ref{alg.type}).
+  \end{itemize}
+
+\item \UseVerb{modify_type_active}
+
+  \begin{itemize}
+  \item[\ding{237}] \UseVerb{false} ({\bf default}): constraints with (user specified) type \UseVerb{CTR_ACTIVE_LB} and \UseVerb{CTR_ACTIVE_UB} are included in $\mathcal{W}^{(0)}$.
+  \item[\ding{237}] \UseVerb{true}: enables the solver to modify the type of constraints in $\mathcal{W}^{\mathit{guess}}$ (or to deactivate them) (see Algorithm~\ref{alg.type}).
+  \end{itemize}
+
+\item \UseVerb{modify_x_guess}
+
+  \begin{itemize}
+  \item[\ding{237}] \UseVerb{false} ({\bf default}): $x^{\mathit{guess}}$ cannot be modified by the solver.
+  \item[\ding{237}] \UseVerb{true}: enables the solver to modify $x^{\mathit{guess}}$ only for satisfying simple
+    bounds in the objective with highest priority (see Algorithm~\ref{alg.x_guess}).
+  \end{itemize} 
+
+\item \UseVerb{x_guess_is_provided}
+
+  \begin{itemize}
+  \item[\ding{237}] \UseVerb{false} ({\bf default}): $x^{\mathit{guess}}$ is not specified.
+
+  \item[\ding{237}] \UseVerb{true}: $x^{\mathit{guess}}$ is specified (by the user).
+
+  \end{itemize} 
+
+  \noindent When $x^{\mathit{guess}}$ has not been specified, a user input \UseVerb{CTR_INACTIVE},
+  \UseVerb{CTR_ACTIVE_LB} or \UseVerb{CTR_ACTIVE_UB} is not modified in the solver (provided that
+  $\ubar{b}_i \neq \bar{b}_i$). Note that the flag \UseVerb{x_guess_is_provided} is not directly set
+  by the user.
+  
+\end{itemize}
+
+\clearpage
+
+\section{Initialization of the active-set method}
+
+Let $\mathcal{W}^{(k)}$ be the working set at the $k$-th iteration. The solution of
+\UseVerb{lexlse}($\mathcal{W}^{(k)}$) will be denoted by $(x^{\star(k)},v^{\star(k)})$, where for
+$i\not\in \mathcal{W}^{(k)}$, $v_i^{\star(k)} = 0$.
+
+\subsection{Phase 1}
+
+\begin{itemize}
+\item form $\mathcal{W}^{(0)}$ using Algorithm~\ref{alg.W0}
+\item compute $(x^{\star(0)},v^{\star(0)})$ by solving \UseVerb{lexlse}($\mathcal{W}^{(0)}$)
+\item determine $x^{(0)}$
+  %
+    \begin{align*}
+      x^{(0)} \leftarrow \left\{ 
+      \begin{array}{l l}
+        x^{\mathit{guess}} & \quad \text{if} \,\,\,\, \UseVerb{x_guess_is_provided} \\
+        x^{\star(0)} & \quad \text{otherwise}
+      \end{array} \right.
+    \end{align*}
+
+\item determine $v_i^{(0)}$
+%
+    \begin{align*}
+      v_i^{(0)} \leftarrow \left\{ 
+      \begin{array}{l l}
+        \eqref{eq.v0_active} & \quad \text{if} \,\,\,\, i\in\mathcal{W}^{(0)} \\
+        \eqref{eq.v0_inactive} & \quad \text{if} \,\,\,\, i\not\in\mathcal{W}^{(0)}
+      \end{array} \right.
+    \end{align*}
+    %
+    If $x^{\mathit{guess}}$ is not initialized, one could use directly $v_i^{(0)} \leftarrow v_i^{\star(0)}$
+    for $i\in\mathcal{W}^{(0)}$ instead of~\eqref{eq.v0_active}.
+
+\item determine $(\Delta x^{(0)},\Delta  v^{(0)})$
+%
+  \begin{align*}
+    \begin{bmatrix}\Delta x^{(0)} \\ \Delta v^{(0)}\end{bmatrix} \leftarrow
+    \begin{bmatrix}x^{\star(0)} \\ v^{\star(0)}\end{bmatrix} - 
+    \begin{bmatrix}x^{(0)} \\ v^{(0)}\end{bmatrix}
+  \end{align*}
+
+\item the active-set search starts ...
+\end{itemize}
+
+\subsection{Initialize $v_i^{(0)}, i\in\mathcal{W}^{(0)}$}
+
+\begin{align} \label{eq.v0_active}
+  v_i^{(0)} \leftarrow \left\{ 
+  \begin{array}{l l}
+    a_i^Tx^{(0)} - \bar{b}_i & \quad \UseVerb{CTR_ACTIVE_UB} \,\,\,\, \text{\bf or} \,\,\,\, \UseVerb{CTR_ACTIVE_EQ} \\
+    a_i^Tx^{(0)} - \ubar{b}_i & \quad \UseVerb{CTR_ACTIVE_LB}
+  \end{array} \right.
+\end{align}
+
+\subsection{Initialize $v_i^{(0)}, i\not\in\mathcal{W}^{(0)}$}
+%
+\begin{align} \label{eq.v0_inactive}
+  v_i^{(0)} \leftarrow \left\{ 
+  \begin{array}{l l}
+    0 & \quad a_i^Tx^{(0)} \in [\ubar{b}_i,\bar{b}_i] \\
+    a^T_ix^{(0)} - \frac{1}{2}(\ubar{b}_i + \bar{b}_i) & \quad \text{otherwise}
+  \end{array} \right.
+\end{align}
+%
+When one of $\abs{\bar{b}_i}$ or $\abs{\ubar{b}_i}$ is very large, we might want to have additional
+cases. % todo
+
+\clearpage
+
+\section{Algorithms}
+
+\subsection{Determine the type of the $i$-th constraint}
+
+\begin{algorithm} \label{alg.type}
+  \caption{determine the type of the $i$-th constraint}
+
+  \KwIn{\UseVerb{determine_ctr_type}($i$)}
+  \KwData{\UseVerb{type}$\in\{$\UseVerb{CTR_INACTIVE}, \UseVerb{CTR_ACTIVE_LB}, \UseVerb{CTR_ACTIVE_UB}, \UseVerb{CTR_ACTIVE_EQ}$\}$ 
+    ({\color{blue}user input}), \\
+    \hspace{1.4cm}\UseVerb{x_guess_is_provided}, \\
+    \hspace{1.4cm}\UseVerb{modify_type_inactive}, \\
+    \hspace{1.4cm}\UseVerb{modify_type_active}
+  }
+  \KwOut{\UseVerb{type}}
+  
+  \vspace{0.2cm}
+
+  \If{$\ubar{b}_i = \bar{b}_i$}{\KwRet{\upshape\color{blue}\UseVerb{CTR_ACTIVE_EQ}}}
+
+  \vspace{0.2cm}
+
+  \If{\upshape\UseVerb{type} = \UseVerb{CTR_ACTIVE_EQ}}
+      {
+        \UseVerb{type} $\leftarrow$ \UseVerb{CTR_INACTIVE} \tcc{(possibly) report an error} 
+      }
+
+  \vspace{0.2cm}
+
+  \If{\upshape\color{blue}\UseVerb{x_guess_is_provided}}
+      {
+        \vspace{0.2cm}
+        
+        \If{\upshape{\color{blue}\UseVerb{type} = \UseVerb{CTR_INACTIVE}} {\bf and} \color{blue}\UseVerb{modify_type_inactive}}{
+          \If{\upshape$a_i^Tx^{\mathit{guess}} \leq \ubar{b}_i$}{\KwRet \UseVerb{CTR_ACTIVE_LB}}
+          \If{\upshape$a_i^Tx^{\mathit{guess}} \geq \bar{b}_i$}{\KwRet \UseVerb{CTR_ACTIVE_UB}}
+        }
+        
+        \vspace{0.2cm}
+        
+        \If{\upshape{\color{blue}\UseVerb{type} = \UseVerb{CTR_ACTIVE_LB}} {\bf and} \color{blue}\UseVerb{modify_type_active}}
+           {
+             \If{\upshape$a_i^Tx^{\mathit{guess}} > \ubar{b}_i$}
+                {
+                  \eIf{\upshape$a_i^Tx^{\mathit{guess}} < \bar{b}_i$}{\KwRet\UseVerb{CTR_INACTIVE}}{\KwRet\UseVerb{CTR_ACTIVE_UB}}
+                }
+           }
+        
+        \vspace{0.2cm}
+        
+        \If{\upshape{\color{blue}\UseVerb{type} = \UseVerb{CTR_ACTIVE_UB}} {\bf and} \color{blue}\UseVerb{modify_type_active}}
+           {
+             \If{\upshape$a_i^Tx^{\mathit{guess}} < \bar{b}_i$}
+                {
+                  \eIf{\upshape$a_i^Tx^{\mathit{guess}} > \ubar{b}_i$}{\KwRet\UseVerb{CTR_INACTIVE}}{\KwRet\UseVerb{CTR_ACTIVE_LB}}
+                }
+           }
+      }
+      \KwRet \UseVerb{type}
+\end{algorithm}
+
+\clearpage
+
+\subsection{Update $x^{\mathit{guess}}$}
+
+\begin{algorithm} \label{alg.x_guess}
+  \caption{update $x^{\mathit{guess}}$}
+
+  \KwIn{\UseVerb{update_x_guess}($x^{\mathit{guess}}$)}
+  \KwData{\UseVerb{type}$\in\{$\UseVerb{CTR_INACTIVE}, \UseVerb{CTR_ACTIVE_LB}, \UseVerb{CTR_ACTIVE_UB}, \UseVerb{CTR_ACTIVE_EQ}$\}$ 
+    ({\color{blue}from Algorithm~\ref{alg.type}}), \\
+    \hspace{1.2cm} \UseVerb{modify_x_guess}}
+  \KwOut{(possibly) modified $x^{\mathit{guess}}$}
+  
+  \vspace{0.2cm}
+
+  \eIf{\upshape\color{blue}\UseVerb{modify_x_guess} = \UseVerb{false}}{\KwRet $x^{\mathit{guess}}$}
+      {
+        \vspace{0.2cm}
+
+        \For{$i \in \{$all constraints in first objective$\}$}
+            {
+              \vspace{0.2cm}
+              
+              $k \leftarrow $ index of element of $x$ participating in the $i$-th simple bound
+
+              \vspace{0.2cm}
+
+              \If{\upshape{\color{blue}\UseVerb{type} = \UseVerb{CTR_ACTIVE_LB}}}
+                 {$x_k^{\mathit{guess}} \leftarrow \ubar{b}_i$}
+           
+              \vspace{0.2cm}
+           
+              \If{\upshape{\color{blue}\UseVerb{type} = \UseVerb{CTR_ACTIVE_UB}} {\bf or} {\color{blue}\UseVerb{type} = \UseVerb{CTR_ACTIVE_EQ}}}
+                 {$x_k^{\mathit{guess}} \leftarrow \bar{b}_i$}
+              
+              \vspace{0.2cm}
+              
+              \If{\upshape{\color{blue}\UseVerb{type} = \UseVerb{CTR_INACTIVE}}}
+                 {$x_k^{\mathit{guess}} \leftarrow \frac{1}{2}(\ubar{b}_i + \bar{b}_i)$ \tcc{other choices are possible (skip for now)}}
+            }
+      }
+\end{algorithm}
+
+\subsection{Form $W^{(0)}$}
+
+\begin{algorithm} \label{alg.W0}
+  \caption{form $W^{(0)}$}
+  \KwData{\UseVerb{x_guess_is_provided}, \UseVerb{modify_x_guess}}
+  
+  \vspace{0.2cm}
+
+  \eIf{\upshape{\color{blue}\UseVerb{x_guess_is_provided}} {\bf and} {\color{blue}\UseVerb{modify_x_guess}} {\bf and} {\color{blue}\UseVerb{SIMPLE_BOUNDS_OBJECTIVE}}}
+      {
+        \For{$i \in \{$all constraints in first objective$\}$}
+            {
+              \UseVerb{type}($i$) $\leftarrow$ \UseVerb{determine_ctr_type}($i$) 
+            }
+
+        \vspace{0.2cm}
+
+        {\color{blue}\UseVerb{update_x_guess}($x^{\mathit{guess}}$)}
+        
+        \vspace{0.2cm}
+        
+        \For{$i \in \{$all constraints in remaining objectives$\}$}
+            {
+              \UseVerb{type}($i$) $\leftarrow$ \UseVerb{determine_ctr_type}($i$) 
+            }
+      }
+      {
+        \For{$i \in \{$all constraints$\}$}
+            {
+              \UseVerb{type}($i$) $\leftarrow$ \UseVerb{determine_ctr_type}($i$) 
+            }
+      }
+\end{algorithm}
+
+\end{document}
+
+%%%EOF
