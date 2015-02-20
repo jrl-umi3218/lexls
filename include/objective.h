@@ -6,755 +6,674 @@
 
 namespace LexLS
 {
-    /**
-       \brief Defines an objective of a LexLSI problem
-
-       \todo Remove throw Exception("Unknown objective type") and others like it. This should have
-       to be checked at the api level.
-    */
-    class Objective
-    {
-    public:
-
+    namespace internal
+    {    
         /**
-           \brief Default constructor
+           \brief Defines an objective of a LexLSI problem
         */
-        Objective(): 
-            nCtr(0),
-            ObjType(DEFAULT_OBJECTIVE),
-            w_is_initialized(false) {}
-
-        /**
-           \brief Resize the objective
-
-           \param[in] nCtr_    Number of constraints in an objective.
-           \param[in] nVar_    Number of variables (without the residuals).
-           \param[in] ObjType_ Type of objective
-        */
-        void resize(Index nCtr_, Index nVar_, ObjectiveType ObjType_)
+        class Objective
         {
-            ObjType = ObjType_;
-            nCtr    = nCtr_;
-            nVar    = nVar_;
+        public:
 
-            WorkingSet.resize(nCtr);
-
-            w.resize(nCtr);
-            dw.resize(nCtr);
-            
-            wStar.resize(nCtr);
-
-            Ax.resize(nCtr);
-            Adx.resize(nCtr);
-
-            if (ObjType == DEFAULT_OBJECTIVE)
-            {
-                data.resize(nCtr,nVar + 2); // [A,LowerBounds,UpperBounds]
-            }
-            else if (ObjType == SIMPLE_BOUNDS_OBJECTIVE_HP || ObjType == SIMPLE_BOUNDS_OBJECTIVE)
-            {
-                data.resize(nCtr,2);         // [LowerBounds,UpperBounds]
-                VarIndex.resize(nCtr);
-            }
-            else
-            {
-                throw Exception("Unknown objective type");
-            }
-
-            initialize();
-        }
-
-        /**
-           \brief Given x, generate a w, such that (x,w) is a feasible initial pair for the
-           constraints involved in the objective 
-
-           \note #Ax is initialized
-        */
-        void phase1(dVectorType &x)
-        {
-            Index CtrIndex, lbIndex, ubIndex;
-            ConstraintType CtrType;
-            
-            if (ObjType == DEFAULT_OBJECTIVE)
-            {
-                lbIndex = nVar;
-                ubIndex = nVar+1;
-                
-                Ax = data.leftCols(nVar)*x; // initialize Ax
-            }
-            else if (ObjType == SIMPLE_BOUNDS_OBJECTIVE || ObjType == SIMPLE_BOUNDS_OBJECTIVE_HP)
-            {
-                lbIndex = 0;
-                ubIndex = 1;
-                
-                for (Index k=0; k<nCtr; k++) // initialize Ax
-                    Ax(k) = x(VarIndex[k]); 
-            }
-            else
-            {
-                throw Exception("Unknown objective type");
-            }
-
-            if (!w_is_initialized)
-            {
-                w  = Ax - 0.5*(data.col(lbIndex)+data.col(ubIndex)); 
-            
-                // overwrite the residual of the active constraints
-                for (Index CtrIndexActive=0; CtrIndexActive<getActiveCtrCount(); CtrIndexActive++)
-                {
-                    CtrIndex = getActiveCtrIndex(CtrIndexActive); // CtrIndexActive --> CtrIndex
-                    CtrType  = getActiveCtrType(CtrIndexActive);
-
-                    if (CtrType == LOWER_BOUND)
-                        w.coeffRef(CtrIndex) = Ax.coeffRef(CtrIndex) - data.coeffRef(CtrIndex,lbIndex);
-                    else if (CtrType == UPPER_BOUND)
-                        w.coeffRef(CtrIndex) = Ax.coeffRef(CtrIndex) - data.coeffRef(CtrIndex,ubIndex);
-                }
-            }
-
-            // FIXME: Temporary hack (TO RECODE THIS FUNCTION)
-            // The problem with the above implementation is that, for inactive constraints, even when 
-            // lb[i] <= Ax[i] <= ub[i], a nonzero w[i] can be generated. So overwrite w[i] = 0
-            /*
-            for (Index CtrIndex=0; CtrIndex<nCtr; CtrIndex++)
-            {
-                if (!isActive(CtrIndex))
-                {
-                    if (Ax.coeffRef(CtrIndex) >= data.coeffRef(CtrIndex,lbIndex) && 
-                        Ax.coeffRef(CtrIndex) <= data.coeffRef(CtrIndex,ubIndex))
-                    {
-                        //printf("w[%d]: {%f <= %f <= %f} \n",CtrIndex,data.coeffRef(CtrIndex,lbIndex), Ax.coeffRef(CtrIndex), data.coeffRef(CtrIndex,ubIndex));
-                        w.coeffRef(CtrIndex) = 0.0;
-                    }
-                }
-            }
+            /**
+               \brief Default constructor
             */
+            Objective(): 
+                nCtr(0),
+                obj_type(GENERAL_OBJECTIVE){}
 
-        }
+            /**
+               \brief Resize the objective
 
-        /** 
-            \brief Includes in the working set the constraint with index CtrIndex (and sets its
-            type)
-
-            \param[in] CtrIndex         Index of constraint in a given LexLSI objective
-            \param[in] type             Type of the constraint to be included in the working set.
-        */
-        void activate(Index CtrIndex, ConstraintType type)
-        {
-            if (CtrIndex >= nCtr)
-                throw Exception("CtrIndex >= nCtr");
-            
-            WorkingSet.activate(CtrIndex, type);
-        }
-
-        /** 
-            \brief Removes from the working set the constraint with index CtrIndexActive
-
-            \param[in] CtrIndexActive Index of constraint in the working set in a given objective,
-            i.e., Obj[ObjIndex].WorkingSet.active[CtrIndexActive] will be removed.
-        */
-        void deactivate(Index CtrIndexActive)
-        {
-            if (CtrIndexActive >= getActiveCtrCount())
+               \param[in] nCtr_     Number of constraints in an objective.
+               \param[in] nVar_     Number of variables (without the constraint violations).
+               \param[in] obj_type_ Objective type
+            */
+            void resize(Index nCtr_, Index nVar_, ObjectiveType obj_type_)
             {
-                throw Exception("CtrIndexActive >= number of active constraints");
+                obj_type = obj_type_;
+                nCtr     = nCtr_;
+                nVar     = nVar_;
+
+                working_set.resize(nCtr);
+
+                v.resize(nCtr);
+                dv.resize(nCtr);
+
+                Ax.resize(nCtr);
+                Adx.resize(nCtr);
+
+                if (obj_type == GENERAL_OBJECTIVE)
+                {
+                    data.resize(nCtr,nVar + 2); // [A,LowerBounds,UpperBounds]
+
+                    lb_index = nVar; 
+                    ub_index = nVar+1; 
+                }
+                else if (obj_type == SIMPLE_BOUNDS_OBJECTIVE)
+                {
+                    data.resize(nCtr,2);         // [LowerBounds,UpperBounds]
+                    var_index.resize(nCtr);
+
+                    lb_index = 0; 
+                    ub_index = 1; 
+                }
+                else
+                {
+                    throw Exception("Unknown objective type");
+                }
+
+                initialize();
             }
 
-            WorkingSet.deactivate(CtrIndexActive);
-        }
-
-        /** 
-            \brief Form an LexLSE problem (using the current working set)
-
-            \verbatim
-            -----------------------------------------
-            Example (handling of simple bounds)
-            -----------------------------------------
-                             nVar = 6
-                         VarIndex = {3,5,4}
-                    active bounds = {2,0}
-                  inactive bounds = {1}
-                             type = {LOWER_BOUND, 
-                                     UPPER_BOUND}
-             -----------------------------------------
-                      data(0,0)  = x(3)
-                      data(1,0) <= x(5) <= data(1,1)
-                                   x(4)  = data(2,1)
-             -----------------------------------------
-                                2 = getActiveCtrIndex(0)
-                                4 = getVarIndex(2)
-             -----------------------------------------
-                                1 = getInactiveCtrIndex(0)
-                                3 = getVarIndex(1)
-             -----------------------------------------
-             \endverbatim
-        */
-        void formLexLSE(LexLSE& lexlse, Index& counter, Index ObjIndex)
-        {
-            Index CtrIndex;
-            ConstraintType CtrType;
-
-            if (ObjType == SIMPLE_BOUNDS_OBJECTIVE_HP)
+            /**
+               \brief Initialize Ax
+            */
+            void initialize_Ax(dVectorType &x)
             {
-                Index VarIndex;
-                lexlse.setFixedVariablesCount(getActiveCtrCount());
-                for (Index CtrIndexActive=0; CtrIndexActive<getActiveCtrCount(); CtrIndexActive++)
+                if (obj_type == GENERAL_OBJECTIVE)
                 {
-                    CtrIndex = getActiveCtrIndex(CtrIndexActive); // CtrIndexActive --> CtrIndex
-                    VarIndex = getVarIndex(CtrIndex);             // CtrIndex       --> VarIndex
-                    CtrType  = getActiveCtrType(CtrIndexActive);
-                        
-                    if (CtrType == LOWER_BOUND)
-                        lexlse.fixVariable(VarIndex, data.coeffRef(CtrIndex,0), LOWER_BOUND);
-                    else if (CtrType == UPPER_BOUND)
-                        lexlse.fixVariable(VarIndex, data.coeffRef(CtrIndex,1), UPPER_BOUND);
-                    else if (CtrType == EQUALITY_CONSTRAINT)
-                        lexlse.fixVariable(VarIndex, data.coeffRef(CtrIndex,1), EQUALITY_CONSTRAINT); // set equal to UPPER_BOUND by convention
-                    else
+                    Ax = data.leftCols(nVar)*x;
+                }
+                else if (obj_type == SIMPLE_BOUNDS_OBJECTIVE)
+                {
+                    for (Index k=0; k<nCtr; k++)
                     {
-                        throw Exception("CtrType is UNKNOWN");
+                        Ax(k) = x(var_index[k]); 
                     }
                 }
             }
-            else if (ObjType == SIMPLE_BOUNDS_OBJECTIVE)
+
+            /**
+               \brief Given x, generate a v such that (x,v) is a feasible initial pair for the
+               constraints involved in the objective 
+
+               \note #Ax is initialized
+            */
+            void phase1(dVectorType &x)
             {
-                // FIXME: to implement ...
-                throw Exception("WE SHOULD NOT BE HERE (YET)");
+                initialize_Ax(x);
+
+                Index CtrIndex;
+                ConstraintActivationType CtrType;
+            
+                // put in function initialize_w0
+
+                v  = Ax - 0.5*(data.col(lb_index)+data.col(ub_index)); 
+            
+                // overwrite v for the active constraints
+                for (Index CtrIndexActive=0; CtrIndexActive<getActiveCtrCount(); CtrIndexActive++)
+                {
+                    CtrIndex = getActiveCtrIndex(CtrIndexActive); // CtrIndexActive --> CtrIndex
+                    CtrType  = getActiveCtrType(CtrIndexActive);
+                
+                    if (CtrType == CTR_ACTIVE_LB)
+                        v.coeffRef(CtrIndex) = Ax.coeffRef(CtrIndex) - data.coeffRef(CtrIndex,lb_index);
+                    else if (CtrType == CTR_ACTIVE_UB)
+                        v.coeffRef(CtrIndex) = Ax.coeffRef(CtrIndex) - data.coeffRef(CtrIndex,ub_index);
+                }
+            
+                // For inactive constraints, even when lb[i] <= Ax[i] <= ub[i], a nonzero v[i] can be
+                // generated. So overwrite v[i] = 0.
+                for (Index CtrIndex=0; CtrIndex<nCtr; CtrIndex++)
+                {
+                    if (!isActive(CtrIndex))
+                    {
+                        if (Ax.coeffRef(CtrIndex) >= data.coeffRef(CtrIndex,lb_index) && 
+                            Ax.coeffRef(CtrIndex) <= data.coeffRef(CtrIndex,ub_index))
+                        {
+                            v.coeffRef(CtrIndex) = 0.0;
+                        }
+                    }
+                }
+
             }
-            else if (ObjType == DEFAULT_OBJECTIVE)
+
+            /** 
+                \brief Includes in the working set the constraint with index CtrIndex (and sets its type)
+
+                \param[in] CtrIndex         Index of constraint in a given LexLSI objective
+                \param[in] type             Type of the constraint to be included in the working set.
+            */
+            void activate(Index CtrIndex, ConstraintActivationType type)
+            {
+                if (CtrIndex >= nCtr)
+                {
+                    throw Exception("CtrIndex >= nCtr");
+                }
+
+                working_set.activate(CtrIndex, type);
+            }
+
+            /** 
+                \brief Removes from the working set the constraint with index CtrIndexActive
+
+                \param[in] CtrIndexActive Index of constraint in the working set in a given objective,
+                i.e., Obj[ObjIndex].working_set.active[CtrIndexActive] will be removed.
+            */
+            void deactivate(Index CtrIndexActive)
+            {
+                if (CtrIndexActive >= getActiveCtrCount())
+                {
+                    throw Exception("CtrIndexActive >= number of active constraints");
+                }
+
+                working_set.deactivate(CtrIndexActive);
+            }
+
+            /** 
+                \brief Form an LexLSE problem (using the current working set)
+
+                \verbatim
+                -----------------------------------------
+                Example (handling of simple bounds)
+                -----------------------------------------
+                nVar = 6
+                var_index = {3,5,4}
+                active bounds = {2,0}
+                inactive bounds = {1}
+                type = {CTR_ACTIVE_LB, 
+                CTR_ACTIVE_UB}
+                -----------------------------------------
+                data(0,0)  = x(3)
+                data(1,0) <= x(5) <= data(1,1)
+                x(4)  = data(2,1)
+                -----------------------------------------
+                2 = getActiveCtrIndex(0)
+                4 = getVarIndex(2)
+                -----------------------------------------
+                1 = getInactiveCtrIndex(0)
+                3 = getVarIndex(1)
+                -----------------------------------------
+                \endverbatim
+            */
+            void formLexLSE(LexLSE& lexlse, Index& counter, Index ObjIndex)
+            {
+                Index CtrIndex;
+                ConstraintActivationType CtrType;
+
+                if (obj_type == SIMPLE_BOUNDS_OBJECTIVE)
+                {
+                    Index VarIndex;
+                    lexlse.setFixedVariablesCount(getActiveCtrCount());
+                    for (Index CtrIndexActive=0; CtrIndexActive<getActiveCtrCount(); CtrIndexActive++)
+                    {
+                        CtrIndex = getActiveCtrIndex(CtrIndexActive); // CtrIndexActive --> CtrIndex
+                        VarIndex = getVarIndex(CtrIndex);             // CtrIndex       --> VarIndex
+                        CtrType  = getActiveCtrType(CtrIndexActive);
+                        
+                        if (CtrType == CTR_ACTIVE_LB)
+                        {
+                            lexlse.fixVariable(VarIndex, data.coeffRef(CtrIndex,0), CTR_ACTIVE_LB);
+                        }
+                        else if (CtrType == CTR_ACTIVE_UB)
+                        {
+                            lexlse.fixVariable(VarIndex, data.coeffRef(CtrIndex,1), CTR_ACTIVE_UB);
+                        }
+                        else if (CtrType == CTR_ACTIVE_EQ)
+                        {
+                            lexlse.fixVariable(VarIndex, data.coeffRef(CtrIndex,1), CTR_ACTIVE_EQ); // set equal to upper bound by convention
+                        }
+                    }
+                }
+                else if (obj_type == GENERAL_OBJECTIVE)
+                {
+                    RealScalar rhs;
+                    for (Index CtrIndexActive=0; CtrIndexActive<getActiveCtrCount(); CtrIndexActive++)
+                    {
+                        CtrIndex = getActiveCtrIndex(CtrIndexActive); // CtrIndexActive --> CtrIndex
+                        CtrType  = getActiveCtrType(CtrIndexActive);
+
+                        if (CtrType == CTR_ACTIVE_EQ)
+                        {
+                            rhs = data.coeffRef(CtrIndex,nVar+1); // set equal to upper bound by convention
+                            lexlse.setCtrType(ObjIndex, CtrIndexActive, CTR_ACTIVE_EQ);
+                        } 
+                        else if (CtrType == CTR_ACTIVE_UB)
+                        {
+                            rhs = data.coeffRef(CtrIndex,nVar+1); // set equal to upper bound
+                            lexlse.setCtrType(ObjIndex, CtrIndexActive, CTR_ACTIVE_UB);
+                        }
+                        else if (CtrType == CTR_ACTIVE_LB)
+                        {
+                            rhs = data.coeffRef(CtrIndex,nVar);   // set equal to CTR_ACTIVE_LB
+                            lexlse.setCtrType(ObjIndex, CtrIndexActive, CTR_ACTIVE_LB);
+                        }
+
+                        lexlse.setCtr(counter, data.row(CtrIndex).head(nVar), rhs);
+                        
+                        counter++;
+                    }
+                }
+            }
+
+            /*
+              \brief Form #dv
+          
+              \verbatim
+              dv{inactive} =              0 - v{inactive}, where 0 corresponds to v{inactive}_star
+              dv{active}   = v{active}_star - v{active}
+              \endverbatim
+            */
+            void formStep(dVectorType &dx)
             {
                 RealScalar rhs;
+                Index CtrIndex;
+                ConstraintActivationType CtrType;
+
+                if (obj_type == GENERAL_OBJECTIVE)
+                {
+                    Adx = data.leftCols(nVar)*dx; // form Adx
+                }
+                else if (obj_type == SIMPLE_BOUNDS_OBJECTIVE)
+                {
+                    for (Index k=0; k<nCtr; k++) // form Adx
+                    {
+                        Adx(k) = dx(var_index[k]); 
+                    }
+                }
+
+                dv = -v;
                 for (Index CtrIndexActive=0; CtrIndexActive<getActiveCtrCount(); CtrIndexActive++)
                 {
                     CtrIndex = getActiveCtrIndex(CtrIndexActive); // CtrIndexActive --> CtrIndex
                     CtrType  = getActiveCtrType(CtrIndexActive);
 
-                    if (CtrType == EQUALITY_CONSTRAINT)
+                    if (CtrType == CTR_ACTIVE_EQ)
                     {
-                        rhs = data.coeffRef(CtrIndex,nVar+1); // set equal to UPPER_BOUND by convention
-                        lexlse.setCtrType(ObjIndex, CtrIndexActive, EQUALITY_CONSTRAINT);
-                    } 
-                    else if (CtrType == UPPER_BOUND)
-                    {
-                        rhs = data.coeffRef(CtrIndex,nVar+1); // set equal to UPPER_BOUND
-                        lexlse.setCtrType(ObjIndex, CtrIndexActive, UPPER_BOUND);
+                        rhs = data.coeffRef(CtrIndex,ub_index); // take upper bound by convention
                     }
-                    else if (CtrType == LOWER_BOUND)
+                    else if (CtrType == CTR_ACTIVE_UB)
                     {
-                        rhs = data.coeffRef(CtrIndex,nVar);   // set equal to LOWER_BOUND
-                        lexlse.setCtrType(ObjIndex, CtrIndexActive, LOWER_BOUND);
+                        rhs = data.coeffRef(CtrIndex,ub_index);
+                    }
+                    else if (CtrType == CTR_ACTIVE_LB)
+                    {
+                        rhs = data.coeffRef(CtrIndex,lb_index);
+                    }
+                
+                    // v{active}_star - v{active}
+                    dv.coeffRef(CtrIndex) += Ax.coeffRef(CtrIndex) + Adx.coeffRef(CtrIndex) - rhs;
+                }
+            }
+
+            /**
+               \brief Check for blocking constraints
+
+               \param[out] CtrIndexBlocking Index of blocking constraint.
+               \param[out] CtrTypeBlocking  Type of the blocking constraint.
+               \param[out] alpha            scaling factor for the step.
+
+               \return true if there are blocking constraints
+
+               \verbatim
+               -----------------------------------------
+               [a', -1]*([x;v] + alpha*[dx;dv]) <= b : CTR_ACTIVE_UB
+               b <= [a', -1]*([x;v] + alpha*[dx;dv])      : CTR_ACTIVE_LB
+               -----------------------------------------
+               den: a'*dx - dv
+               num: b - a'*x + v
+               ratio: num/den <-- this should be > 0 (in theory)
+           
+               CTR_ACTIVE_UB: check den > 0
+               CTR_ACTIVE_LB: check den < 0
+
+               alpha \in [0,1]
+               \endverbatim
+            */
+            bool checkBlockingConstraints(Index &CtrIndexBlocking, 
+                                          ConstraintActivationType &CtrTypeBlocking, 
+                                          RealScalar &alpha,
+                                          const RealScalar tol_feasibility)
+            {
+                bool condition;
+                RealScalar num, den, ratio, rhs, alpha_input = alpha;
+
+                Index CtrIndex;
+                ConstraintActivationType CtrType;
+                        
+                for (Index CtrIndexInactive=0; CtrIndexInactive<getInactiveCtrCount(); CtrIndexInactive++) // loop over inactive constraints
+                {
+                    CtrIndex = getInactiveCtrIndex(CtrIndexInactive); // CtrIndexActive --> CtrIndex
+                
+                    den = Adx.coeffRef(CtrIndex) - dv.coeffRef(CtrIndex);
+                
+                    condition = false;
+                    if (den < -tol_feasibility)     // CTR_ACTIVE_LB
+                    {
+                        CtrType   = CTR_ACTIVE_LB;
+                        rhs       = data.coeffRef(CtrIndex,lb_index);
+                        condition = true;
+                    }
+                    else if (den > tol_feasibility) // CTR_ACTIVE_UB
+                    {
+                        CtrType   = CTR_ACTIVE_UB;
+                        rhs       = data.coeffRef(CtrIndex,ub_index);
+                        condition = true;
+                    }
+                        
+                    if (condition)
+                    {
+                        num   = rhs - Ax.coeffRef(CtrIndex) + v.coeffRef(CtrIndex);
+                        ratio = num/den;
+
+                        // ratio should always be positive (but just in case)
+                        if (ratio < 0)
+                            ratio = 0;
+                            
+                        // when den is very small, ratio will be grater than alpha (I don't expect numerical problems here)
+                        if (ratio < alpha)
+                        {
+                            alpha = ratio;
+                                
+                            // store the current blocking constraint
+                            CtrIndexBlocking = CtrIndex;
+                            CtrTypeBlocking  = CtrType;
+                        }
                     }
                     else
                     {
-                        throw Exception("UNKNOWN constraint type");
-                    }                    
-
-                    lexlse.setCtr(counter, data.row(CtrIndex).head(nVar), rhs);
-                        
-                    counter++;
-                }
-            }
-        }
-
-        /*
-          \brief Form #dw
-          
-          \verbatim
-          dw{inactive} =              0 - w{inactive}, where 0 corresponds to w{inactive}_star
-          dw{active}   = w{active}_star - w{active}
-          \endverbatim
-
-          \return Squared norm of the step.
-        */
-        RealScalar formStep(dVectorType &dx)
-        {
-            RealScalar rhs;
-            Index CtrIndex, lbIndex, ubIndex;
-            ConstraintType CtrType;
-            
-            if (ObjType == DEFAULT_OBJECTIVE)
-            {
-                lbIndex = nVar;
-                ubIndex = nVar+1;
-             
-                Adx = data.leftCols(nVar)*dx; // form Adx
-            }
-            else if (ObjType == SIMPLE_BOUNDS_OBJECTIVE || ObjType == SIMPLE_BOUNDS_OBJECTIVE_HP)
-            {
-                lbIndex = 0;
-                ubIndex = 1;
-                
-                for (Index k=0; k<nCtr; k++) // form Adx
-                    Adx(k) = dx(VarIndex[k]); 
-            }
-            else
-            {
-                throw Exception("Unknown objective type");
-            }
-            
-            // Only the first getActiveCtrCount() entries of wStar are initialized and used, so
-            // wStar.setZero() is not necessary
-
-            dw = -w;
-            for (Index CtrIndexActive=0; CtrIndexActive<getActiveCtrCount(); CtrIndexActive++)
-            {
-                CtrIndex = getActiveCtrIndex(CtrIndexActive); // CtrIndexActive --> CtrIndex
-                CtrType  = getActiveCtrType(CtrIndexActive);
-
-                if (CtrType == EQUALITY_CONSTRAINT)
-                    rhs = data.coeffRef(CtrIndex,ubIndex); // take upper bound by convention
-                else if (CtrType == UPPER_BOUND)
-                    rhs = data.coeffRef(CtrIndex,ubIndex);
-                else if (CtrType == LOWER_BOUND)
-                    rhs = data.coeffRef(CtrIndex,lbIndex);
-                else
-                    throw Exception("UNKNOWN constraint type"); // we should not be here
-                
-                wStar.coeffRef(CtrIndexActive) = Ax.coeffRef(CtrIndex) + Adx.coeffRef(CtrIndex) - rhs;
-
-                dw.coeffRef(CtrIndex) += wStar.coeffRef(CtrIndexActive); // w{active}_star - w{active}
-            }
-            dwSquaredNorm = dw.squaredNorm();
-
-            return dwSquaredNorm;
-        }
-
-        /**
-           \brief Check for blocking constraints
-
-           \param[out] CtrIndexBlocking Index of blocking constraint.
-           \param[out] CtrTypeBlocking  Type of the blocking constraint.
-           \param[out] alpha            scaling factor for the step.
-
-           \return true if there are blocking constraints
-
-           \verbatim
-           -----------------------------------------
-                [a', -1]*([x;w] + alpha*[dx;dw]) <= b : UPPER_BOUND
-           b <= [a', -1]*([x;w] + alpha*[dx;dw])      : LOWER_BOUND
-           -----------------------------------------
-           den: a'*dx - dw
-           num: b - a'*x + w
-           ratio: num/den <-- this should be > 0 (in theory)
-           
-           UPPER_BOUND: check den > 0
-           LOWER_BOUND: check den < 0
-
-           alpha \in [0,1]
-           \endverbatim
-        */
-        bool checkBlockingConstraints(  Index &CtrIndexBlocking, 
-                                        ConstraintType &CtrTypeBlocking, 
-                                        RealScalar &alpha,
-                                        const RealScalar tolFeasibility)
-        {
-            bool condition;
-            RealScalar num, den, ratio, rhs, alpha_input = alpha;
-
-            Index CtrIndex, lbIndex, ubIndex;
-            ConstraintType CtrType;
-
-
-            if (ObjType == DEFAULT_OBJECTIVE)
-            {
-                lbIndex = nVar;
-                ubIndex = nVar+1;
-            }
-            else if (ObjType == SIMPLE_BOUNDS_OBJECTIVE_HP || ObjType == SIMPLE_BOUNDS_OBJECTIVE)
-            {
-                lbIndex = 0;
-                ubIndex = 1;
-            }
-            else
-            {
-                throw Exception("Unknown objective type");
-            }
-                        
-            for (Index CtrIndexInactive=0; CtrIndexInactive<getInactiveCtrCount(); CtrIndexInactive++) // loop over inactive constraints
-            {
-                CtrIndex = getInactiveCtrIndex(CtrIndexInactive); // CtrIndexActive --> CtrIndex
-                
-                den = Adx.coeffRef(CtrIndex) - dw.coeffRef(CtrIndex);
-                
-                condition = false;
-                if (den < -tolFeasibility)     // LOWER_BOUND
-                {
-                    CtrType   = LOWER_BOUND;
-                    rhs       = data.coeffRef(CtrIndex,lbIndex);
-                    condition = true;
-                }
-                else if (den > tolFeasibility) // UPPER_BOUND
-                {
-                    CtrType   = UPPER_BOUND;
-                    rhs       = data.coeffRef(CtrIndex,ubIndex);
-                    condition = true;
-                }
-                        
-                if (condition)
-                {
-                    num   = rhs - Ax.coeffRef(CtrIndex) + w.coeffRef(CtrIndex);
-                    ratio = num/den;
-
-                    // ratio should always be positive (but just in case)
-                    if (ratio < 0)
-                        ratio = 0;
-                            
-                    // when den is very small, ratio will be grater than alpha (I don't expect numerical problems here)
-                    if (ratio < alpha)
-                    {
-                        alpha = ratio;
-                                
-                        // store the current blocking constraint
-                        CtrIndexBlocking = CtrIndex;
-                        CtrTypeBlocking  = CtrType;
+                        //do nothing
                     }
+                }                
+            
+                return (alpha < alpha_input); // true if alpha has been modified
+            }
+
+            /**
+               \brief Take a step alpha from #v in the direction #dv (and update #Ax)
+           
+               \param[in] alpha step scaling
+            */
+            void step(RealScalar alpha)
+            {
+                v  += alpha*dv;
+                Ax += alpha*Adx;
+            }
+        
+            // --------------------------------------------------------------------
+            // set & get
+            // --------------------------------------------------------------------
+
+            /**
+               \brief Returns #v
+            */
+            dVectorType& get_v()
+            {
+                return v;
+            }
+
+            /**
+               \brief Returns #dv
+            */
+            dVectorType& get_dv()
+            {
+                return dv;
+            }
+
+            /**
+               \brief Returns the number of active constraints
+            */
+            Index getActiveCtrCount() const
+            {
+                return working_set.getActiveCtrCount();
+            }
+
+            /**
+               \brief Returns the index of the k-th active constraint
+            */
+            Index getActiveCtrIndex(Index k) const
+            {
+                return working_set.getActiveCtrIndex(k);
+            }
+
+            /**
+               \brief Returns the type of the k-th active constraint
+            */
+            ConstraintActivationType getActiveCtrType(Index k) const
+            {
+                return working_set.getActiveCtrType(k);
+            }
+
+            /**
+               \brief Returns the type of the k-th constraint
+            */
+            ConstraintActivationType getCtrType(Index k) const
+            {
+                return working_set.getCtrType(k);
+            }
+
+            /**
+               \brief Returns the number of inactive constraints
+            */
+            Index getInactiveCtrCount() const
+            {
+                return working_set.getInactiveCtrCount();
+            }
+
+            /**
+               \brief Returns the index of the k-th inactive constraint
+            */
+            Index getInactiveCtrIndex(Index k) const
+            {
+                return working_set.getInactiveCtrIndex(k);
+            }
+
+            /**
+               \brief Returns the index storde in var_index[k] 
+            */
+            Index getVarIndex(Index k) const
+            {
+                return var_index(k);
+            }
+
+            /**
+               \brief Get objective type
+            */
+            ObjectiveType getObjType() const
+            {
+                return obj_type;
+            }
+
+            /**
+               \brief Get number of constraints in objective
+            */
+            Index getDim() const
+            {
+                return nCtr;
+            }
+
+            /** 
+                \brief Get objective data
+            */
+            dMatrixType& getData()
+            {
+                return data;
+            }
+
+            /**
+               \brief Returns true if the k-th constraint is active, otherwise returns false
+            */                                        
+            bool isActive(Index CtrIndex) const
+            {
+                return working_set.isActive(CtrIndex);
+            }
+
+            /**
+               \brief Set objective data (obj_type = GENERAL_OBJECTIVE)
+            */
+            void setData(const dMatrixType& data_)
+            {
+                data = data_;
+            }
+
+            /**
+               \brief Set objective data + var_index (obj_type = SIMPLE_BOUNDS_OBJECTIVE)
+            */
+            void setData(Index *var_index_, const dMatrixType& data_)
+            {
+                var_index = Eigen::Map<iVectorType>(var_index_,nCtr);
+                data      = data_;
+            }
+
+            /**
+               \brief Set v0
+
+               \note Use this function with caution (advanced initialization)
+            */
+            void set_v0(const dVectorType& v_)
+            {
+                v = v_;
+                v0_is_specified = true;
+            }
+
+            /**
+               \brief Modify upper or lower bound
+            */
+            void relax_bounds(Index CtrIndex, ConstraintActivationType CtrType, RealScalar p)
+            {
+                if (CtrType == CTR_ACTIVE_LB)
+                {
+                    data(CtrIndex,lb_index) -= p; // relax lower-bound
+                }
+                else if (CtrType == CTR_ACTIVE_UB)
+                {
+                    data(CtrIndex,ub_index) += p; // relax upper-bound
                 }
                 else
                 {
-                    //do nothing
+                    throw Exception("Should not be here");
                 }
-            }                
-            
-            return (alpha < alpha_input); // true if alpha has been modified
-        }
+            }
 
-        /**
-           \brief Take a step alpha from #w in the direction #dw (and update #Ax)
+
+            /**
+               \brief Set objective data + var_index one by one (obj_type = SIMPLE_BOUNDS_OBJECTIVE)
+            */
+            void setData(Index k, Index var_index_, RealScalar lb_, RealScalar ub_)
+            {
+                var_index(k) = var_index_;
+                data(k,0)    = lb_;
+                data(k,1)    = ub_;
+            }
+
+            /**
+               \brief Prints some fields
+
+               \param[in] field description of field to print.
+            */
+            void print(const char * field) const
+            {
+                if (!strcmp(field, "working_set"))
+                {
+                    working_set.print();
+                }
+                else if (!strcmp(field, "data"))
+                {
+                    std::cout << "data = \n" << data << std::endl << std::endl;
+                    if (obj_type == SIMPLE_BOUNDS_OBJECTIVE)
+                        std::cout << "var_index = {" << var_index.transpose() << "}"<< std::endl;
+                }
+                else if (!strcmp(field, "v"))
+                {
+                    std::cout << "v = \n" << v << "\n dv  = \n" << dv << std::endl << std::endl;
+                }
+            }
+
+        private:
+
+            /**
+               \brief Initializations
+            */
+            void initialize()
+            {
+                v.setZero();
+                dv.setZero();
+            }
+
+            // ------------------------------------------------------------------------------------------
+            // fields
+            // ------------------------------------------------------------------------------------------
+
+            /**
+               \brief Number of variables
+
+               \note This field is a bit redundant as the number of variables is stored in LexLSI, but
+               it is a bit inconvenient to always pass it as input argument.
+            */
+            Index nVar;
+
+            /**
+               \brief Number of constraints involved in objective
+            */
+            Index nCtr;
+
+            /**
+               \brief Index of lower bound in the data
+
+               \note It is different for general constraints and simple bounds
+            */
+            Index lb_index;
+
+            /**
+               \brief Index of upper bound in the data
+
+               \note It is different for general constraints and simple bounds
+            */
+            Index ub_index;
+
+            /**
+               \brief Objective type
+            */
+            ObjectiveType obj_type;
+
+            /**
+               \brief Vector of indexes of variables that are bounded (if obj_type = SIMPLE_BOUNDS_OBJECTIVE)
+            */
+            iVectorType var_index;
+
+            /**
+               \brief Objective data
            
-           \param[in] alpha step scaling
-        */
-        void step(RealScalar alpha)
-        {
-            w  += alpha*dw;
-            Ax += alpha*Adx;
-        }
-        
-        // --------------------------------------------------------------------
-        // set & get
-        // --------------------------------------------------------------------
+               \verbatim
+               if obj_type = GENERAL_OBJECTIVE      : data = [A, LowerBounds, UpperBounds]
+               if obj_type = SIMPLE_BOUNDS_OBJECTIVE: data = [LowerBounds, UpperBounds], var_index is used
+               \endverbatim
+            */
+            dMatrixType data;
 
-        /**
-           \brief Returns #wStar
-        */
-        dVectorType& getOptimalResidual()
-        {
-            return wStar;
-        }
+            /**
+               \brief Working set
+            */
+            WorkingSet working_set;
 
-        /**
-           \brief Returns #w
-        */
-        dVectorType& getResidual()
-        {
-            return w;
-        }
+            /**
+               \brief Constraint violation
+            */
+            dVectorType v;
 
-        /**
-           \brief Returns squared norm of #w
-        */
-        RealScalar getResidualSquaredNorm()
-        {
-            return w.squaredNorm();
-        }
+            /**
+               \brief Descent direction from #v
+            */
+            dVectorType dv;
 
-        /**
-           \brief Returns #dw
-        */
-        dVectorType& get_dw()
-        {
-            return dw;
-        }
+            /**
+               \brief Stores A*x
+            */
+            dVectorType Ax;
 
-        /**
-           \brief Returns the number of active constraints
-        */
-        Index getActiveCtrCount() const
-        {
-            return WorkingSet.getActiveCtrCount();
-        }
+            /**
+               \brief Stores A*dx
+            */
+            dVectorType Adx;
 
-        /**
-           \brief Returns the index of the k-th active constraint
-        */
-        Index getActiveCtrIndex(Index k) const
-        {
-            return WorkingSet.getActiveCtrIndex(k);
-        }
+            /** 
+                \brief If v0_is_initialized == true, the function set_v0(...) has been called.
+            */
+            bool v0_is_specified;
+        };
 
-        /**
-           \brief Returns the type of the k-th active constraint
-        */
-        ConstraintType getActiveCtrType(Index k) const
-        {
-            return WorkingSet.getActiveCtrType(k);
-        }
-
-        /**
-           \brief Returns the type of the k-th constraint
-        */
-        ConstraintType getCtrType(Index k) const
-        {
-            return WorkingSet.getCtrType(k);
-        }
-
-        /**
-           \brief Returns the number of inactive constraints
-        */
-        Index getInactiveCtrCount() const
-        {
-            return WorkingSet.getInactiveCtrCount();
-        }
-
-        /**
-           \brief Returns the index of the k-th inactive constraint
-        */
-        Index getInactiveCtrIndex(Index k) const
-        {
-            return WorkingSet.getInactiveCtrIndex(k);
-        }
-
-        /**
-           \brief Returns the index storde in VarIndex[k] 
-        */
-        Index getVarIndex(Index k) const
-        {
-            return VarIndex(k);
-        }
-
-        /**
-           \brief Returns a reference to VarIndex 
-        */
-        iVectorType& getVarIndex()
-        {
-            return VarIndex;
-        }
-
-        /**
-           \brief Get objective type
-        */
-        ObjectiveType getObjType() const
-        {
-            return ObjType;
-        }
-
-        /**
-           \brief Get number of constraints in objective
-        */
-        Index getDim() const
-        {
-            return nCtr;
-        }
-
-        /** 
-            \brief Get objective data
-        */
-        MatrixType& getData()
-        {
-            return data;
-        }
-
-        /**
-           \brief Returns true if the k-th constraint is active, otherwise returns false
-        */                                        
-        bool isActive(Index CtrIndex) const
-        {
-            return WorkingSet.isActive(CtrIndex);
-        }
-
-        /**
-           \brief Set objective data (ObjType = DEFAULT_OBJECTIVE)
-        */
-        void setData(const MatrixType& data_)
-        {
-            data = data_;
-        }
-
-        /**
-           \brief Set objective data + VarIndex (ObjType = SIMPLE_BOUNDS_OBJECTIVE_HP or ObjType = SIMPLE_BOUNDS_OBJECTIVE)
-        */
-        void setData(Index *VarIndex_, const MatrixType& data_)
-        {
-            VarIndex = Eigen::Map<iVectorType>(VarIndex_,nCtr);
-            data     = data_;
-        }
-
-        /**
-           \brief Set w
-        */
-        void set_w(const dVectorType& w_)
-        {
-            w = w_;
-            w_is_initialized = true;
-        }
-
-        /**
-           \brief Modify upper or lower bound
-        */
-        void relax_bounds(Index CtrIndex, ConstraintType CtrType, RealScalar p)
-        {
-            Index lbIndex, ubIndex;
-
-            // ----------------------------------------------------
-            if (ObjType == DEFAULT_OBJECTIVE)
-            {
-                lbIndex = nVar;
-                ubIndex = nVar+1;
-            }
-            else if (ObjType == SIMPLE_BOUNDS_OBJECTIVE_HP)
-            {
-                lbIndex = 0;
-                ubIndex = 1;
-            }
-            else
-            {
-                throw Exception("Unknown objective type");
-            }
-            // ----------------------------------------------------
-            if (CtrType == LOWER_BOUND)
-            {
-                data(CtrIndex,lbIndex) -= p; // relax lower-bound
-            }
-            else if (CtrType == UPPER_BOUND)
-            {
-                data(CtrIndex,ubIndex) += p; // relax upper-bound
-            }
-            else
-            {
-                throw Exception("Should not be here");
-            }
-            // ----------------------------------------------------
-                
-        }
-
-
-        /**
-           \brief Set objective data + VarIndex one by one (ObjType = SIMPLE_BOUNDS_OBJECTIVE_HP or ObjType = SIMPLE_BOUNDS_OBJECTIVE)
-        */
-        void setData(Index k, Index VarIndex_, RealScalar bl, RealScalar bu)
-        {
-            VarIndex(k) = VarIndex_;
-            data(k,0)   = bl;
-            data(k,1)   = bu;
-        }
-
-        /**
-           \brief Prints some fields
-
-           \param[in] field description of field to print.
-        */
-        void print(const char * field) const
-        {
-            if (!strcmp(field, "WorkingSet"))
-            {
-                WorkingSet.print();
-            }
-            else if (!strcmp(field, "data"))
-            {
-                std::cout << "data = \n" << data << std::endl << std::endl;
-                if (ObjType == SIMPLE_BOUNDS_OBJECTIVE)
-                    std::cout << "VarIndex = {" << VarIndex.transpose() << "}"<< std::endl;
-            }
-            else if (!strcmp(field, "w"))
-            {
-                std::cout << "w = \n" << w << "\n dw  = \n" << dw << std::endl << std::endl;
-            }
-        }
-
-    private:
-
-        /**
-           \brief Initializations
-        */
-        void initialize()
-        {
-            w.setZero();
-            dw.setZero();
-
-            dwSquaredNorm = 0;
-        }
-
-        // ------------------------------------------------------------------------------------------
-        // fields
-        // ------------------------------------------------------------------------------------------
-
-        /**
-           \brief Number of variables
-
-           \note This field is a bit redundant as the number of variables is stored in LexLSI, but
-           it is a bit inconvenient to always pass it as input argument.
-        */
-        Index nVar;
-
-        /**
-           \brief Number of constraints involved in objective
-        */
-        Index nCtr;
-
-        /**
-           \brief Objective type
-        */
-        ObjectiveType ObjType;
-
-        /**
-           \brief Vector of indexes of variables that are bounded (if ObjType =
-           SIMPLE_BOUNDS_OBJECTIVE_HP or ObjType = SIMPLE_BOUNDS_OBJECTIVE)
-        */
-        iVectorType VarIndex;
-
-        /**
-           \brief Objective data
-           
-           \verbatim
-           if ObjType = DEFAULT_OBJECTIVE         : data = [A, LowerBounds, UpperBounds]
-           if ObjType = SIMPLE_BOUNDS_OBJECTIVE_HP: data = [LowerBounds, UpperBounds], VarIndex is used
-           if ObjType = SIMPLE_BOUNDS_OBJECTIVE   : data = [LowerBounds, UpperBounds], VarIndex is used
-           \endverbatim
-        */
-        MatrixType data;
-
-        /**
-           \brief Working set
-        */
-        WorkingSetType WorkingSet;
-
-        /**
-           \brief Residual
-        */
-        dVectorType w;
-
-        /**
-           \brief Descent direction from #w
-        */
-        dVectorType dw;
-
-        /**
-           \brief When ObjType = DEFAULT_OBJECTIVE, stores A*x
-        */
-        dVectorType Ax;
-
-        /**
-           \brief When ObjType = DEFAULT_OBJECTIVE, stores A*dx
-        */
-        dVectorType Adx;
-
-        /**
-           \brief The first getActiveCtrCount() elements contain the optimal residual for the
-           current getActiveCtrCount() equality constraints. The tail of wStar is never used.
-
-           \note This variable is not used.
-        */
-        dVectorType wStar;
-
-        /**
-           \brief Squared norm of #dw
-        */
-        RealScalar dwSquaredNorm;
-
-        /** 
-            \brief If w_is_initialized == true, the function set_w(w) has been called.
-        */
-        bool w_is_initialized;
-    };
+    } // END namespace internal
 
 } // END namespace LexLS
 

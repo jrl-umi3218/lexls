@@ -13,18 +13,15 @@ namespace LexLS
     typedef unsigned int Index;
     typedef double RealScalar;
 
-    /// @todo Why MatrixType, but dVectortype?
-    typedef Eigen::Matrix<RealScalar, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> MatrixType;    
-    //typedef Eigen::Matrix<RealScalar, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixType; 
+    typedef Eigen::Matrix<RealScalar, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> dMatrixType; // Eigen::RowMajor
     
-    typedef Eigen::Matrix<RealScalar, Eigen::Dynamic, 1>              dVectorType;
-    typedef Eigen::Matrix<RealScalar, 1, Eigen::Dynamic>              dRowVectorType;
-
-    typedef Eigen::Matrix<     Index, Eigen::Dynamic, 1>              iVectorType;
+    typedef Eigen::Matrix<RealScalar, Eigen::Dynamic, 1> dVectorType;
+    typedef Eigen::Matrix<RealScalar, 1, Eigen::Dynamic> dRowVectorType;
+    typedef Eigen::Matrix<     Index, Eigen::Dynamic, 1> iVectorType;
     
-    typedef Eigen::Block<MatrixType , Eigen::Dynamic, Eigen::Dynamic> dBlockType;
-    typedef Eigen::Block<MatrixType , Eigen::Dynamic, 1>              dBlockType2Vector;
-    typedef Eigen::VectorBlock<dVectorType, Eigen::Dynamic>           dVectorBlockType;
+    typedef Eigen::Block<dMatrixType , Eigen::Dynamic, Eigen::Dynamic> dBlockType;
+    typedef Eigen::Block<dMatrixType , Eigen::Dynamic, 1>              dBlockType2Vector;
+    typedef Eigen::VectorBlock<dVectorType, Eigen::Dynamic>            dVectorBlockType;
 
 
     enum RegularizationType
@@ -46,54 +43,415 @@ namespace LexLS
     */
     enum TerminationStatus
     {
-        TERMINATION_STATUS_UNKNOWN = -1,
-        PROBLEM_SOLVED,                  // 0
-        PROBLEM_SOLVED_CYCLING_HANDLING, // 1
-        MAX_NUMBER_OF_ITERATIONS_EXCEDED // 2
+        TERMINATION_STATUS_UNKNOWN = -1,     // -1
+        PROBLEM_SOLVED,                      // 0
+        PROBLEM_SOLVED_CYCLING_HANDLING,     // 1
+        MAX_NUMBER_OF_FACTORIZATIONS_EXCEDED // 2
     };
 
     /**
        \brief Type of objective function 
-       
-       \verbatim
-       Some other options (to implement ...):
-       -----------------------------------------------------
-       EQUALITY_OBJECTIVE           //       A*x - w  = b
-       ONLY_UPPER_BOUNDS_OBJECTIVE  //       A*x - w <= bu
-       ONLY_LOWER_BOUNDS_OBJECTIVE  // bl <= A*x - w
-       \endverbatim
-
-       \note Problems in ASCII files assume that DEFAULT_OBJECTIVE = 0 and SIMPLE_BOUNDS_OBJECTIVE = 1
     */
     enum ObjectiveType
     {
-        DEFAULT_OBJECTIVE,         // bl <= A*x - w <= bu, assuming bl <= bu
-        SIMPLE_BOUNDS_OBJECTIVE,   // bl <=   x - w <= bu, assuming bl <= bu
-        SIMPLE_BOUNDS_OBJECTIVE_HP // bl <=   x     <= bu, assuming bl <= bu (only for the objective with highest priority)
+        GENERAL_OBJECTIVE = 0,    // bl <= A*x - w <= bu, assuming bl <= bu
+        SIMPLE_BOUNDS_OBJECTIVE   // bl <=   x - w <= bu, assuming bl <= bu (only for the objective with highest priority)
     };
 
     /**
-       \brief Type of a constraint in the working set (to be set when checking for blocking
-       constraints). Used when computing the most negative/positive Lagrange multiplier.
+       \brief Type of a constraint in the working set.
     */
-    enum ConstraintType
+    enum ConstraintActivationType
     {
-        CONSTRAINT_TYPE_UNKNOWN, // 0: used for initialization purposes
-        LOWER_BOUND,             // 1: bl <= A*x - w
-        UPPER_BOUND,             // 2:       A*x - w <= bu
-        EQUALITY_CONSTRAINT,     // 3:       A*x - w  = b
-        CORRECT_SIGN_OF_LAMBDA   // 4: positive if UPPER_BOUND, negative if LOWER_BOUND
+        CTR_INACTIVE = 0,        // 0
+        CTR_ACTIVE_LB,           // 1: bl <= A*x - w
+        CTR_ACTIVE_UB,           // 2:       A*x - w <= bu
+        CTR_ACTIVE_EQ,           // 3:       A*x - w  = b
+        CORRECT_SIGN_OF_LAMBDA   // 4: positive if CTR_ACTIVE_UB, negative if CTR_ACTIVE_LB (for internal use)
+    };
+
+    class ParametersLexLSE
+    {
+    public:
+        /** 
+            \brief Tolerance: linear dependence (used when solving an LexLSE problem)
+        */
+        RealScalar tol_linear_dependence;
+
+        /** 
+            \brief Max number of iterations for cg_tikhonov(...)
+
+            \note used only with regularization_type = REGULARIZATION_TIKHONOV_CG
+        */
+        Index max_number_of_CG_iterations;
+
+        /** 
+            \brief Type of regularization (Tikhonov, Basic Tikhonov, ...)
+        */
+        RegularizationType regularization_type;
+
+        /**
+         * @brief 
+         * @todo add documentation
+         */
+        RealScalar variable_regularization_factor;
+
+        ParametersLexLSE()
+        {
+            setDefaults();
+        }
+
+        void setDefaults()
+        {
+            tol_linear_dependence          = 1e-12;
+            max_number_of_CG_iterations    = 10;
+            regularization_type            = REGULARIZATION_NONE;
+            variable_regularization_factor = 0.0;
+        }
+    };
+
+    class ParametersLexLSI
+    {
+    public:
+        /**
+           \brief Maximum number of iterations
+        */
+        Index max_number_of_factorizations;
+
+        /** 
+            \brief Tolerance: linear dependence (used when solving an LexLSE problem)
+        */
+        RealScalar tol_linear_dependence;
+
+        /** 
+            \brief Tolerance: absolute value of Lagrange multiplier to be considered with "wrong" sign
+        */
+        RealScalar tol_wrong_sign_lambda;
+
+        /** 
+            \brief Tolerance: absolute value of Lagrange multiplier to be considered with "correct" sign
+        */
+        RealScalar tol_correct_sign_lambda;
+
+        /** 
+            \brief Tolerance: I was using tol = 0, but if I have the same
+            constraint appearing twice in one objective (i.e., both RHS and LHS
+            are the same) there is cycling. For tol = 1e-13 there is no
+            cycling. 
+        */
+        RealScalar tol_feasibility;
+
+        /** 
+            \brief Type of regularization (Tikhonov, Basic Tikhonov, ...)
+        */
+        RegularizationType regularization_type;
+
+        /** 
+            \brief Max number of iterations for cg_tikhonov(...)
+
+            \note used only with regularization_type = REGULARIZATION_TIKHONOV_CG
+        */
+        Index max_number_of_CG_iterations;
+
+        /**
+         * @brief 
+         * @todo add documentation
+         */
+        RealScalar variable_regularization_factor;
+
+        /** 
+            \brief If cycling_handling_enabled == true, cycling handling is performed
+        */
+        bool cycling_handling_enabled;
+
+        /**
+         * @brief 
+         * @todo add documentation
+         * @todo cycling is not always detected
+         */
+        Index cycling_max_counter;
+        /**
+         * @brief 
+         * @todo add documentation
+         */
+        double cycling_relax_step;
+
+        /**
+         * @brief 
+         * @todo add documentation
+         */
+        std::string output_file_name;
+
+        ParametersLexLSI()
+        {
+            setDefaults();
+        }
+
+        void setDefaults()
+        {
+            max_number_of_factorizations = 200;
+
+            tol_linear_dependence   = 1e-12;
+            tol_wrong_sign_lambda   = 1e-08;
+            tol_correct_sign_lambda = 1e-12;
+            tol_feasibility         = 1e-13;
+
+            cycling_handling_enabled = false;
+            cycling_max_counter      = 50;
+            cycling_relax_step       = 1e-08;
+
+            regularization_type            = REGULARIZATION_NONE;
+            max_number_of_CG_iterations    = 10;
+            variable_regularization_factor = 0.0;
+        }
     };
 
     /**
-       \brief Performed operation during the current step
+       \brief A class for handling exceptions 
     */
-    enum OperationType
+    class Exception: public std::exception 
     {
-        UNDEFINED,         // used for initialization purposes
-        ADD_CONSTRAINT,    // when constraint is added
-        REMOVE_CONSTRAINT  // when constraint is removed
+    public:
+        
+        explicit Exception(const char *message): ExceptionMessage(message) {}
+        
+        ~Exception() throw() {}
+        
+        const char* what() const throw()
+        {
+            return ExceptionMessage.c_str();
+        }
+
+    private:
+   
+        std::string ExceptionMessage;
     };
-}
+
+    // ----------------------------------------------------------------------------------------------------------
+    // internal
+    // ----------------------------------------------------------------------------------------------------------
+    namespace internal
+    {    
+        /**
+           \brief Performed operation during the current step
+        */
+        enum OperationType
+        {
+            OPERATION_UNDEFINED, // used for initialization purposes
+            OPERATION_ADD,       // when constraint is added
+            OPERATION_REMOVE     // when constraint is removed
+        };
+
+        /** 
+            \brief A single Given's rotation (I use this class as a structure)
+        */
+        class GivensRotation
+        {
+        public:
+            GivensRotation(){}
+
+            GivensRotation(RealScalar a, RealScalar b, Index i_, Index j_)
+            {
+                set(a, b, i_, j_);
+            }
+        
+            void set(RealScalar a, RealScalar b, Index i_, Index j_)
+            {
+                G.makeGivens(a,b);
+                i = i_;
+                j = j_;
+            }
+
+            void print()
+            {
+                printf("i = % d, j = % d, c = % f, s = % f \n", i, j, G.c(), G.s());
+            }
+        
+            Eigen::JacobiRotation<RealScalar> G;
+            Index i;
+            Index j;
+        };
+
+        /** 
+            \brief A sequence of Given's rotations
+        */
+        class GivensRotationSequence
+        {    
+        public:
+            GivensRotationSequence(){}
+
+            GivensRotationSequence(Index dim)
+            {
+                seq.reserve(dim);
+            }
+
+            void push(GivensRotation& G)
+            {
+                seq.push_back(G);
+            }
+    
+            Eigen::JacobiRotation<RealScalar>& get(Index k)
+            {
+                return seq[k].G;
+            }
+
+            Index get_i(Index k)
+            {
+                return seq[k].i;
+            }
+
+            Index get_j(Index k)
+            {
+                return seq[k].j;
+            }
+
+            Index size()
+            {
+                return seq.size();
+            }
+    
+        private:
+            std::vector<GivensRotation> seq;
+        };
+    
+        /** 
+            \brief Information about an objective in a LexLSE problem
+
+            \note I use this as a data-structure and all fields are public.
+        */
+        class ObjectiveInfo
+        {    
+        public:
+
+            ObjectiveInfo():
+                dim(0),
+                rank(0),
+                FirstRowIndex(0), 
+                FirstColIndex(0){}
+
+            /**
+               \brief Print objective information.
+            */                                        
+            void print() const
+            {
+                printf("FirstRowIndex = %d, FirstColIndex = %d, dim = %d, rank = %d \n", FirstRowIndex, FirstColIndex, dim, rank);
+            }
+
+            /*
+              \brief Number of constraints involved in (LexLSE) objective 
+
+              \note set during initialization.
+            */
+            Index dim; 
+
+            /*
+              \brief Rank of constraints involved in (LexLSE) objective 
+
+              \attention The rank is estimated during the factorization step in a naive way (and could
+              be wrong) - see p. 260, Example 5.5.1 of "Matrix computations" by Golub & van Loan.
+            */
+            Index rank; 
+
+            /*
+              \brief Initial row index - depends only on the number of constraints involved in (LexLSE) objectives
+
+              \note computed during initialization.
+            */
+            Index FirstRowIndex; 
+    
+            /*
+              \brief Initial column index - depends on the ranks of constraints involved in (LexLSE) objectives
+      
+              \note computed during factorization. 
+            */
+            Index FirstColIndex; 
+        };
+
+        /** 
+            \brief A class used to identify a constraint (used only in the cycling detection).
+        */
+        class ConstraintIdentifier
+        {    
+        public:
+    
+            ConstraintIdentifier(){}
+
+            ConstraintIdentifier(Index obj_index_, Index ctr_index_, ConstraintActivationType ctr_type_):
+                obj_index(obj_index_),
+                ctr_index(ctr_index_),
+                ctr_type(ctr_type_) {}
+        
+            void set(Index obj_index_, Index ctr_index_, ConstraintActivationType ctr_type_)
+            {
+                obj_index = obj_index_;
+                ctr_index = ctr_index_;
+                ctr_type  = ctr_type_;
+            }
+
+            bool operator==(const ConstraintIdentifier& ci)
+            {
+                return compare(ci);
+            }
+
+            bool compare(const ConstraintIdentifier& ci)
+            {
+                if (obj_index != ci.obj_index)
+                    return false;
+
+                if (ctr_index != ci.ctr_index)
+                    return false;
+
+                if (ctr_type != ci.ctr_type)
+                    return false;
+
+                return true;
+            }
+
+            void print()
+            {
+                printf("obj_index = %d, ctr_index = %d, ctr_type = %d\n", obj_index, ctr_index, ctr_type);
+            }
+
+            Index getObjIndex()
+            {
+                return obj_index;
+            }
+
+            Index getCtrIndex()
+            {
+                return ctr_index;
+            }
+
+            ConstraintActivationType getCtrType()
+            {
+                return ctr_type;
+            }
+
+            /** 
+                \brief Index of objective
+            */ 
+            Index obj_index;
+        
+            /** 
+                \brief Index of constraint
+
+                \note This index could mean different things (depending on how an instance of this class
+                is used): (i) if a constraint is to be included in the active set ctr_index is the index
+                within objective obj_index; (ii) if a constraint is to be removed from the working set,
+                ctr_index indicates the index within the set of active constraints.
+            */ 
+            Index ctr_index;
+
+            /** 
+                \brief Type of constraint
+            */ 
+            ConstraintActivationType ctr_type;
+        };
+
+    } // END namespace internal
+    // ----------------------------------------------------------------------------------------------------------
+
+} // END namespace LexLS
 
 #endif // TYPEDEFS
+

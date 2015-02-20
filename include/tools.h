@@ -3,27 +3,16 @@
 #include <vector>
 #include <fstream>
 
-
 namespace LexLS
 {
     namespace tools
     {
-        enum ConstraintActivationType
-        {
-            BOUNDS_INACTIVE = 0,
-            LOWER_BOUND_ACTIVE = 1,
-            UPPER_BOUND_ACTIVE = 2,
-            EQUALITY_CONSTRAINT = 3
-        };
-
-
         enum HierarchyType
         {
             HIERARCHY_TYPE_NONE         = 0, 
             HIERARCHY_TYPE_EQUALITY     = 1, // equality constraints
             HIERARCHY_TYPE_INEQUALITY   = 2 // inequality constraints
         };
-
 
 
         class HierarchyFileProcessor
@@ -190,10 +179,10 @@ namespace LexLS
                             switch(type)
                             {
                                 case HEADER_OBJECTIVE_TYPE_SIMPLE:
-                                    types_of_objectives.push_back(LexLS::SIMPLE_BOUNDS_OBJECTIVE_HP);
+                                    types_of_objectives.push_back(LexLS::SIMPLE_BOUNDS_OBJECTIVE);
                                     break;
                                 case HEADER_OBJECTIVE_TYPE_GENERAL:
-                                    types_of_objectives.push_back(LexLS::DEFAULT_OBJECTIVE);
+                                    types_of_objectives.push_back(LexLS::GENERAL_OBJECTIVE);
                                     break;
                                 default:
                                     throw std::runtime_error("Unsupported type of objective.");
@@ -249,10 +238,10 @@ namespace LexLS
                             {
                                 switch(activation_type)
                                 {
-                                    case BOUNDS_INACTIVE:
-                                    case LOWER_BOUND_ACTIVE:
-                                    case UPPER_BOUND_ACTIVE:
-                                    case EQUALITY_CONSTRAINT:
+                                    case CTR_INACTIVE:
+                                    case CTR_ACTIVE_LB:
+                                    case CTR_ACTIVE_UB:
+                                    case CTR_ACTIVE_EQ:
                                         active_set_guess[objective_index][row_index] = 
                                             static_cast<ConstraintActivationType> (activation_type);
                                         break;
@@ -438,7 +427,7 @@ namespace LexLS
 
                         if (line.compare(0, OBJECTIVE_DATA.length(), OBJECTIVE_DATA) == 0)
                         {
-                            if ( types_of_objectives[objective_index] == LexLS::SIMPLE_BOUNDS_OBJECTIVE_HP )
+                            if ( types_of_objectives[objective_index] == LexLS::SIMPLE_BOUNDS_OBJECTIVE )
                             {
                                 if (objective_index == 0)
                                 {
@@ -498,5 +487,7 @@ namespace LexLS
                     ifs.close();
                 }
         };
-    }
-}
+
+    } // END namespace internal
+
+} // END namespace LexLS

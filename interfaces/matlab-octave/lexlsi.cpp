@@ -8,7 +8,7 @@
 
 
 #include "lexls_common.h"
-#include "../../tools/lexls_tools.h"
+#include "../../include/tools.h"
 
 
 const int MIN_INPUTS = 1;
@@ -50,7 +50,7 @@ mxArray * formInfoStructure (
         case LexLS::PROBLEM_SOLVED_CYCLING_HANDLING:
             status = STATUS_CYCLING_HANDLING;
             break;
-        case LexLS::MAX_NUMBER_OF_ITERATIONS_EXCEDED:
+        case LexLS::MAX_NUMBER_OF_FACTORIZATIONS_EXCEDED:
             status = STATUS_MAXITER;
             break;
         default:
@@ -92,7 +92,7 @@ void mexFunction( int num_output, mxArray *output[],
                     MIN_NUMBER_OF_FIELDS_IN_OBJ);
 
 // parameters of the solver
-    LexLS::LexLSIParameters lexlsi_parameters;
+    LexLS::ParametersLexLSI lexlsi_parameters;
 
     lexlsi_parameters.setDefaults();
 
@@ -100,7 +100,7 @@ void mexFunction( int num_output, mxArray *output[],
     bool    is_simple_bounds_handling_enabled = false;
 
     bool                is_regularization_set = false;
-    std::vector<double> regularization;
+    std::vector<double> regularization_factors;
 
 // parse parameters
 
@@ -113,36 +113,30 @@ void mexFunction( int num_output, mxArray *output[],
             // ================================================
             // parse options
 
-            getOptionDouble(&lexlsi_parameters.tolLinearDependence, 
+            getOptionDouble(&lexlsi_parameters.tol_linear_dependence, 
                             options_struct, 
-                            "tolLinearDependence");
+                            "tol_linear_dependence");
 
-            getOptionDouble(&lexlsi_parameters.tolWrongSignLambda, 
+            getOptionDouble(&lexlsi_parameters.tol_wrong_sign_lambda, 
                             options_struct, 
-                            "tolWrongSignLambda");
+                            "tol_wrong_sign_lambda");
 
-            getOptionDouble(&lexlsi_parameters.tolCorrectSignLambda, 
+            getOptionDouble(&lexlsi_parameters.tol_correct_sign_lambda, 
                             options_struct, 
-                            "tolCorrectSignLambda");
+                            "tol_correct_sign_lambda");
 
-            getOptionDouble(&lexlsi_parameters.tolFeasibility, 
+            getOptionDouble(&lexlsi_parameters.tol_feasibility, 
                             options_struct, 
-                            "tolFeasibility");
+                            "tol_feasibility");
 
 
-            getOptionUnsignedInteger(   &lexlsi_parameters.max_number_of_iterations, 
+            getOptionUnsignedInteger(   &lexlsi_parameters.max_number_of_factorizations, 
                                 options_struct, 
-                                "max_iterations");
+                                "max_number_of_factorizations");
 
-
-            getOptionBool(  &lexlsi_parameters.enable_lagrange_multipliers_scaling, 
+            getOptionBool(  &lexlsi_parameters.cycling_handling_enabled, 
                             options_struct, 
-                            "enable_lagrange_multipliers_scaling");
-
-
-            getOptionBool(  &lexlsi_parameters.CyclingHandling, 
-                            options_struct, 
-                            "cycling_handling");
+                            "cycling_handling_enabled");
 
             getOptionUnsignedInteger(   &lexlsi_parameters.cycling_max_counter, 
                                 options_struct, 
@@ -155,10 +149,10 @@ void mexFunction( int num_output, mxArray *output[],
 
 
 
-            is_regularization_set = getOptionArray( regularization, 
+            is_regularization_set = getOptionArray( regularization_factors, 
                                                     mxGetNumberOfElements (input[0]),
                                                     options_struct, 
-                                                    "regularization");
+                                                    "regularization_factors");
 
             getOptionBool(  &is_simple_bounds_handling_enabled,
                             options_struct, 
@@ -167,24 +161,19 @@ void mexFunction( int num_output, mxArray *output[],
             unsigned int regularization_type = 0;
             if (getOptionUnsignedInteger( &regularization_type, 
                               options_struct, 
-                              "regularizationType"))
+                              "regularization_type"))
             {
-                lexlsi_parameters.regularizationType = static_cast <LexLS::RegularizationType> (regularization_type);
+                lexlsi_parameters.regularization_type = static_cast <LexLS::RegularizationType> (regularization_type);
             }
 
 
-            getOptionUnsignedInteger(   &lexlsi_parameters.regularizationMaxIterCG, 
-                                options_struct, 
-                                "regularizationMaxIterCG");
+            getOptionUnsignedInteger(&lexlsi_parameters.max_number_of_CG_iterations, 
+                                     options_struct, 
+                                     "max_number_of_CG_iterations");
 
             getOptionDouble(&lexlsi_parameters.variable_regularization_factor, 
                             options_struct, 
                             "variable_regularization_factor");
-
-            getOptionBool(  &lexlsi_parameters.realSensitivityResidual, 
-                            options_struct, 
-                            "realSensitivityResidual");
-
 
             getOptionString(lexlsi_parameters.output_file_name, 
                             options_struct, 
@@ -196,8 +185,8 @@ void mexFunction( int num_output, mxArray *output[],
 
             /// @todo This check should probably go to the solver interface
             if ( 
-                    ((lexlsi_parameters.regularizationType == LexLS::REGULARIZATION_NONE) && (is_regularization_set)) ||
-                    ((lexlsi_parameters.regularizationType != LexLS::REGULARIZATION_NONE) && (!is_regularization_set))
+                    ((lexlsi_parameters.regularization_type == LexLS::REGULARIZATION_NONE) && (is_regularization_set)) ||
+                    ((lexlsi_parameters.regularization_type != LexLS::REGULARIZATION_NONE) && (!is_regularization_set))
                )
             {
                 mexWarnMsgTxt("Both regularization type and regularization factors must be specified.");
@@ -246,7 +235,7 @@ void mexFunction( int num_output, mxArray *output[],
     // form[lb, ub]
     // remember objective
         constraints[0] = catenateMatrices(lb, ub);
-        obj_type[0] = LexLS::SIMPLE_BOUNDS_OBJECTIVE_HP;
+        obj_type[0] = LexLS::SIMPLE_BOUNDS_OBJECTIVE;
 
     // copy indices
         int num_simple_bounds = mxGetM(A);
@@ -287,7 +276,7 @@ void mexFunction( int num_output, mxArray *output[],
     // form Ab = [A, b]
     // remember objective
         constraints[i] = catenateMatrices(A, lb, ub);
-        obj_type[i] = LexLS::DEFAULT_OBJECTIVE;
+        obj_type[i] = LexLS::GENERAL_OBJECTIVE;
     }
 
 
@@ -373,8 +362,7 @@ void mexFunction( int num_output, mxArray *output[],
 
 // instantiate LexLS
     LexLS::TerminationStatus status = LexLS::TERMINATION_STATUS_UNKNOWN;
-    LexLS::LexLSI lexlsi(num_var, num_obj, num_constr.data(), obj_type.data());
-
+    LexLS::internal::LexLSI lexlsi(num_var, num_obj, num_constr.data(), obj_type.data());
 
 // initialize solver
     try
@@ -386,7 +374,7 @@ void mexFunction( int num_output, mxArray *output[],
         {
             for (unsigned int i = 0; i < num_obj; ++i)
             {
-                lexlsi.setRegularization(i, regularization[i]);
+                lexlsi.setRegularizationFactor(i, regularization_factors[i]);
             }
         }
 
@@ -396,7 +384,7 @@ void mexFunction( int num_output, mxArray *output[],
             lexlsi.setData(
                     0, 
                     simple_bounds_indicies.data(), 
-                    Eigen::Map<LexLS::MatrixType>(
+                    Eigen::Map<LexLS::dMatrixType>(
                         mxGetPr(constraints[0]), 
                         num_constr[0], 
                         2));
@@ -405,7 +393,7 @@ void mexFunction( int num_output, mxArray *output[],
         {
             lexlsi.setData(
                     i, 
-                    Eigen::Map<LexLS::MatrixType>(
+                    Eigen::Map<LexLS::dMatrixType>(
                         mxGetPr(constraints[i]), 
                         num_constr[i], 
                         num_var + 2));
@@ -445,7 +433,7 @@ void mexFunction( int num_output, mxArray *output[],
                     residual(j) = (static_cast <const double *> (mxGetPr(residuals[i])))[j];
                 }
 
-                lexlsi.set_w(i, residual);
+                lexlsi.set_v0(i, residual);
             }
         }
 
@@ -464,17 +452,17 @@ void mexFunction( int num_output, mxArray *output[],
                 {
                     switch (static_cast <int> (round(mxGetPr(active_set[i])[j])))
                     {
-                        case LexLS::tools::BOUNDS_INACTIVE:
+                        case LexLS::CTR_INACTIVE:
                             // nothing to activate
                             break;
-                        case LexLS::tools::LOWER_BOUND_ACTIVE:
-                            lexlsi.api_activate(i, j, LexLS::LOWER_BOUND);
+                        case LexLS::CTR_ACTIVE_LB:
+                            lexlsi.api_activate(i, j, LexLS::CTR_ACTIVE_LB);
                             break;
-                        case LexLS::tools::UPPER_BOUND_ACTIVE:
-                            lexlsi.api_activate(i, j, LexLS::UPPER_BOUND);
+                        case LexLS::CTR_ACTIVE_UB:
+                            lexlsi.api_activate(i, j, LexLS::CTR_ACTIVE_UB);
                             break;
-                        case LexLS::tools::EQUALITY_CONSTRAINT:
-                            lexlsi.api_activate(i, j, LexLS::EQUALITY_CONSTRAINT);
+                        case LexLS::CTR_ACTIVE_EQ:
+                            lexlsi.api_activate(i, j, LexLS::CTR_ACTIVE_EQ);
                             break;
                         default:
                             mexWarnMsgTxt("Wrong format of 'c' matrix. Assuming inactive constraint.");
@@ -519,9 +507,9 @@ void mexFunction( int num_output, mxArray *output[],
 
         try
         {
-            num_activations = lexlsi.getAddCount();
-            num_deactivations = lexlsi.getRemoveCount();
-            num_factorizations = lexlsi.getNumberOfFactorizations();
+            num_activations = lexlsi.getActivationsCount();
+            num_deactivations = lexlsi.getDeactivationsCount();
+            num_factorizations = lexlsi.getFactorizationsCount();
             cycling_counter = lexlsi.getCyclingCounter();
         }
         catch (std::exception &e)
@@ -540,7 +528,7 @@ void mexFunction( int num_output, mxArray *output[],
 
             try
             {
-                LexLS::dVectorType& w = lexlsi.getResidual(i);
+                LexLS::dVectorType& w = lexlsi.get_v(i);
                 mxArray * wi = mxCreateDoubleMatrix(num_constr[i], 1, mxREAL);
                 for (LexLS::Index j = 0; j < num_constr[i]; ++j)
                 {
@@ -559,7 +547,7 @@ void mexFunction( int num_output, mxArray *output[],
 // output active set
     if (num_output >= 4)
     {
-        std::vector<LexLS::ConstraintType>  lexlsi_active_constraints;
+        std::vector<LexLS::ConstraintActivationType> lexlsi_active_constraints;
 
         output[3] = mxCreateCellMatrix(num_obj, 1);
 
@@ -580,17 +568,17 @@ void mexFunction( int num_output, mxArray *output[],
             {
                 switch (lexlsi_active_constraints[j])
                 {
-                    case LexLS::LOWER_BOUND:
-                        mxGetPr(active_constraints)[j] = LexLS::tools::LOWER_BOUND_ACTIVE;
+                    case LexLS::CTR_ACTIVE_LB:
+                        mxGetPr(active_constraints)[j] = LexLS::CTR_ACTIVE_LB;
                         break;
-                    case LexLS::UPPER_BOUND:
-                        mxGetPr(active_constraints)[j] = LexLS::tools::UPPER_BOUND_ACTIVE;
+                    case LexLS::CTR_ACTIVE_UB:
+                        mxGetPr(active_constraints)[j] = LexLS::CTR_ACTIVE_UB;
                         break;
-                    case LexLS::EQUALITY_CONSTRAINT:
-                        mxGetPr(active_constraints)[j] = LexLS::tools::EQUALITY_CONSTRAINT;
+                    case LexLS::CTR_ACTIVE_EQ:
+                        mxGetPr(active_constraints)[j] = LexLS::CTR_ACTIVE_EQ;
                         break;
                     default:
-                        mxGetPr(active_constraints)[j] = LexLS::tools::BOUNDS_INACTIVE;
+                        mxGetPr(active_constraints)[j] = LexLS::CTR_INACTIVE;
                         break;
                 }
             }
