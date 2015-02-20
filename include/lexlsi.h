@@ -111,35 +111,52 @@ namespace LexLS
             */
             void phase1()
             {         
-                formLexLSE(); 
-            
+                bool active_constraints_exist = false;
+                for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
+                {
+                    // we would enter even if there are only equality constraints
+                    if (objectives[ObjIndex].getActiveCtrCount() > 0)
+                    {
+                        active_constraints_exist = true;
+                        break;
+                    }
+                }
+         
                 // --------------------------------------------------------
-                // solve lexlse based on initial working set
+                // form x
                 // --------------------------------------------------------
-                lexlse.factorize();
-                lexlse.solve();                    
-                nFactorizations++;
-                // --------------------------------------------------------
+                if (active_constraints_exist)
+                {
+                    formLexLSE();                
+                
+                    if (!x0_is_specified)
+                    {
+                        lexlse.factorize();
+                        lexlse.solve();                    
+                        x = lexlse.get_x();
 
-                if (!x0_is_specified)
-                {
-                    x = lexlse.get_x(); // start from x_star
-                    dx.setZero(); 
+                        nFactorizations++;
+                    }
                 }
-                else // x is initialized in set_x0(...)
+                else
                 {
-                    dx = lexlse.get_x() - x; // take a step towards x_star
+                    if (!x0_is_specified)
+                    {
+                        for (Index k=0; k<nVar; k++)
+                            x(k) = 0.01; // set to something different from 0
+                    }
                 }
             
                 // --------------------------------------------------------
-                // form initial w
+                // form w
                 // --------------------------------------------------------
                 for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
                     objectives[ObjIndex].phase1(x);
 
                 // --------------------------------------------------------
-                // form step for w (similar to formStep(...))
+                // form step (similar to formStep())
                 // --------------------------------------------------------
+                dx.setZero();
                 for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
                     objectives[ObjIndex].formStep(dx);
                 // --------------------------------------------------------
@@ -632,9 +649,9 @@ namespace LexLS
                 Index ObjIndex2Manipulate, CtrIndex2Manipulate;
                 ConstraintActivationType CtrType2Manipulate = CTR_INACTIVE;
 
-                bool normalIteration = true;         
+                bool normalIteration = true;
                 OperationType operation = OPERATION_UNDEFINED;
-                ConstraintIdentifier ConstraintIdentifier;
+                ConstraintIdentifier constraint_identifier;
 
                 RealScalar alpha;
                 // ----------------------------------------------------------------------
@@ -650,12 +667,19 @@ namespace LexLS
 
                     nFactorizations++;
                 }
+                else // if nIterations == 0
+                {
+                    if (x0_is_specified)
+                    {
+                        normalIteration = false;
+                    }
+                }
 
                 if (checkBlockingConstraints(ObjIndex2Manipulate, CtrIndex2Manipulate, CtrType2Manipulate, alpha))
                 {
                     if (parameters.cycling_handling_enabled)
                     {
-                        ConstraintIdentifier.set(ObjIndex2Manipulate, CtrIndex2Manipulate, CtrType2Manipulate);
+                        constraint_identifier.set(ObjIndex2Manipulate, CtrIndex2Manipulate, CtrType2Manipulate);
                     }
 
                     operation = OPERATION_ADD;
@@ -663,21 +687,24 @@ namespace LexLS
                 }
                 else
                 {
-                    if (findActiveCtr2Remove(ObjIndex2Manipulate, CtrIndex2Manipulate))
+                    if (normalIteration) 
                     {
-                        if (parameters.cycling_handling_enabled)
+                        if (findActiveCtr2Remove(ObjIndex2Manipulate, CtrIndex2Manipulate))
                         {
-                            ConstraintIdentifier.set(ObjIndex2Manipulate, 
-                                                     objectives[ObjIndex2Manipulate].getActiveCtrIndex(CtrIndex2Manipulate), 
-                                                     objectives[ObjIndex2Manipulate].getActiveCtrType(CtrIndex2Manipulate));
+                            if (parameters.cycling_handling_enabled)
+                            {
+                                constraint_identifier.set(ObjIndex2Manipulate, 
+                                                         objectives[ObjIndex2Manipulate].getActiveCtrIndex(CtrIndex2Manipulate), 
+                                                         objectives[ObjIndex2Manipulate].getActiveCtrType(CtrIndex2Manipulate));
+                            }
+                            
+                            operation = OPERATION_REMOVE;
+                            deactivate(ObjIndex2Manipulate, CtrIndex2Manipulate); 
                         }
-                    
-                        operation = OPERATION_REMOVE;
-                        deactivate(ObjIndex2Manipulate, CtrIndex2Manipulate); 
-                    }
-                    else
-                    {
-                        status = PROBLEM_SOLVED;
+                        else
+                        {
+                            status = PROBLEM_SOLVED;
+                        }
                     }
                 }
 
@@ -694,7 +721,7 @@ namespace LexLS
                 }
 
                 if (parameters.cycling_handling_enabled && operation != OPERATION_UNDEFINED)
-                    status = cycling_handler.update(operation, ConstraintIdentifier, objectives, nIterations, false);
+                    status = cycling_handler.update(operation, constraint_identifier, objectives, nIterations, false);
 
                 nIterations++;
 

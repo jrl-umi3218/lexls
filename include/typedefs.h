@@ -327,7 +327,8 @@ namespace LexLS
                 dim(0),
                 rank(0),
                 FirstRowIndex(0), 
-                FirstColIndex(0){}
+                FirstColIndex(0),                
+                regularization_factor(0.0){}
 
             /**
                \brief Print objective information.
@@ -365,6 +366,11 @@ namespace LexLS
               \note computed during factorization. 
             */
             Index FirstColIndex; 
+
+            /*
+              \brief Regularization factor for the current objective (default: 0.0)
+            */
+            RealScalar regularization_factor;
         };
 
         /** 

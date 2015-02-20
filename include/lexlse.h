@@ -82,7 +82,6 @@ namespace LexLS
                 Index dim = std::max(maxObjDimSum,nVar);
                 dWorkspace.resize(2*dim + nVar + 1);
             
-                regularization_factors.resize(nObj);
                 column_permutations.resize(nVar);
 
                 // no need to initialize them (used in cg_tikhonov(...))
@@ -236,7 +235,7 @@ namespace LexLS
                     // -----------------------------------------------------------------------
                     if (0.0 == parameters.variable_regularization_factor) // constant regularization factor
                     {
-                        aRegularizationFactor = regularization_factors[ObjIndex];
+                        aRegularizationFactor = obj_info[ObjIndex].regularization_factor;
                     }
                     else // variable damping factor (use with caution)
                     {
@@ -265,7 +264,7 @@ namespace LexLS
                             RealScalar epsilon = parameters.variable_regularization_factor;
                             if (conditioning_estimate < epsilon)
                             {
-                                aRegularizationFactor = std::sqrt((1 - (conditioning_estimate*conditioning_estimate)/(epsilon*epsilon)))*regularization_factors[ObjIndex];
+                                aRegularizationFactor = std::sqrt((1 - (conditioning_estimate*conditioning_estimate)/(epsilon*epsilon)))*obj_info[ObjIndex].regularization_factor;
 
                                 //printf("aRegularizationFactor = %e \n", aRegularizationFactor);
                             }
@@ -706,8 +705,8 @@ namespace LexLS
                                       RealScalar tol_correct_sign_lambda)
             {
                 bool FoundBetterDescentDirection = false;
-                RealScalar aLambda, aCtrNorm;
-                Index ind, nColRemaining;
+                RealScalar aLambda;
+                Index ind;
                 ConstraintActivationType *aCtrType; // aCtrType cannot be CTR_INACTIVE
 
                 for (Index k=0; k<ObjDim; k++)
@@ -994,7 +993,7 @@ namespace LexLS
 
                \note using the normal equations (and reusing the basis constructed for Tikhonov
                regularization). Hence in order to use this, one has to set regularization_type =
-               REGULARIZATION_TIKHONOV and regularization_factors = zeros(1,nObj);
+               REGULARIZATION_TIKHONOV and obj_info[:].regularization_factor = 0;
             */
             void solveLeastNorm_3()
             {
@@ -1240,7 +1239,7 @@ namespace LexLS
             {
                 /// @todo: check whether ObjIndex and factor make sense. 
 
-                regularization_factors(ObjIndex) = factor;
+                obj_info[ObjIndex].regularization_factor = factor;
             }
 
             /** 
@@ -1413,8 +1412,6 @@ namespace LexLS
 
                 P.setIdentity();
                 x.tail(nVar-nVarFixed).setZero(); // x.head(nVarFixed) has already been initialized in fixVariable(...)
-
-                regularization_factors.setZero(); // by default there is no regularization
             }
 
             /** 
@@ -1961,7 +1958,7 @@ namespace LexLS
             /** 
                 \brief Regularization factor used at the current level
 
-                \note Based on #regularization_factors
+                \note Based on obj_info[:].regularization_factor
             */
             RealScalar aRegularizationFactor;
 
@@ -2026,14 +2023,6 @@ namespace LexLS
               \note computed during the factorization.
             */
             dVectorType hh_scalars; 
-
-            /** 
-                \brief Regularization factoris for each objective
-
-                \note The number of elements is equal to the number of objectives (fixed variables in
-                the highest level are not regularized)
-            */
-            dVectorType regularization_factors; 
 
             /** 
                 \brief Used in implementation of conjugate gradients (CG)
