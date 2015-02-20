@@ -20,7 +20,9 @@ namespace LexLS
             */
             Objective(): 
                 nCtr(0),
-                obj_type(GENERAL_OBJECTIVE){}
+                obj_type(GENERAL_OBJECTIVE),
+                regularization_factor(0.0),
+                v0_is_specified(false){}
 
             /**
                \brief Resize the objective
@@ -192,7 +194,7 @@ namespace LexLS
                 Index CtrIndex;
                 ConstraintActivationType CtrType;
 
-                if (obj_type == SIMPLE_BOUNDS_OBJECTIVE)
+                if (obj_type == SIMPLE_BOUNDS_OBJECTIVE) // cannot be regularized
                 {
                     Index VarIndex;
                     lexlse.setFixedVariablesCount(getActiveCtrCount());
@@ -244,8 +246,9 @@ namespace LexLS
                         
                         counter++;
                     }
+                    lexlse.setRegularizationFactor(ObjIndex,regularization_factor);                
                 }
-            }
+            }           
 
             /*
               \brief Form #dv
@@ -500,23 +503,6 @@ namespace LexLS
             }
 
             /**
-               \brief Set objective data (obj_type = GENERAL_OBJECTIVE)
-            */
-            void setData(const dMatrixType& data_)
-            {
-                data = data_;
-            }
-
-            /**
-               \brief Set objective data + var_index (obj_type = SIMPLE_BOUNDS_OBJECTIVE)
-            */
-            void setData(Index *var_index_, const dMatrixType& data_)
-            {
-                var_index = Eigen::Map<iVectorType>(var_index_,nCtr);
-                data      = data_;
-            }
-
-            /**
                \brief Set v0
 
                \note Use this function with caution (advanced initialization)
@@ -546,6 +532,22 @@ namespace LexLS
                 }
             }
 
+            /**
+               \brief Set objective data (obj_type = GENERAL_OBJECTIVE)
+            */
+            void setData(const dMatrixType& data_)
+            {
+                data = data_;
+            }
+
+            /**
+               \brief Set objective data + var_index (obj_type = SIMPLE_BOUNDS_OBJECTIVE)
+            */
+            void setData(Index *var_index_, const dMatrixType& data_)
+            {
+                var_index = Eigen::Map<iVectorType>(var_index_,nCtr);
+                data      = data_;
+            }
 
             /**
                \brief Set objective data + var_index one by one (obj_type = SIMPLE_BOUNDS_OBJECTIVE)
@@ -555,6 +557,27 @@ namespace LexLS
                 var_index(k) = var_index_;
                 data(k,0)    = lb_;
                 data(k,1)    = ub_;
+            }
+
+            /**
+               \brief Set regularization factor
+            */
+            void setRegularization(RealScalar factor)
+            {
+                if (obj_type == SIMPLE_BOUNDS_OBJECTIVE)
+                {
+                    printf("WARNING: setting a nonzero regularization factor has no effect on an objective of type SIMPLE_BOUNDS_OBJECTIVE. \n");
+                }
+                    
+                regularization_factor = factor;
+            }
+
+            /**
+               \brief Get the regularization factor
+            */
+            RealScalar getRegularization()
+            {
+                return regularization_factor;
             }
 
             /**
@@ -666,6 +689,11 @@ namespace LexLS
                \brief Stores A*dx
             */
             dVectorType Adx;
+
+            /*
+              \brief Regularization factor for the current objective (default: 0.0)
+            */
+            RealScalar regularization_factor;
 
             /** 
                 \brief If v0_is_initialized == true, the function set_v0(...) has been called.

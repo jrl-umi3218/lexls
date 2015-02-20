@@ -374,8 +374,8 @@ namespace LexLS
             void setRegularizationFactor(Index ObjIndex, RealScalar factor)
             {
                 // @todo: check whether ObjIndex and factor make sense. 
-
-                regularization_factors(ObjIndex) = factor;
+                
+                objectives[ObjIndex].setRegularization(factor);
             }
         
             /** 
@@ -520,8 +520,6 @@ namespace LexLS
                 // ObjDim_ + nObjOffset is pointer arithmetic
                 lexlse.resize(nVar, nObj - nObjOffset, ObjDim_ + nObjOffset);
 
-                regularization_factors.resize(nObj);
-
                 nActive.resize(nObj);
                 objectives.resize(nObj); 
                 for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
@@ -547,8 +545,6 @@ namespace LexLS
 
                 x.setZero();
                 dx.setZero();
-
-                regularization_factors.setZero(); // by default there is no regularization
             }
 
             /** 
@@ -557,15 +553,11 @@ namespace LexLS
             void formLexLSE()
             {
                 // obj_info.FirstRowIndex has to be initialized before I start setting CtrType in formLexLSE below
-                Index counter = 0;
                 for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
                     nActive(ObjIndex) = objectives[ObjIndex].getActiveCtrCount();
                 lexlse.setObjDim(&nActive(0)+nObjOffset);
-            
-                // skip the first regularization factor if the first objective is of type SIMPLE_BOUNDS_OBJECTIVE
-                for (Index ObjIndex=0; ObjIndex<nObj-nObjOffset; ObjIndex++)
-                    lexlse.setRegularizationFactor(ObjIndex,regularization_factors(ObjIndex + nObjOffset));
 
+                Index counter = 0;
                 for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
                     objectives[ObjIndex].formLexLSE(lexlse, counter, ObjIndex-nObjOffset);
             }
@@ -923,15 +915,6 @@ namespace LexLS
                 \brief The current descent direction from #x
             */
             dVectorType dx;
-
-            /** 
-                \brief Regularization factoris for each objective
-
-                \note The number of elements is equal to the number of objectives (having a non-zero
-                regularization for objective of type SIMPLE_BOUNDS_OBJECTIVE has no effect as it is
-                ignored)
-            */
-            dVectorType regularization_factors; 
 
             /** 
                 \brief Number of active constraints in each objective
