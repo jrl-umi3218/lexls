@@ -68,12 +68,17 @@ namespace LexLS
                 initialize();
             }
 
-            void form_initial_working_set(dVectorType &x)
+            void form_initial_working_set(dVectorType &x, 
+                                          bool modify_x_guess_enabled,
+                                          bool modify_type_active_enabled,
+                                          bool modify_type_inactive_enabled)
             {
+                Index CtrIndex;
+
                 if (obj_type == SIMPLE_BOUNDS_OBJECTIVE)
                 {
-
-
+                    //if (isActive(CtrIndex))
+                    
                 }
                 else if (obj_type == GENERAL_OBJECTIVE)
                 {
@@ -320,6 +325,7 @@ namespace LexLS
                \param[out] CtrIndexBlocking Index of blocking constraint.
                \param[out] CtrTypeBlocking  Type of the blocking constraint.
                \param[out] alpha            scaling factor for the step.
+               \param[in] tol_feasibility   used to determine whether a constraint has been violated.
 
                \return true if there are blocking constraints
 
@@ -510,12 +516,12 @@ namespace LexLS
 
             /**
                \brief Returns true if the k-th constraint is active, otherwise returns false
-            */                                        
+            */
             bool isActive(Index CtrIndex) const
             {
                 return working_set.isActive(CtrIndex);
             }
-
+            
             /**
                \brief Set v0
 

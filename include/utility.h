@@ -3,9 +3,6 @@
 
 #include <typedefs.h>
 
-/**
-   \brief Some basic functions 
-*/
 namespace LexLS
 {    
     /**

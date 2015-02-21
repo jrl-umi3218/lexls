@@ -114,7 +114,7 @@ namespace LexLS
     {
     public:
         /**
-           \brief Maximum number of iterations
+           \brief Maximum number of factorizations (if reached, the solver terminates)
         */
         Index max_number_of_factorizations;
 
@@ -134,10 +134,7 @@ namespace LexLS
         RealScalar tol_correct_sign_lambda;
 
         /** 
-            \brief Tolerance: I was using tol = 0, but if I have the same
-            constraint appearing twice in one objective (i.e., both RHS and LHS
-            are the same) there is cycling. For tol = 1e-13 there is no
-            cycling. 
+            \brief Tolerance: used to determine whether a constraint has been violated
         */
         RealScalar tol_feasibility;
 
@@ -154,8 +151,15 @@ namespace LexLS
         Index max_number_of_CG_iterations;
 
         /**
-         * @brief 
-         * @todo add documentation
+         * \brief When variable_regularization_factor = 0 the user specified regularization factors
+         * are used directly. When variable_regularization_factor != 0 an estimation of the
+         * conditioning (conditioning_estimate) of each level is made (during the LOD). Then if
+         * conditioning_estimate > variable_regularization_factor no regularization is applied,
+         * while if conditioning_estimate < variable_regularization_factor the regularization
+         * factors (provided by the user) are modified (there are various approaches to do this, see
+         * lexlse::factorize(...)).
+         *
+         * \attention This functionality is not mature yet (use with caution).
          */
         RealScalar variable_regularization_factor;
 
@@ -165,22 +169,36 @@ namespace LexLS
         bool cycling_handling_enabled;
 
         /**
-         * @brief 
-         * @todo add documentation
+         * \brief Maximum number of attempts for cycling handling
+         *
          * @todo cycling is not always detected
          */
         Index cycling_max_counter;
+        
         /**
-         * @brief 
-         * @todo add documentation
+         * \brief Ammount of relaxation performed during each attempt to handle cycling 
          */
-        double cycling_relax_step;
+        RealScalar cycling_relax_step;
 
         /**
-         * @brief 
-         * @todo add documentation
+         * \brief Used to output information for intermediate iterations of the solver
          */
         std::string output_file_name;
+
+        /** 
+            \brief Allows modification of the user guess for x (see doc/hot_start.pdf)
+        */
+        bool modify_x_guess_enabled;
+
+        /** 
+            \brief Allows modification of the user guess for active constraints (see doc/hot_start.pdf)
+        */
+        bool modify_type_active_enabled;
+
+        /** 
+            \brief Allows modification of the user guess for inactive constraints (see doc/hot_start.pdf)
+        */
+        bool modify_type_inactive_enabled;
 
         ParametersLexLSI()
         {
@@ -189,20 +207,24 @@ namespace LexLS
 
         void setDefaults()
         {
-            max_number_of_factorizations = 200;
+            max_number_of_factorizations   = 200;
 
-            tol_linear_dependence   = 1e-12;
-            tol_wrong_sign_lambda   = 1e-08;
-            tol_correct_sign_lambda = 1e-12;
-            tol_feasibility         = 1e-13;
+            tol_linear_dependence          = 1e-12;
+            tol_wrong_sign_lambda          = 1e-08;
+            tol_correct_sign_lambda        = 1e-12;
+            tol_feasibility                = 1e-13;
 
-            cycling_handling_enabled = false;
-            cycling_max_counter      = 50;
-            cycling_relax_step       = 1e-08;
+            cycling_handling_enabled       = false;
+            cycling_max_counter            = 50;
+            cycling_relax_step             = 1e-08;
 
             regularization_type            = REGULARIZATION_NONE;
             max_number_of_CG_iterations    = 10;
             variable_regularization_factor = 0.0;
+
+            modify_x_guess_enabled         = false;
+            modify_type_active_enabled     = false;
+            modify_type_inactive_enabled   = false;
         }
     };
 

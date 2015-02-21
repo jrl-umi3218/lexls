@@ -46,10 +46,10 @@
 \SaveVerb{true}|true|
 \SaveVerb{false}|false|
 \SaveVerb{determine_ctr_type}|determine_ctr_type|
-\SaveVerb{modify_type_inactive}|modify_type_inactive|
-\SaveVerb{modify_type_active}|modify_type_active|
-\SaveVerb{x_guess_is_provided}|x_guess_is_provided|
-\SaveVerb{modify_x_guess}|modify_x_guess|
+\SaveVerb{modify_type_inactive_enabled}|modify_type_inactive_enabled|
+\SaveVerb{modify_type_active_enabled}|modify_type_active_enabled|
+\SaveVerb{x_guess_is_specified}|x_guess_is_specified|
+\SaveVerb{modify_x_guess_enabled}|modify_x_guess_enabled|
 \SaveVerb{update_x_guess}|update_x_guess|
 \SaveVerb{lexlse}|lexlse|
 
@@ -79,9 +79,9 @@ algorithm (they need not be the same).
   \item[\ding{237}] {\bf IF}
     
     \begin{itemize}
-    \item \UseVerb{modify_x_guess} = \UseVerb{false}
-    \item \UseVerb{modify_type_inactive} = \UseVerb{false} 
-    \item \UseVerb{modify_type_active} = \UseVerb{false}
+    \item \UseVerb{modify_x_guess_enabled} = \UseVerb{false}
+    \item \UseVerb{modify_type_inactive_enabled} = \UseVerb{false} 
+    \item \UseVerb{modify_type_active_enabled} = \UseVerb{false}
     \end{itemize}
     %
     $\mathcal{W}^{(0)} \leftarrow \mathcal{W}^{\mathit{guess}}$. Equality constraints are detected
@@ -90,9 +90,9 @@ algorithm (they need not be the same).
   \item[\ding{237}] {\bf ELSE IF}
 
     \begin{itemize}
-    \item \UseVerb{modify_x_guess} = \UseVerb{false}
-    \item {\color{blue}\UseVerb{modify_type_inactive} = \UseVerb{true}}
-    \item \UseVerb{modify_type_active} = \UseVerb{false}
+    \item \UseVerb{modify_x_guess_enabled} = \UseVerb{false}
+    \item {\color{blue}\UseVerb{modify_type_inactive_enabled} = \UseVerb{true}}
+    \item \UseVerb{modify_type_active_enabled} = \UseVerb{false}
     \end{itemize}
     % 
     $\mathcal{W}^{(0)} \leftarrow \mathcal{W}^{\mathit{guess}}$. Additional inequality constraints
@@ -102,9 +102,9 @@ algorithm (they need not be the same).
   \item[\ding{237}] {\bf ELSE IF}
 
     \begin{itemize}
-    \item \UseVerb{modify_x_guess} = \UseVerb{false}
-    \item \UseVerb{modify_type_inactive} = \UseVerb{false} 
-    \item {\color{blue}\UseVerb{modify_type_active} = \UseVerb{true}}
+    \item \UseVerb{modify_x_guess_enabled} = \UseVerb{false}
+    \item \UseVerb{modify_type_inactive_enabled} = \UseVerb{false} 
+    \item {\color{blue}\UseVerb{modify_type_active_enabled} = \UseVerb{true}}
     \end{itemize}
     % 
     $\mathcal{W}^{(0)} \leftarrow \mathcal{W}^{\mathit{guess}}$. Some inequality constraints
@@ -114,9 +114,9 @@ algorithm (they need not be the same).
   \item[\ding{237}] {\bf ELSE IF}
 
     \begin{itemize}
-    \item {\color{blue}\UseVerb{modify_x_guess} = \UseVerb{true}}
-    \item \UseVerb{modify_type_inactive} = \UseVerb{false} 
-    \item \UseVerb{modify_type_active} = \UseVerb{false}
+    \item {\color{blue}\UseVerb{modify_x_guess_enabled} = \UseVerb{true}}
+    \item \UseVerb{modify_type_inactive_enabled} = \UseVerb{false} 
+    \item \UseVerb{modify_type_active_enabled} = \UseVerb{false}
     \end{itemize}
     %
     $\mathcal{W}^{(0)} \leftarrow \mathcal{W}^{\mathit{guess}}$. Equality constraints are detected
@@ -170,7 +170,7 @@ algorithm (they need not be the same).
     \begin{itemize}
     \item[\ding{237}] $\ubar{b}_i = \bar{b}_i$ (the $i$-th constraint is automatically modified to
       \UseVerb{CTR_ACTIVE_EQ}).
-    \item[\ding{237}] \UseVerb{modify_type_inactive} = \UseVerb{true} (see Algorithm~\ref{alg.type}).
+    \item[\ding{237}] \UseVerb{modify_type_inactive_enabled} = \UseVerb{true} (see Algorithm~\ref{alg.type}).
     \end{itemize}
   \end{itemize}
 
@@ -192,7 +192,7 @@ algorithm (they need not be the same).
     \begin{itemize}
     \item[\ding{237}] $\ubar{b}_i = \bar{b}_i$ (the $i$-th constraint is automatically modified to
       \UseVerb{CTR_ACTIVE_EQ}).
-    \item[\ding{237}] \UseVerb{modify_type_active} = \UseVerb{true} (see Algorithm~\ref{alg.type}).
+    \item[\ding{237}] \UseVerb{modify_type_active_enabled} = \UseVerb{true} (see Algorithm~\ref{alg.type}).
     \end{itemize}
   \end{itemize}
 
@@ -205,7 +205,7 @@ algorithm (they need not be the same).
     \begin{itemize}
     \item[\ding{237}] $\ubar{b}_i = \bar{b}_i$ (the $i$-th constraint is automatically modified to
       \UseVerb{CTR_ACTIVE_EQ}).
-    \item[\ding{237}] \UseVerb{modify_type_active} = \UseVerb{true} (see Algorithm~\ref{alg.type}).
+    \item[\ding{237}] \UseVerb{modify_type_active_enabled} = \UseVerb{true} (see Algorithm~\ref{alg.type}).
     \end{itemize}
   \end{itemize}
 
@@ -219,7 +219,7 @@ to specifying the initial guess.
 
 \begin{itemize}
 
-\item \UseVerb{modify_type_inactive}
+\item \UseVerb{modify_type_inactive_enabled}
 
   \begin{itemize}
   \item[\ding{237}] \UseVerb{false} ({\bf default}): constraints with (user specified) type \UseVerb{CTR_INACTIVE} are not included in $\mathcal{W}^{(0)}$.
@@ -228,14 +228,14 @@ to specifying the initial guess.
     \UseVerb{CTR_INACTIVE} maybe be activated (see Algorithm~\ref{alg.type}).
   \end{itemize}
 
-\item \UseVerb{modify_type_active}
+\item \UseVerb{modify_type_active_enabled}
 
   \begin{itemize}
   \item[\ding{237}] \UseVerb{false} ({\bf default}): constraints with (user specified) type \UseVerb{CTR_ACTIVE_LB} and \UseVerb{CTR_ACTIVE_UB} are included in $\mathcal{W}^{(0)}$.
   \item[\ding{237}] \UseVerb{true}: enables the solver to modify the type of constraints in $\mathcal{W}^{\mathit{guess}}$ (or to deactivate them) (see Algorithm~\ref{alg.type}).
   \end{itemize}
 
-\item \UseVerb{modify_x_guess}
+\item \UseVerb{modify_x_guess_enabled}
 
   \begin{itemize}
   \item[\ding{237}] \UseVerb{false} ({\bf default}): $x^{\mathit{guess}}$ cannot be modified by the solver.
@@ -243,7 +243,7 @@ to specifying the initial guess.
     bounds in the objective with highest priority (see Algorithm~\ref{alg.x_guess}).
   \end{itemize} 
 
-\item \UseVerb{x_guess_is_provided}
+\item \UseVerb{x_guess_is_specified}
 
   \begin{itemize}
   \item[\ding{237}] \UseVerb{false} ({\bf default}): $x^{\mathit{guess}}$ is not specified.
@@ -254,7 +254,7 @@ to specifying the initial guess.
 
   \noindent When $x^{\mathit{guess}}$ has not been specified, a user input \UseVerb{CTR_INACTIVE},
   \UseVerb{CTR_ACTIVE_LB} or \UseVerb{CTR_ACTIVE_UB} is not modified in the solver (provided that
-  $\ubar{b}_i \neq \bar{b}_i$). Note that the flag \UseVerb{x_guess_is_provided} is not directly set
+  $\ubar{b}_i \neq \bar{b}_i$). Note that the flag \UseVerb{x_guess_is_specified} is not directly set
   by the user.
   
 \end{itemize}
@@ -277,7 +277,7 @@ $i\not\in \mathcal{W}^{(k)}$, $v_i^{\star(k)} = 0$.
     \begin{align*}
       x^{(0)} \leftarrow \left\{ 
       \begin{array}{l l}
-        x^{\mathit{guess}} & \quad \text{if} \,\,\,\, \UseVerb{x_guess_is_provided} \\
+        x^{\mathit{guess}} & \quad \text{if} \,\,\,\, \UseVerb{x_guess_is_specified} \\
         x^{\star(0)} & \quad \text{otherwise}
       \end{array} \right.
     \end{align*}
@@ -339,11 +339,11 @@ cases. % todo
   \caption{determine the type of the $i$-th constraint}
 
   \KwIn{\UseVerb{determine_ctr_type}($i$)}
-  \KwData{\UseVerb{type}$\in\{$\UseVerb{CTR_INACTIVE}, \UseVerb{CTR_ACTIVE_LB}, \UseVerb{CTR_ACTIVE_UB}, \UseVerb{CTR_ACTIVE_EQ}$\}$ 
-    ({\color{blue}user input}), \\
-    \hspace{1.4cm}\UseVerb{x_guess_is_provided}, \\
-    \hspace{1.4cm}\UseVerb{modify_type_inactive}, \\
-    \hspace{1.4cm}\UseVerb{modify_type_active}
+  \KwData{\UseVerb{type}$\in\{$\UseVerb{CTR_INACTIVE}, \UseVerb{CTR_ACTIVE_LB}, \UseVerb{CTR_ACTIVE_UB}, \UseVerb{CTR_ACTIVE_EQ}$\}$ \\
+    \hspace{1.4cm}(note: {\color{blue}\UseVerb{type} is the input from the user}), \\
+    \hspace{1.4cm}\UseVerb{x_guess_is_specified}, \\
+    \hspace{1.4cm}\UseVerb{modify_type_inactive_enabled}, \\
+    \hspace{1.4cm}\UseVerb{modify_type_active_enabled}
   }
   \KwOut{\UseVerb{type}}
   
@@ -360,18 +360,18 @@ cases. % todo
 
   \vspace{0.2cm}
 
-  \If{\upshape\color{blue}\UseVerb{x_guess_is_provided}}
+  \If{\upshape\color{blue}\UseVerb{x_guess_is_specified}}
       {
         \vspace{0.2cm}
         
-        \If{\upshape{\color{blue}\UseVerb{type} = \UseVerb{CTR_INACTIVE}} {\bf and} \color{blue}\UseVerb{modify_type_inactive}}{
+        \If{\upshape{\color{blue}\UseVerb{type} = \UseVerb{CTR_INACTIVE}} {\bf and} \color{blue}\UseVerb{modify_type_inactive_enabled}}{
           \If{\upshape$a_i^Tx^{\mathit{guess}} \leq \ubar{b}_i$}{\KwRet \UseVerb{CTR_ACTIVE_LB}}
           \If{\upshape$a_i^Tx^{\mathit{guess}} \geq \bar{b}_i$}{\KwRet \UseVerb{CTR_ACTIVE_UB}}
         }
         
         \vspace{0.2cm}
         
-        \If{\upshape{\color{blue}\UseVerb{type} = \UseVerb{CTR_ACTIVE_LB}} {\bf and} \color{blue}\UseVerb{modify_type_active}}
+        \If{\upshape{\color{blue}\UseVerb{type} = \UseVerb{CTR_ACTIVE_LB}} {\bf and} \color{blue}\UseVerb{modify_type_active_enabled}}
            {
              \If{\upshape$a_i^Tx^{\mathit{guess}} > \ubar{b}_i$}
                 {
@@ -381,7 +381,7 @@ cases. % todo
         
         \vspace{0.2cm}
         
-        \If{\upshape{\color{blue}\UseVerb{type} = \UseVerb{CTR_ACTIVE_UB}} {\bf and} \color{blue}\UseVerb{modify_type_active}}
+        \If{\upshape{\color{blue}\UseVerb{type} = \UseVerb{CTR_ACTIVE_UB}} {\bf and} \color{blue}\UseVerb{modify_type_active_enabled}}
            {
              \If{\upshape$a_i^Tx^{\mathit{guess}} < \bar{b}_i$}
                 {
@@ -400,14 +400,14 @@ cases. % todo
   \caption{update $x^{\mathit{guess}}$}
 
   \KwIn{\UseVerb{update_x_guess}($x^{\mathit{guess}}$)}
-  \KwData{\UseVerb{type}$\in\{$\UseVerb{CTR_INACTIVE}, \UseVerb{CTR_ACTIVE_LB}, \UseVerb{CTR_ACTIVE_UB}, \UseVerb{CTR_ACTIVE_EQ}$\}$ 
-    ({\color{blue}from Algorithm~\ref{alg.type}}), \\
-    \hspace{1.2cm} \UseVerb{modify_x_guess}}
+  \KwData{\UseVerb{type}$\in\{$\UseVerb{CTR_INACTIVE}, \UseVerb{CTR_ACTIVE_LB}, \UseVerb{CTR_ACTIVE_UB}, \UseVerb{CTR_ACTIVE_EQ}$\}$ \\
+    \hspace{1.4cm}(note: {\color{blue}\UseVerb{type} is the the output of Algorithm~\ref{alg.type}}), \\
+    \hspace{1.2cm} \UseVerb{modify_x_guess_enabled}}
   \KwOut{(possibly) modified $x^{\mathit{guess}}$}
   
   \vspace{0.2cm}
 
-  \eIf{\upshape\color{blue}\UseVerb{modify_x_guess} = \UseVerb{false}}{\KwRet $x^{\mathit{guess}}$}
+  \eIf{\upshape\color{blue}\UseVerb{modify_x_guess_enabled} = \UseVerb{false}}{\KwRet $x^{\mathit{guess}}$}
       {
         \vspace{0.2cm}
 
@@ -439,11 +439,13 @@ cases. % todo
 
 \begin{algorithm} \label{alg.W0}
   \caption{form $W^{(0)}$}
-  \KwData{\UseVerb{x_guess_is_provided}, \UseVerb{modify_x_guess}}
+  \KwData{\UseVerb{x_guess_is_specified}, \UseVerb{modify_x_guess_enabled}}
   
   \vspace{0.2cm}
 
-  \eIf{\upshape{\color{blue}\UseVerb{x_guess_is_provided}} {\bf and} {\color{blue}\UseVerb{modify_x_guess}} {\bf and} {\color{blue}\UseVerb{SIMPLE_BOUNDS_OBJECTIVE}}}
+  \eIf{\upshape{\color{blue}\UseVerb{x_guess_is_specified}} {\bf and} \\ 
+               \hspace{0.45cm}{\color{blue}\UseVerb{modify_x_guess_enabled}} {\bf and} \\ 
+               \hspace{0.45cm}{\color{blue}\UseVerb{SIMPLE_BOUNDS_OBJECTIVE}}}
       {
         \For{$i \in \{$all constraints in first objective$\}$}
             {

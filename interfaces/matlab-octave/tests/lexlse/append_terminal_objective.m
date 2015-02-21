@@ -10,7 +10,7 @@ if options.get_least_norm_solution
   obj(nObj+1).A = eye(n);
   obj(nObj+1).b = zeros(n,1);
   
-  options.regularization = [options.regularization, 0];
+  options.regularization_factors = [options.regularization_factors, 0];
 end
 
 %%%EOF4

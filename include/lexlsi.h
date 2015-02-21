@@ -14,8 +14,6 @@ namespace LexLS
 
             \todo When we solve a sequence of LexLSI problems we could specify the maximum size of the
             envisioned objectives so that we don't have to allocate memory online.
-
-            \todo To use a structure containing the tolerances.
         */
         class LexLSI
         {
@@ -581,9 +579,6 @@ namespace LexLS
                \param[out] alpha            scaling factor for the step.
 
                \return true if there are blocking constraints
-
-               @todo Name of a method 'checkBlockingConstraints()' is shared by
-               both this and Objective classes. This may be confusing.
             */      
             bool checkBlockingConstraints(Index &ObjIndexBlocking, 
                                           Index &CtrIndexBlocking, 

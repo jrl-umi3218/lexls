@@ -27,13 +27,13 @@ if ~check_flag
     fprintf('enable_fixed_variables  = %d \n', options.enable_fixed_variables);
   end
 
-  if isfield(options,'regularizationType')
-    fprintf('regularizationType      = %d \n', options.regularizationType);
+  if isfield(options,'regularization_type')
+    fprintf('regularization_type     = %d \n', options.regularization_type);
   end
 
-  if isfield(options,'regularization')
-    fprintf('regularization          = [');
-    fprintf(' %d ', options.regularization);
+  if isfield(options,'regularization_factors')
+    fprintf('regularization_factors  = [');
+    fprintf(' %d ', options.regularization_factors);
     fprintf('] \n');
   end
 else

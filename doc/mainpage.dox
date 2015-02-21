@@ -4,7 +4,6 @@
  * \section Contents Contents
  * - \ref ContactItem
  * - \ref PurposeItem
- * - \ref LibraryStructureItem
  * - \ref LicenseItem
  * - \ref ReferencesItem
  * - \ref InstallItem
@@ -43,13 +42,11 @@
  * \f}
  *
  * \section LicenseItem License
- * \verbinclude "LICENSE"
  *
  * \section ReferencesItem References
  * Work in progress ...
  *
  * \section InstallItem Compilation & other
- * \verbinclude "INSTALL"
  *	
  * \n
  */

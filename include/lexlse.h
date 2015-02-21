@@ -14,8 +14,6 @@ namespace LexLS
 
             \todo Should I resize fixed_var_type.resize(nVar) and fixed_var_index.resize(nVar) only once (in
             active-set iterations)?
-
-            \todo There are two tolerances that are fixed. see lexlse.findDescentDirection(...) and factorize()
         */
         class LexLSE
         {
@@ -250,8 +248,6 @@ namespace LexLS
                                 triangularView<Eigen::Upper>().solveInPlace<Eigen::OnTheLeft>(rhs_tmp);
 
                             conditioning_estimate /= rhs_tmp.squaredNorm();
-
-                            //printf("conditioning_estimate = %e \n",conditioning_estimate);
                             // -----------------------------------------------------------------------
 
                             /*
@@ -262,9 +258,8 @@ namespace LexLS
                             RealScalar epsilon = parameters.variable_regularization_factor;
                             if (conditioning_estimate < epsilon)
                             {
-                                aRegularizationFactor = std::sqrt((1 - (conditioning_estimate*conditioning_estimate)/(epsilon*epsilon)))*obj_info[ObjIndex].regularization_factor;
-
-                                //printf("aRegularizationFactor = %e \n", aRegularizationFactor);
+                                aRegularizationFactor = std::sqrt((1 - (conditioning_estimate*conditioning_estimate)/(epsilon*epsilon)));
+                                aRegularizationFactor *= obj_info[ObjIndex].regularization_factor;
                             }
                         }
                     }
@@ -431,8 +426,6 @@ namespace LexLS
 
                 \note Upon exit, the lagrange multipliers associated with objective ObjIndex can be accessed using
                 dWorkspace.head(nVarFixed + nLambda)
-
-                \todo Replace applyOnTheLeft(householderSequence(H,h)) with my implementation
             */
             bool ObjectiveSensitivity(Index ObjIndex, 
                                       Index &CtrIndex2Remove, int &ObjIndex2Remove, 
@@ -481,7 +474,6 @@ namespace LexLS
             
                 // check for wrong sign of the Lagrange multipliers
                 FoundBetterDescentDirection = findDescentDirection(FirstRowIndex,
-                                                                   FirstColIndex,
                                                                    ObjDim,
                                                                    maxAbsValue,
                                                                    CtrIndex2Remove,
@@ -523,7 +515,6 @@ namespace LexLS
                     
                         // check for wrong sign of the Lagrange multipliers
                         tmp_bool = findDescentDirection(FirstRowIndex,
-                                                        FirstColIndex,
                                                         ObjDim,
                                                         maxAbsValue,
                                                         CtrIndex2Remove,
@@ -543,7 +534,6 @@ namespace LexLS
 
                     // check for wrong sign of the Lagrange multipliers
                     tmp_bool = findDescentDirection(-1,
-                                                    -1,
                                                     nVarFixed,
                                                     maxAbsValue,
                                                     CtrIndex2Remove,
@@ -673,7 +663,6 @@ namespace LexLS
                multipliers.
             */
             bool findDescentDirection(int FirstRowIndex,
-                                      int FirstColIndex,
                                       Index ObjDim,
                                       RealScalar &maxAbsValue,   // modified
                                       Index &CtrIndex,           // modified
@@ -986,8 +975,6 @@ namespace LexLS
                 for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
                 {
                     FirstRowIndex = obj_info[ObjIndex].first_row_index;
-                    /// @todo FirstColIndex is not used in this function.
-                    //FirstColIndex = obj_info[ObjIndex].first_col_index;
                     ObjRank       = obj_info[ObjIndex].rank;
 
                     x.segment(nVarFixed+counter,ObjRank) = LOD.col(nVar).segment(FirstRowIndex,ObjRank) - 
@@ -1258,7 +1245,7 @@ namespace LexLS
                \brief Form the residuals (A*x-RHS) through the LOD. The residual of the
                fixed variables is always zero (and is not included).
 
-               \note This function could compute an incorect residual depending on #parameters.tol_linear_dependence.
+               \note This function could compute an incorect residual depending on parameters.tol_linear_dependence.
             */
             dVectorType& get_v()
             {

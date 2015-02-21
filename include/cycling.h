@@ -1,9 +1,6 @@
 #ifndef CYCLING
 #define CYCLING
 
-/**
-   \brief Cycling detection
-*/
 namespace LexLS
 {   
     namespace internal

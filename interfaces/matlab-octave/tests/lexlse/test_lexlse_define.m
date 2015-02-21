@@ -18,64 +18,64 @@ i = i + 1;
 % ------------------------------------------------------------------
 options(i).get_least_norm_solution = 0;
 options(i).enable_fixed_variables  = 0;
-options(i).regularizationType      = REGULARIZATION_TIKHONOV;
-options(i).regularization          = [1,2,3,4];
+options(i).regularization_type     = REGULARIZATION_TIKHONOV;
+options(i).regularization_factors  = [1,2,3,4];
 
 % ------------------------------------------------------------------
 i = i + 1;
 % ------------------------------------------------------------------
 options(i).get_least_norm_solution = 0;
 options(i).enable_fixed_variables  = 1;
-options(i).regularizationType      = REGULARIZATION_TIKHONOV;
-options(i).regularization          = [0,2,3,4];
+options(i).regularization_type     = REGULARIZATION_TIKHONOV;
+options(i).regularization_factors  = [0,2,3,4];
 
 % ------------------------------------------------------------------
 i = i + 1;
 % ------------------------------------------------------------------
 options(i).get_least_norm_solution = 1;
 options(i).enable_fixed_variables  = 1;
-options(i).regularizationType      = REGULARIZATION_TIKHONOV;
-options(i).regularization          = [0,2,3,4];
+options(i).regularization_type     = REGULARIZATION_TIKHONOV;
+options(i).regularization_factors  = [0,2,3,4];
 
 % ------------------------------------------------------------------
 i = i + 1;
 % ------------------------------------------------------------------
 options(i).get_least_norm_solution = 1;
 options(i).enable_fixed_variables  = 0;
-options(i).regularizationType      = REGULARIZATION_TIKHONOV;
-options(i).regularization          = [0,2,3,4];
+options(i).regularization_type     = REGULARIZATION_TIKHONOV;
+options(i).regularization_factors  = [0,2,3,4];
 
 % ------------------------------------------------------------------
 i = i + 1;
 % ------------------------------------------------------------------
 options(i).get_least_norm_solution = 2;
 options(i).enable_fixed_variables  = 1;
-options(i).regularizationType      = REGULARIZATION_TIKHONOV;
-options(i).regularization          = [0,2,3,4];
+options(i).regularization_type     = REGULARIZATION_TIKHONOV;
+options(i).regularization_factors  = [0,2,3,4];
 
 % ------------------------------------------------------------------
 i = i + 1;
 % ------------------------------------------------------------------
 options(i).get_least_norm_solution = 2;
 options(i).enable_fixed_variables  = 0;
-options(i).regularizationType      = REGULARIZATION_TIKHONOV;
-options(i).regularization          = [0,2,3,4];
+options(i).regularization_type     = REGULARIZATION_TIKHONOV;
+options(i).regularization_factors  = [0,2,3,4];
 
 % ------------------------------------------------------------------
 i = i + 1;
 % ------------------------------------------------------------------
 options(i).get_least_norm_solution = 3;
 options(i).enable_fixed_variables  = 1;
-options(i).regularizationType      = REGULARIZATION_TIKHONOV;
-options(i).regularization          = [0,2,3,4];
+options(i).regularization_type     = REGULARIZATION_TIKHONOV;
+options(i).regularization_factors  = [0,2,3,4];
 
 % ------------------------------------------------------------------
 i = i + 1;
 % ------------------------------------------------------------------
 options(i).get_least_norm_solution = 3;
 options(i).enable_fixed_variables  = 0;
-options(i).regularizationType      = REGULARIZATION_TIKHONOV;
-options(i).regularization          = [0,2,3,4];
+options(i).regularization_type     = REGULARIZATION_TIKHONOV;
+options(i).regularization_factors  = [0,2,3,4];
 
 % =========================================================================================
 % =========================================================================================
@@ -88,64 +88,64 @@ i = i + 1;
 % ------------------------------------------------------------------
 options(i).get_least_norm_solution = 0;
 options(i).enable_fixed_variables  = 0;
-options(i).regularizationType      = REGULARIZATION_TIKHONOV_1;
-options(i).regularization          = [1,2,3,4];
+options(i).regularization_type     = REGULARIZATION_TIKHONOV_1;
+options(i).regularization_factors  = [1,2,3,4];
 
 % ------------------------------------------------------------------
 i = i + 1;
 % ------------------------------------------------------------------
 options(i).get_least_norm_solution = 0;
 options(i).enable_fixed_variables  = 1;
-options(i).regularizationType      = REGULARIZATION_TIKHONOV_1;
-options(i).regularization          = [0,2,3,4];
+options(i).regularization_type     = REGULARIZATION_TIKHONOV_1;
+options(i).regularization_factors  = [0,2,3,4];
 
 % ------------------------------------------------------------------
 i = i + 1;
 % ------------------------------------------------------------------
 options(i).get_least_norm_solution = 1;
 options(i).enable_fixed_variables  = 1;
-options(i).regularizationType      = REGULARIZATION_TIKHONOV_1;
-options(i).regularization          = [0,2,3,4];
+options(i).regularization_type     = REGULARIZATION_TIKHONOV_1;
+options(i).regularization_factors  = [0,2,3,4];
 
 % ------------------------------------------------------------------
 i = i + 1;
 % ------------------------------------------------------------------
 options(i).get_least_norm_solution = 1;
 options(i).enable_fixed_variables  = 0;
-options(i).regularizationType      = REGULARIZATION_TIKHONOV_1;
-options(i).regularization          = [0,2,3,4];
+options(i).regularization_type     = REGULARIZATION_TIKHONOV_1;
+options(i).regularization_factors  = [0,2,3,4];
 
 % ------------------------------------------------------------------
 i = i + 1;
 % ------------------------------------------------------------------
 options(i).get_least_norm_solution = 2;
 options(i).enable_fixed_variables  = 1;
-options(i).regularizationType      = REGULARIZATION_TIKHONOV_1;
-options(i).regularization          = [0,2,3,4];
+options(i).regularization_type     = REGULARIZATION_TIKHONOV_1;
+options(i).regularization_factors  = [0,2,3,4];
 
 % ------------------------------------------------------------------
 i = i + 1;
 % ------------------------------------------------------------------
 options(i).get_least_norm_solution = 2;
 options(i).enable_fixed_variables  = 0;
-options(i).regularizationType      = REGULARIZATION_TIKHONOV_1;
-options(i).regularization          = [0,2,3,4];
+options(i).regularization_type     = REGULARIZATION_TIKHONOV_1;
+options(i).regularization_factors  = [0,2,3,4];
 
 % ------------------------------------------------------------------
 i = i + 1;
 % ------------------------------------------------------------------
 options(i).get_least_norm_solution = 3;
 options(i).enable_fixed_variables  = 1;
-options(i).regularizationType      = REGULARIZATION_TIKHONOV_1;
-options(i).regularization          = [0,2,3,4];
+options(i).regularization_type     = REGULARIZATION_TIKHONOV_1;
+options(i).regularization_factors  = [0,2,3,4];
 
 % ------------------------------------------------------------------
 i = i + 1;
 % ------------------------------------------------------------------
 options(i).get_least_norm_solution = 3;
 options(i).enable_fixed_variables  = 0;
-options(i).regularizationType      = REGULARIZATION_TIKHONOV_1;
-options(i).regularization          = [0,2,3,4];
+options(i).regularization_type     = REGULARIZATION_TIKHONOV_1;
+options(i).regularization_factors  = [0,2,3,4];
 
 % =========================================================================================
 % =========================================================================================
@@ -158,64 +158,64 @@ i = i + 1;
 % ------------------------------------------------------------------
 options(i).get_least_norm_solution = 0;
 options(i).enable_fixed_variables  = 0;
-options(i).regularizationType      = REGULARIZATION_TIKHONOV_2;
-options(i).regularization          = [1,2,3,4];
+options(i).regularization_type     = REGULARIZATION_TIKHONOV_2;
+options(i).regularization_factors  = [1,2,3,4];
 
 % ------------------------------------------------------------------
 i = i + 1;
 % ------------------------------------------------------------------
 options(i).get_least_norm_solution = 0;
 options(i).enable_fixed_variables  = 1;
-options(i).regularizationType      = REGULARIZATION_TIKHONOV_2;
-options(i).regularization          = [0,2,3,4];
+options(i).regularization_type     = REGULARIZATION_TIKHONOV_2;
+options(i).regularization_factors  = [0,2,3,4];
 
 % ------------------------------------------------------------------
 i = i + 1;
 % ------------------------------------------------------------------
 options(i).get_least_norm_solution = 1;
 options(i).enable_fixed_variables  = 1;
-options(i).regularizationType      = REGULARIZATION_TIKHONOV_2;
-options(i).regularization          = [0,2,3,4];
+options(i).regularization_type     = REGULARIZATION_TIKHONOV_2;
+options(i).regularization_factors  = [0,2,3,4];
 
 % ------------------------------------------------------------------
 i = i + 1;
 % ------------------------------------------------------------------
 options(i).get_least_norm_solution = 1;
 options(i).enable_fixed_variables  = 0;
-options(i).regularizationType      = REGULARIZATION_TIKHONOV_2;
-options(i).regularization          = [0,2,3,4];
+options(i).regularization_type     = REGULARIZATION_TIKHONOV_2;
+options(i).regularization_factors  = [0,2,3,4];
 
 % ------------------------------------------------------------------
 i = i + 1;
 % ------------------------------------------------------------------
 options(i).get_least_norm_solution = 2;
 options(i).enable_fixed_variables  = 1;
-options(i).regularizationType      = REGULARIZATION_TIKHONOV_2;
-options(i).regularization          = [0,2,3,4];
+options(i).regularization_type     = REGULARIZATION_TIKHONOV_2;
+options(i).regularization_factors  = [0,2,3,4];
 
 % ------------------------------------------------------------------
 i = i + 1;
 % ------------------------------------------------------------------
 options(i).get_least_norm_solution = 2;
 options(i).enable_fixed_variables  = 0;
-options(i).regularizationType      = REGULARIZATION_TIKHONOV_2;
-options(i).regularization          = [0,2,3,4];
+options(i).regularization_type     = REGULARIZATION_TIKHONOV_2;
+options(i).regularization_factors  = [0,2,3,4];
 
 % ------------------------------------------------------------------
 i = i + 1;
 % ------------------------------------------------------------------
 options(i).get_least_norm_solution = 3;
 options(i).enable_fixed_variables  = 1;
-options(i).regularizationType      = REGULARIZATION_TIKHONOV_2;
-options(i).regularization          = [0,2,3,4];
+options(i).regularization_type     = REGULARIZATION_TIKHONOV_2;
+options(i).regularization_factors  = [0,2,3,4];
 
 % ------------------------------------------------------------------
 i = i + 1;
 % ------------------------------------------------------------------
 options(i).get_least_norm_solution = 3;
 options(i).enable_fixed_variables  = 0;
-options(i).regularizationType      = REGULARIZATION_TIKHONOV_2;
-options(i).regularization          = [0,2,3,4];
+options(i).regularization_type     = REGULARIZATION_TIKHONOV_2;
+options(i).regularization_factors  = [0,2,3,4];
 
 
 % =========================================================================================
@@ -230,48 +230,48 @@ i = i + 1;
 % ------------------------------------------------------------------
 options(i).get_least_norm_solution = 0;
 options(i).enable_fixed_variables  = 1;
-options(i).regularizationType      = REGULARIZATION_R;
-options(i).regularization          = [0,2,3,4];
+options(i).regularization_type     = REGULARIZATION_R;
+options(i).regularization_factors  = [0,2,3,4];
 
 % ------------------------------------------------------------------
 i = i + 1;
 % ------------------------------------------------------------------
 options(i).get_least_norm_solution = 0;
 options(i).enable_fixed_variables  = 0;
-options(i).regularizationType      = REGULARIZATION_R;
-options(i).regularization          = [0,2,3,4];
+options(i).regularization_type     = REGULARIZATION_R;
+options(i).regularization_factors  = [0,2,3,4];
 
 % ------------------------------------------------------------------
 i = i + 1;
 % ------------------------------------------------------------------
 options(i).get_least_norm_solution = 1;
 options(i).enable_fixed_variables  = 1;
-options(i).regularizationType      = REGULARIZATION_R;
-options(i).regularization          = [0,2,3,4];
+options(i).regularization_type     = REGULARIZATION_R;
+options(i).regularization_factors  = [0,2,3,4];
 
 % ------------------------------------------------------------------
 i = i + 1;
 % ------------------------------------------------------------------
 options(i).get_least_norm_solution = 1;
 options(i).enable_fixed_variables  = 0;
-options(i).regularizationType      = REGULARIZATION_R;
-options(i).regularization          = [0,2,3,4];
+options(i).regularization_type     = REGULARIZATION_R;
+options(i).regularization_factors  = [0,2,3,4];
 
 % ------------------------------------------------------------------
 i = i + 1;
 % ------------------------------------------------------------------
 options(i).get_least_norm_solution = 2;
 options(i).enable_fixed_variables  = 1;
-options(i).regularizationType      = REGULARIZATION_R;
-options(i).regularization          = [0,2,3,4];
+options(i).regularization_type     = REGULARIZATION_R;
+options(i).regularization_factors  = [0,2,3,4];
 
 % ------------------------------------------------------------------
 i = i + 1;
 % ------------------------------------------------------------------
 options(i).get_least_norm_solution = 2;
 options(i).enable_fixed_variables  = 0;
-options(i).regularizationType      = REGULARIZATION_R;
-options(i).regularization          = [0,2,3,4];
+options(i).regularization_type     = REGULARIZATION_R;
+options(i).regularization_factors  = [0,2,3,4];
 
 % =========================================================================================
 % =========================================================================================
@@ -284,48 +284,48 @@ i = i + 1;
 % ------------------------------------------------------------------
 options(i).get_least_norm_solution = 0;
 options(i).enable_fixed_variables  = 1;
-options(i).regularizationType      = REGULARIZATION_R_NO_Z;
-options(i).regularization          = [0,2,3,4];
+options(i).regularization_type     = REGULARIZATION_R_NO_Z;
+options(i).regularization_factors  = [0,2,3,4];
 
 % ------------------------------------------------------------------
 i = i + 1;
 % ------------------------------------------------------------------
 options(i).get_least_norm_solution = 0;
 options(i).enable_fixed_variables  = 0;
-options(i).regularizationType      = REGULARIZATION_R_NO_Z;
-options(i).regularization          = [0,2,3,4];
+options(i).regularization_type     = REGULARIZATION_R_NO_Z;
+options(i).regularization_factors  = [0,2,3,4];
 
 % ------------------------------------------------------------------
 i = i + 1;
 % ------------------------------------------------------------------
 options(i).get_least_norm_solution = 1;
 options(i).enable_fixed_variables  = 1;
-options(i).regularizationType      = REGULARIZATION_R_NO_Z;
-options(i).regularization          = [0,2,3,4];
+options(i).regularization_type     = REGULARIZATION_R_NO_Z;
+options(i).regularization_factors  = [0,2,3,4];
 
 % ------------------------------------------------------------------
 i = i + 1;
 % ------------------------------------------------------------------
 options(i).get_least_norm_solution = 1;
 options(i).enable_fixed_variables  = 0;
-options(i).regularizationType      = REGULARIZATION_R_NO_Z;
-options(i).regularization          = [0,2,3,4];
+options(i).regularization_type     = REGULARIZATION_R_NO_Z;
+options(i).regularization_factors  = [0,2,3,4];
 
 % ------------------------------------------------------------------
 i = i + 1;
 % ------------------------------------------------------------------
 options(i).get_least_norm_solution = 2;
 options(i).enable_fixed_variables  = 1;
-options(i).regularizationType      = REGULARIZATION_R_NO_Z;
-options(i).regularization          = [0,2,3,4];
+options(i).regularization_type     = REGULARIZATION_R_NO_Z;
+options(i).regularization_factors  = [0,2,3,4];
 
 % ------------------------------------------------------------------
 i = i + 1;
 % ------------------------------------------------------------------
 options(i).get_least_norm_solution = 2;
 options(i).enable_fixed_variables  = 0;
-options(i).regularizationType      = REGULARIZATION_R_NO_Z;
-options(i).regularization          = [0,2,3,4];
+options(i).regularization_type     = REGULARIZATION_R_NO_Z;
+options(i).regularization_factors  = [0,2,3,4];
 
 % =========================================================================================
 % =========================================================================================
@@ -338,47 +338,47 @@ i = i + 1;
 % ------------------------------------------------------------------
 options(i).get_least_norm_solution = 0;
 options(i).enable_fixed_variables  = 1;
-options(i).regularizationType      = REGULARIZATION_RT_NO_Z;
-options(i).regularization          = [0,2,3,4];
+options(i).regularization_type     = REGULARIZATION_RT_NO_Z;
+options(i).regularization_factors  = [0,2,3,4];
 
 % ------------------------------------------------------------------
 i = i + 1;
 % ------------------------------------------------------------------
 options(i).get_least_norm_solution = 0;
 options(i).enable_fixed_variables  = 0;
-options(i).regularizationType      = REGULARIZATION_RT_NO_Z;
-options(i).regularization          = [0,2,3,4];
+options(i).regularization_type     = REGULARIZATION_RT_NO_Z;
+options(i).regularization_factors  = [0,2,3,4];
 
 % ------------------------------------------------------------------
 i = i + 1;
 % ------------------------------------------------------------------
 options(i).get_least_norm_solution = 1;
 options(i).enable_fixed_variables  = 1;
-options(i).regularizationType      = REGULARIZATION_RT_NO_Z;
-options(i).regularization          = [0,2,3,4];
+options(i).regularization_type     = REGULARIZATION_RT_NO_Z;
+options(i).regularization_factors  = [0,2,3,4];
 
 % ------------------------------------------------------------------
 i = i + 1;
 % ------------------------------------------------------------------
 options(i).get_least_norm_solution = 1;
 options(i).enable_fixed_variables  = 0;
-options(i).regularizationType      = REGULARIZATION_RT_NO_Z;
-options(i).regularization          = [0,2,3,4];
+options(i).regularization_type     = REGULARIZATION_RT_NO_Z;
+options(i).regularization_factors  = [0,2,3,4];
 
 % ------------------------------------------------------------------
 i = i + 1;
 % ------------------------------------------------------------------
 options(i).get_least_norm_solution = 2;
 options(i).enable_fixed_variables  = 1;
-options(i).regularizationType      = REGULARIZATION_RT_NO_Z;
-options(i).regularization          = [0,2,3,4];
+options(i).regularization_type     = REGULARIZATION_RT_NO_Z;
+options(i).regularization_factors  = [0,2,3,4];
 
 % ------------------------------------------------------------------
 i = i + 1;
 % ------------------------------------------------------------------
 options(i).get_least_norm_solution = 2;
 options(i).enable_fixed_variables  = 0;
-options(i).regularizationType      = REGULARIZATION_RT_NO_Z;
-options(i).regularization          = [0,2,3,4];
+options(i).regularization_type     = REGULARIZATION_RT_NO_Z;
+options(i).regularization_factors  = [0,2,3,4];
 
 %%%EOF
