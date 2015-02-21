@@ -30,9 +30,7 @@ namespace LexLS
             */
             LexLSE(): 
                 nVarFixed(0),
-                nVarFixedInit(0)
-            {
-            }
+                nVarFixedInit(0){}
         
             /** 
                 \param[in] nVar_   Number of variables (only number of elements in x, and not in the residuals v)
@@ -104,8 +102,8 @@ namespace LexLS
                 Index RemainingRows, ObjRank, ObjDim, TotalRank, maxColNormIndex;
 
                 Index RowIndex;                   // Current constraint
-                Index FirstRowIndex;              // The same as obj_info[k].FirstRowIndex (already available)
-                Index FirstColIndex;              // The same as obj_info[k].FirstColIndex (not yet computed)
+                Index FirstRowIndex;              // The same as obj_info[k].first_row_index (already available)
+                Index FirstColIndex;              // The same as obj_info[k].first_col_index (not yet computed)
                 Index FirstRowIndexNextObjective; // The first index of the next objective
 
                 // --------------------------------------------------------------------------
@@ -159,8 +157,8 @@ namespace LexLS
 
                 for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++) // loop over all (explicitly defined) objectives
                 {    
-                    FirstRowIndex = obj_info[ObjIndex].FirstRowIndex;
-                    FirstColIndex = obj_info[ObjIndex].FirstColIndex = ColIndex;
+                    FirstRowIndex = obj_info[ObjIndex].first_row_index;
+                    FirstColIndex = obj_info[ObjIndex].first_col_index = ColIndex;
                     ObjDim        = obj_info[ObjIndex].dim;
 
                     for(Index k=ColIndex; k<nVar; k++) // initially compute the norms of the columns
@@ -277,8 +275,6 @@ namespace LexLS
 
                         case REGULARIZATION_TIKHONOV:
 
-                            //printf("REGULARIZATION_TIKHONOV \n");
-
                             if ( !isEqual(aRegularizationFactor,0.0) ) 
                             {
                                 if (FirstColIndex + ObjRank <= RemainingColumns)
@@ -288,12 +284,9 @@ namespace LexLS
                             }            
                             accumulate_nullspace_basis(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
 
-                            //printf("===================================================================================\n");
                             break;
 
                         case REGULARIZATION_TIKHONOV_CG:
-
-                            //printf("REGULARIZATION_TIKHONOV_CG(%d) \n", parameters.max_number_of_CG_iterations);
 
                             if ( !isEqual(aRegularizationFactor,0.0) ) 
                             {
@@ -305,8 +298,6 @@ namespace LexLS
                             
                         case REGULARIZATION_R:
 
-                            //printf("REGULARIZATION_TIKHONOV_R \n");
-
                             if ( !isEqual(aRegularizationFactor,0.0) ) 
                             {
                                 regularize_R(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
@@ -316,8 +307,6 @@ namespace LexLS
 
                         case REGULARIZATION_R_NO_Z:
 
-                            //printf("REGULARIZATION_TIKHONOV_R_NO_Z \n");
-
                             if ( !isEqual(aRegularizationFactor,0.0) ) 
                             {
                                 regularize_R_NO_Z(FirstRowIndex, FirstColIndex, ObjRank);
@@ -325,8 +314,6 @@ namespace LexLS
                             break;
 
                         case REGULARIZATION_RT_NO_Z:
-
-                            //printf("REGULARIZATION_TIKHONOV_RT_NO_Z \n");
 
                             if ( !isEqual(aRegularizationFactor,0.0) ) 
                             {
@@ -336,8 +323,6 @@ namespace LexLS
 
                         case REGULARIZATION_RT_NO_Z_CG:
 
-                            //printf("REGULARIZATION_RT_NO_Z_CG(%d) \n", parameters.max_number_of_CG_iterations);
-
                             if ( !isEqual(aRegularizationFactor,0.0) ) 
                             {
                                 regularize_RT_NO_Z_CG(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
@@ -345,8 +330,6 @@ namespace LexLS
                             break;
 
                         case REGULARIZATION_TIKHONOV_1:
-
-                            //printf("REGULARIZATION_TIKHONOV_1 \n");
 
                             if ( !isEqual(aRegularizationFactor,0.0) ) 
                             {
@@ -357,8 +340,6 @@ namespace LexLS
 
                         case REGULARIZATION_TIKHONOV_2:
 
-                            //printf("REGULARIZATION_TIKHONOV_2 \n");
-
                             if ( !isEqual(aRegularizationFactor,0.0) ) 
                             {
                                 regularize_tikhonov_2(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
@@ -368,8 +349,6 @@ namespace LexLS
 
                         case REGULARIZATION_TEST:
 
-                            //printf("REGULARIZATION_TEST \n");
-
                             if ( !isEqual(aRegularizationFactor,0.0) ) 
                             {
                                 regularize_test(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
@@ -377,8 +356,6 @@ namespace LexLS
                             break;
 
                         case REGULARIZATION_NONE:
-
-                            //printf("REGULARIZATION_NONE \n");
 
                             // do nothing
                             break;
@@ -431,7 +408,7 @@ namespace LexLS
                     {
                         // Initialize some remaining fields of obj_info before we terminate (used later in ComputeLambda())
                         for (Index k=ObjIndex+1; k<nObj; k++) 
-                            obj_info[k].FirstColIndex = obj_info[k-1].FirstColIndex + obj_info[k-1].rank; // of course, obj_info[>ObjIndex].rank = 0
+                            obj_info[k].first_col_index = obj_info[k-1].first_col_index + obj_info[k-1].rank; // of course, obj_info[>ObjIndex].rank = 0
                     
                         break; // terminate the LOD
                     }
@@ -483,8 +460,8 @@ namespace LexLS
                 dVectorBlockType         rhs(dWorkspace, nLambda + nVarFixed, nRank+nVarFixed);
                 // ---------------------------------------------------------------------------------
 
-                FirstRowIndex = obj_info[ObjIndex].FirstRowIndex;
-                FirstColIndex = obj_info[ObjIndex].FirstColIndex;
+                FirstRowIndex = obj_info[ObjIndex].first_row_index;
+                FirstColIndex = obj_info[ObjIndex].first_col_index;
                 ObjDim        = obj_info[ObjIndex].dim;
                 ObjRank       = obj_info[ObjIndex].rank;
 
@@ -524,8 +501,8 @@ namespace LexLS
                     //for (int k=ObjIndex-1; k>=0; k--)
                     for (Index k=ObjIndex; k--; ) //ObjIndex-1, ..., 0. 
                     {
-                        FirstRowIndex = obj_info[k].FirstRowIndex;
-                        FirstColIndex = obj_info[k].FirstColIndex;
+                        FirstRowIndex = obj_info[k].first_row_index;
+                        FirstColIndex = obj_info[k].first_col_index;
                         ObjDim        = obj_info[k].dim;
                         ObjRank       = obj_info[k].rank;
 
@@ -614,8 +591,8 @@ namespace LexLS
                 dVectorBlockType         rhs(dWorkspace, nLambda + nVarFixed, nRank+nVarFixed);
                 // ---------------------------------------------------------------------------------
 
-                FirstRowIndex = obj_info[ObjIndex].FirstRowIndex;
-                FirstColIndex = obj_info[ObjIndex].FirstColIndex;
+                FirstRowIndex = obj_info[ObjIndex].first_row_index;
+                FirstColIndex = obj_info[ObjIndex].first_col_index;
                 ObjDim        = obj_info[ObjIndex].dim;
                 ObjRank       = obj_info[ObjIndex].rank;
 
@@ -642,8 +619,8 @@ namespace LexLS
                     //for (int k=ObjIndex-1; k>=0; k--)
                     for (Index k=ObjIndex; k--; ) //ObjIndex-1, ..., 0. 
                     {
-                        FirstRowIndex = obj_info[k].FirstRowIndex;
-                        FirstColIndex = obj_info[k].FirstColIndex;
+                        FirstRowIndex = obj_info[k].first_row_index;
+                        FirstColIndex = obj_info[k].first_col_index;
                         ObjDim        = obj_info[k].dim;
                         ObjRank       = obj_info[k].rank;
                     
@@ -748,29 +725,6 @@ namespace LexLS
                 return FoundBetterDescentDirection;
             }
 
-            // for convenience (@todo introduce enum)
-            void solve(Index solve_option)
-            {
-                switch(solve_option){
-                
-                case 0:
-                    solve();
-                    break;
-
-                case 1:
-                    solveLeastNorm_1();
-                    break;
-                
-                case 2:
-                    solveLeastNorm_2();
-                    break;
-
-                case 3:
-                    solveLeastNorm_3();
-                    break;
-                }
-            }
-
             /**
                \brief Back-solve accounting for the zero blocks due to singular constraints
            
@@ -806,19 +760,19 @@ namespace LexLS
                     ObjRank = obj_info[k].rank;
                     if (ObjRank > 0)
                     {
-                        dVectorBlockType x_k(x, obj_info[k].FirstColIndex, ObjRank);
+                        dVectorBlockType x_k(x, obj_info[k].first_col_index, ObjRank);
 
-                        x_k = LOD.col(nVar).segment(obj_info[k].FirstRowIndex, ObjRank);
+                        x_k = LOD.col(nVar).segment(obj_info[k].first_row_index, ObjRank);
                     
                         if (AccumulatedRanks > 0) // Do not enter here the first time ObjRank != 0
                         {
-                            x_k.noalias() -= LOD.block(obj_info[k].FirstRowIndex,
-                                                       obj_info[k+1].FirstColIndex,
+                            x_k.noalias() -= LOD.block(obj_info[k].first_row_index,
+                                                       obj_info[k+1].first_col_index,
                                                        ObjRank,
-                                                       AccumulatedRanks) * x.segment(obj_info[k+1].FirstColIndex, AccumulatedRanks);
+                                                       AccumulatedRanks) * x.segment(obj_info[k+1].first_col_index, AccumulatedRanks);
                         }
                     
-                        LOD.block(obj_info[k].FirstRowIndex, obj_info[k].FirstColIndex, ObjRank, ObjRank)
+                        LOD.block(obj_info[k].first_row_index, obj_info[k].first_col_index, ObjRank, ObjRank)
                             .triangularView<Eigen::Upper>().solveInPlace(x_k);
                     
                         AccumulatedRanks += ObjRank;
@@ -863,8 +817,8 @@ namespace LexLS
                 Index col_dim = nVarRank + nVarFree;
                 for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
                 {
-                    FirstRowIndex = obj_info[ObjIndex].FirstRowIndex;
-                    FirstColIndex = obj_info[ObjIndex].FirstColIndex;
+                    FirstRowIndex = obj_info[ObjIndex].first_row_index;
+                    FirstColIndex = obj_info[ObjIndex].first_col_index;
                     ObjRank       = obj_info[ObjIndex].rank;
                 
                     RT.block(counter, counter, ObjRank, col_dim)
@@ -945,8 +899,8 @@ namespace LexLS
                 Index col_dim = nVarRank + nVarFree;
                 for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
                 {
-                    FirstRowIndex = obj_info[ObjIndex].FirstRowIndex;
-                    FirstColIndex = obj_info[ObjIndex].FirstColIndex;
+                    FirstRowIndex = obj_info[ObjIndex].first_row_index;
+                    FirstColIndex = obj_info[ObjIndex].first_col_index;
                     ObjRank       = obj_info[ObjIndex].rank;
               
                     RT.block(counter, counter, ObjRank, col_dim+1)
@@ -971,8 +925,8 @@ namespace LexLS
                 counter = 0;
                 for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
                 {
-                    FirstRowIndex = obj_info[ObjIndex].FirstRowIndex;
-                    FirstColIndex = obj_info[ObjIndex].FirstColIndex;
+                    FirstRowIndex = obj_info[ObjIndex].first_row_index;
+                    FirstColIndex = obj_info[ObjIndex].first_col_index;
                     ObjRank       = obj_info[ObjIndex].rank;
 
                     x.segment(nVarFixed+counter,ObjRank) = LOD.col(nVar).segment(FirstRowIndex,ObjRank) - 
@@ -998,8 +952,6 @@ namespace LexLS
             void solveLeastNorm_3()
             {
                 Index FirstRowIndex, ObjRank, counter = 0;
-                /// @todo FirstColIndex is not used in this function.
-                // Index FirstColIndex = 0;
                 Index nVarRank = 0; // number of variables determined by rank([R,T])
 
                 // -------------------------------------------------------------------------
@@ -1033,9 +985,9 @@ namespace LexLS
                 counter = 0;
                 for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
                 {
-                    FirstRowIndex = obj_info[ObjIndex].FirstRowIndex;
+                    FirstRowIndex = obj_info[ObjIndex].first_row_index;
                     /// @todo FirstColIndex is not used in this function.
-                    //FirstColIndex = obj_info[ObjIndex].FirstColIndex;
+                    //FirstColIndex = obj_info[ObjIndex].first_col_index;
                     ObjRank       = obj_info[ObjIndex].rank;
 
                     x.segment(nVarFixed+counter,ObjRank) = LOD.col(nVar).segment(FirstRowIndex,ObjRank) - 
@@ -1093,8 +1045,8 @@ namespace LexLS
                 Index col_dim = nVarRank + nVarFree;
                 for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
                 {
-                    FirstRowIndex = obj_info[ObjIndex].FirstRowIndex;
-                    FirstColIndex = obj_info[ObjIndex].FirstColIndex;
+                    FirstRowIndex = obj_info[ObjIndex].first_row_index;
+                    FirstColIndex = obj_info[ObjIndex].first_col_index;
                     ObjRank       = obj_info[ObjIndex].rank;
               
                     RT.block(counter, counter, ObjRank, col_dim+1)
@@ -1118,8 +1070,8 @@ namespace LexLS
                 counter = 0;
                 for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
                 {
-                    FirstRowIndex = obj_info[ObjIndex].FirstRowIndex;
-                    FirstColIndex = obj_info[ObjIndex].FirstColIndex;
+                    FirstRowIndex = obj_info[ObjIndex].first_row_index;
+                    FirstColIndex = obj_info[ObjIndex].first_col_index;
                     ObjRank       = obj_info[ObjIndex].rank;
 
                     x.segment(nVarFixed+counter,ObjRank) = LOD.col(nVar).segment(FirstRowIndex,ObjRank) - 
@@ -1154,7 +1106,7 @@ namespace LexLS
             void fixVariable(Index VarIndex, RealScalar VarValue, ConstraintActivationType type = CTR_ACTIVE_UB)
             {
                 fixed_var_index(nVarFixedInit) = VarIndex;
-                x(nVarFixedInit)             = VarValue;
+                x(nVarFixedInit)               = VarValue;
                 fixed_var_type[nVarFixedInit]  = type;
             
                 nVarFixedInit++;
@@ -1198,7 +1150,7 @@ namespace LexLS
 
                     obj_info[ObjIndex].dim = ObjDim_[ObjIndex];
                     if (ObjIndex > 0)
-                        obj_info[ObjIndex].FirstRowIndex = obj_info[ObjIndex-1].FirstRowIndex + obj_info[ObjIndex-1].dim;
+                        obj_info[ObjIndex].first_row_index = obj_info[ObjIndex-1].first_row_index + obj_info[ObjIndex-1].dim;
                 }
             
                 initialize();
@@ -1277,7 +1229,7 @@ namespace LexLS
                 if (ObjIndex >= nObj)                
                     throw Exception("ObjIndex >= nObj");
             
-                LOD.block(obj_info[ObjIndex].FirstRowIndex,0,obj_info[ObjIndex].dim,nVar+1) = data;
+                LOD.block(obj_info[ObjIndex].first_row_index,0,obj_info[ObjIndex].dim,nVar+1) = data;
             }
 
             /** 
@@ -1298,7 +1250,7 @@ namespace LexLS
             */      
             void setCtrType(Index ObjIndex, Index CtrIndex, ConstraintActivationType type)
             {
-                Index FirstRowIndex = obj_info[ObjIndex].FirstRowIndex;
+                Index FirstRowIndex = obj_info[ObjIndex].first_row_index;
                 ctr_type[FirstRowIndex + CtrIndex] = type;
             }
         
@@ -1315,8 +1267,8 @@ namespace LexLS
 
                 for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
                 {
-                    FirstRowIndex = obj_info[ObjIndex].FirstRowIndex;
-                    FirstColIndex = obj_info[ObjIndex].FirstColIndex;
+                    FirstRowIndex = obj_info[ObjIndex].first_row_index;
+                    FirstColIndex = obj_info[ObjIndex].first_col_index;
                     ObjDim        = obj_info[ObjIndex].dim;
                     ObjRank       = obj_info[ObjIndex].rank;
                 

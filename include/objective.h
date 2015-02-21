@@ -68,6 +68,20 @@ namespace LexLS
                 initialize();
             }
 
+            void form_initial_working_set(dVectorType &x)
+            {
+                if (obj_type == SIMPLE_BOUNDS_OBJECTIVE)
+                {
+
+
+                }
+                else if (obj_type == GENERAL_OBJECTIVE)
+                {
+                    
+                    
+                }
+            }
+
             /**
                \brief Initialize Ax
             */
@@ -117,7 +131,7 @@ namespace LexLS
             
                 // For inactive constraints, even when lb[i] <= Ax[i] <= ub[i], a nonzero v[i] can be
                 // generated. So overwrite v[i] = 0.
-                for (Index CtrIndex=0; CtrIndex<nCtr; CtrIndex++)
+                for (CtrIndex=0; CtrIndex<nCtr; CtrIndex++)
                 {
                     if (!isActive(CtrIndex))
                     {

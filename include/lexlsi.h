@@ -34,7 +34,7 @@ namespace LexLS
             LexLSI(Index nVar_, Index nObj_, Index *ObjDim_, ObjectiveType *ObjType_):
                 nVar(nVar_), 
                 nObj(nObj_),
-                x0_is_specified(false),
+                x_guess_is_specified(false),
                 status(TERMINATION_STATUS_UNKNOWN)
             {           
                 parameters.setDefaults();
@@ -110,7 +110,7 @@ namespace LexLS
                \brief Computes an initial feasible pair (x,w)
             */
             void phase1()
-            {         
+            {   
                 bool active_constraints_exist = false;
                 for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
                 {
@@ -259,7 +259,7 @@ namespace LexLS
             void set_x0(dVectorType &x0)
             {
                 x = x0;
-                x0_is_specified = true;
+                x_guess_is_specified = true;
             }
 
             /**
@@ -661,7 +661,7 @@ namespace LexLS
                 }
                 else // if nIterations == 0
                 {
-                    if (x0_is_specified)
+                    if (x_guess_is_specified)
                     {
                         normalIteration = false;
                     }
@@ -736,7 +736,7 @@ namespace LexLS
                 file.precision(15);
 
                 if (flag_clear_file)
-                    file << "% phase 1 (x0_is_specified = "<<x0_is_specified<<") \n"; 
+                    file << "% phase 1 (x_guess_is_specified = "<<x_guess_is_specified<<") \n"; 
 
                 if (nIterations == 1)
                     file << "% here lexlse is not solved\n"; 
@@ -765,7 +765,7 @@ namespace LexLS
 
                 file << "% ---------------------------------------------\n";
 
-                if ((x0_is_specified) && (nIterations == 1))
+                if ((x_guess_is_specified) && (nIterations == 1))
                 {
                     // when x0 is specified by the user, the step direction is not recomputed at nIterations == 1
                 }
@@ -806,7 +806,7 @@ namespace LexLS
                     file << "]';\n";
                 }
             
-                if ((x0_is_specified) && (nIterations == 1))
+                if ((x_guess_is_specified) && (nIterations == 1))
                 {
                     // when x0 is specified by the user, the step direction is not recomputed at nIterations == 1
                 }
@@ -888,12 +888,12 @@ namespace LexLS
             Index nIterations;
 
             /** 
-                \brief If x0_is_specified == true, the function set_x0(dVectorType &x0) has been
+                \brief If x_guess_is_specified == true, the function set_x0(dVectorType &x0) has been
                 called and x0 has been initialized.
 
                 \note This is later used in phase1().
             */
-            bool x0_is_specified;
+            bool x_guess_is_specified;
 
             /*
               \brief Equal to alpha in verifyWorkingSet()

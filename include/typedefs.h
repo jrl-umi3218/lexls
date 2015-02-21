@@ -326,8 +326,8 @@ namespace LexLS
             ObjectiveInfo():
                 dim(0),
                 rank(0),
-                FirstRowIndex(0), 
-                FirstColIndex(0),                
+                first_row_index(0),
+                first_col_index(0),
                 regularization_factor(0.0){}
 
             /**
@@ -335,7 +335,7 @@ namespace LexLS
             */                                        
             void print() const
             {
-                printf("FirstRowIndex = %d, FirstColIndex = %d, dim = %d, rank = %d \n", FirstRowIndex, FirstColIndex, dim, rank);
+                printf("first_row_index = %d, first_col_index = %d, dim = %d, rank = %d \n", first_row_index, first_col_index, dim, rank);
             }
 
             /*
@@ -358,14 +358,14 @@ namespace LexLS
 
               \note computed during initialization.
             */
-            Index FirstRowIndex; 
+            Index first_row_index; 
     
             /*
               \brief Initial column index - depends on the ranks of constraints involved in (LexLSE) objectives
       
               \note computed during factorization. 
             */
-            Index FirstColIndex; 
+            Index first_col_index; 
 
             /*
               \brief Regularization factor for the current objective (default: 0.0)
