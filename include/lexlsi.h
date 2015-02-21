@@ -129,7 +129,7 @@ namespace LexLS
                 {
                     formLexLSE();                
                 
-                    if (!x0_is_specified)
+                    if (!x_guess_is_specified)
                     {
                         lexlse.factorize();
                         lexlse.solve();                    
@@ -140,7 +140,7 @@ namespace LexLS
                 }
                 else
                 {
-                    if (!x0_is_specified)
+                    if (!x_guess_is_specified)
                     {
                         for (Index k=0; k<nVar; k++)
                             x(k) = 0.01; // set to something different from 0
