@@ -70,29 +70,29 @@ namespace LexLS
             /** 
                 \brief Adds a constraint to the working set (and sets its type)
 
-                \param[in] ObjIndex       Index of objective.
-                \param[in] CtrIndex       Index of constraint: objectives[ObjIndex].data.row(CtrIndex).
-                \param[in] type           Type of the constraint.
-                \param[in] CountIteration if true, the iteration counter #nActivations is incremented
+                \param[in] ObjIndex        Index of objective.
+                \param[in] CtrIndex        Index of constraint: objectives[ObjIndex].data.row(CtrIndex).
+                \param[in] type            Type of the constraint.
+                \param[in] CountActivation if true, the iteration counter #nActivations is incremented
 
-                \note CountIteration = false is used when specifying the initial working set
+                \note CountActivation = false is used when specifying the initial working set
             */
-            void activate(Index ObjIndex, Index CtrIndex, ConstraintActivationType type, bool CountIteration=true)
+            void activate(Index ObjIndex, Index CtrIndex, ConstraintActivationType type, bool CountActivation=true)
             {
                 if (ObjIndex >= nObj)                
                     throw Exception("ObjIndex >= nObj");
 
                 objectives[ObjIndex].activate(CtrIndex, type);
 
-                if (CountIteration)
+                if (CountActivation)
                     nActivations++;
             }
         
             /** 
                 \brief Removes a constraint from the working set
 
-                \param[in] ObjIndex       Index of objective.
-                \param[in] CtrIndexActive Index of constraint: objectives[ObjIndex].working_set.active[CtrIndexActive].
+                \param[in] ObjIndex          Index of objective.
+                \param[in] CtrIndexActive    Index of constraint: objectives[ObjIndex].working_set.active[CtrIndexActive].
             */
             void deactivate(Index ObjIndex, Index CtrIndexActive)
             {
@@ -106,58 +106,67 @@ namespace LexLS
 
             /**
                \brief Computes an initial feasible pair (x,w)
+
+                \verbatim
+                ----------------------------------------------------------------------------------------------------
+                two cases:
+                ----------------------------------------------------------------------------------------------------
+                1.  x = x_star        ,  v{active} = A{active}*x-b{active},  v{inactive} = middle of bounds
+                   dx = x_star - x = 0, dv{active} = A{active}*dx = 0     , dv{inactive} = -v{inactive}
+                
+                2.  x = x_guess       ,  v{active} = A{active}*x-b{active},  v{inactive} = middle of bounds
+                   dx = x_star - x    , dv{active} = A{active}*dx         , dv{inactive} = -v{inactive}
+                
+                   dv{active} = A{active}*x_star - b{active} - (A{active}*x - b{active}) = A{active}*(x_star - x) 
+                ----------------------------------------------------------------------------------------------------
+                \endverbatim
             */
             void phase1()
             {   
-                bool active_constraints_exist = false;
+                if (!x_guess_is_specified)
+                {
+                    formLexLSE();
+                    lexlse.factorize();
+                    lexlse.solve(); // solve lexlse based on initial working set
+                    x = lexlse.get_x();
+                }
+
+                // --------------------------------------------------------
+                // form initial working set and a feasible pair (x,v)
+                // --------------------------------------------------------
                 for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
                 {
-                    // we would enter even if there are only equality constraints
-                    if (objectives[ObjIndex].getActiveCtrCount() > 0)
-                    {
-                        active_constraints_exist = true;
-                        break;
-                    }
+                    objectives[ObjIndex].phase1(x, // either x = x_guess or x = lexlse.get_x()
+                                                x_guess_is_specified,
+                                                parameters.modify_type_active_enabled,
+                                                parameters.modify_type_inactive_enabled,
+                                                parameters.modify_x_guess_enabled);
                 }
-         
-                // --------------------------------------------------------
-                // form x
-                // --------------------------------------------------------
-                if (active_constraints_exist)
-                {
-                    formLexLSE();                
                 
-                    if (!x_guess_is_specified)
-                    {
-                        lexlse.factorize();
-                        lexlse.solve();                    
-                        x = lexlse.get_x();
+                // --------------------------------------------------------
+                // form dx
+                // --------------------------------------------------------
+                if (x_guess_is_specified) 
+                {
+                    formLexLSE();
+                    lexlse.factorize();
+                    lexlse.solve(); // solve lexlse based on initial working set
 
-                        nFactorizations++;
-                    }
+                    dx = lexlse.get_x() - x; // take a step towards x_star
                 }
                 else
                 {
-                    if (!x_guess_is_specified)
-                    {
-                        for (Index k=0; k<nVar; k++)
-                            x(k) = 0.01; // set to something different from 0
-                    }
+                    // dx.setZero(); // already set to zero in initialize() 
                 }
-            
+                     
                 // --------------------------------------------------------
-                // form w
+                // form step for v (similar to formStep() but dx is initialized above)
                 // --------------------------------------------------------
-                for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
-                    objectives[ObjIndex].phase1(x);
-
-                // --------------------------------------------------------
-                // form step (similar to formStep())
-                // --------------------------------------------------------
-                dx.setZero();
                 for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
                     objectives[ObjIndex].formStep(dx);
                 // --------------------------------------------------------
+
+                nFactorizations++; // one factorization is performed
             }
         
             /**
@@ -636,7 +645,6 @@ namespace LexLS
                 Index ObjIndex2Manipulate, CtrIndex2Manipulate;
                 ConstraintActivationType CtrType2Manipulate = CTR_INACTIVE;
 
-                bool normalIteration = true;
                 OperationType operation = OPERATION_UNDEFINED;
                 ConstraintIdentifier constraint_identifier;
 
@@ -654,13 +662,6 @@ namespace LexLS
 
                     nFactorizations++;
                 }
-                else // if nIterations == 0
-                {
-                    if (x_guess_is_specified)
-                    {
-                        normalIteration = false;
-                    }
-                }
 
                 if (checkBlockingConstraints(ObjIndex2Manipulate, CtrIndex2Manipulate, CtrType2Manipulate, alpha))
                 {
@@ -674,24 +675,21 @@ namespace LexLS
                 }
                 else
                 {
-                    if (normalIteration) 
+                    if (findActiveCtr2Remove(ObjIndex2Manipulate, CtrIndex2Manipulate))
                     {
-                        if (findActiveCtr2Remove(ObjIndex2Manipulate, CtrIndex2Manipulate))
+                        if (parameters.cycling_handling_enabled)
                         {
-                            if (parameters.cycling_handling_enabled)
-                            {
-                                constraint_identifier.set(ObjIndex2Manipulate, 
-                                                         objectives[ObjIndex2Manipulate].getActiveCtrIndex(CtrIndex2Manipulate), 
-                                                         objectives[ObjIndex2Manipulate].getActiveCtrType(CtrIndex2Manipulate));
-                            }
+                            constraint_identifier.set(ObjIndex2Manipulate, 
+                                                      objectives[ObjIndex2Manipulate].getActiveCtrIndex(CtrIndex2Manipulate), 
+                                                      objectives[ObjIndex2Manipulate].getActiveCtrType(CtrIndex2Manipulate));
+                        }
                             
-                            operation = OPERATION_REMOVE;
-                            deactivate(ObjIndex2Manipulate, CtrIndex2Manipulate); 
-                        }
-                        else
-                        {
-                            status = PROBLEM_SOLVED;
-                        }
+                        operation = OPERATION_REMOVE;
+                        deactivate(ObjIndex2Manipulate, CtrIndex2Manipulate); 
+                    }
+                    else
+                    {
+                        status = PROBLEM_SOLVED;
                     }
                 }
 

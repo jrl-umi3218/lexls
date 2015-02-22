@@ -42,18 +42,13 @@ namespace LexLS
                 if (all_type[CtrIndex] != CTR_INACTIVE)
                     throw Exception("Cannot activate an active constraint");
             
-                std::vector<Index>::iterator it;
-                Index ind;
-            
                 // ----------------------------------------------------------------------------
                 // remove the constraint with index CtrIndex from the set of inactive constraints
                 // ----------------------------------------------------------------------------
-                it = std::find(inactive.begin(), inactive.end(), CtrIndex);
-                ind = std::distance(inactive.begin(), it); // it - inactive.begin()
-            
+                Index ind = getCtrIndex(CtrIndex); // get the index among the inactive constraints 
+                
                 inactive[ind] = inactive.back();
-                inactive.pop_back();
-            
+                inactive.pop_back();            
                 // ----------------------------------------------------------------------------
                 // add to set of active constraints
                 // ----------------------------------------------------------------------------
@@ -128,6 +123,29 @@ namespace LexLS
             }
 
             /**
+               \brief If the constraint with index k is active then return its index among the
+               active constraints. If the constraint with index k is inactive then return its index
+               among the inactive constraints.
+            */
+            Index getCtrIndex(Index k)
+            {
+                std::vector<Index>::iterator it;
+
+                if (isActive(k))
+                {
+                    it = std::find(active.begin(), active.end(), k);
+
+                    return std::distance(active.begin(), it); // it - active.begin()
+                }
+                else
+                {
+                    it = std::find(inactive.begin(), inactive.end(), k);
+
+                    return std::distance(inactive.begin(), it); // it - inactive.begin()
+                }
+            }
+
+            /**
                \brief Returns the number of inactive constraints
             */
             Index getInactiveCtrCount() const
@@ -171,7 +189,7 @@ namespace LexLS
                 // -----------------------------------------------------------
                 // type
                 // -----------------------------------------------------------
-                std::cout << "    type = {";
+                std::cout << "     type = {";
                 std::copy(active_ctr_type.begin(), 
                           active_ctr_type.end(),
                           std::ostream_iterator<ConstraintActivationType>(std::cout, " "));
@@ -180,7 +198,7 @@ namespace LexLS
                 // -----------------------------------------------------------
                 // active
                 // -----------------------------------------------------------
-                std::cout << "  active = {";
+                std::cout << "   active = {";
                 std::copy(active.begin(), 
                           active.end(),
                           std::ostream_iterator<Index>(std::cout, " "));
@@ -189,7 +207,7 @@ namespace LexLS
                 // -----------------------------------------------------------                
                 // inactive
                 // -----------------------------------------------------------
-                std::cout << "inactive = {";
+                std::cout << " inactive = {";
                 std::copy(inactive.begin(),
                           inactive.end(),
                           std::ostream_iterator<Index>(std::cout, " "));

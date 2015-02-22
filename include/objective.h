@@ -68,58 +68,116 @@ namespace LexLS
                 initialize();
             }
 
-            void form_initial_working_set(dVectorType &x, 
-                                          bool modify_x_guess_enabled,
-                                          bool modify_type_active_enabled,
-                                          bool modify_type_inactive_enabled)
+            void ensureZeroCtrViolationForSimpleBounds(dVectorType &x)
             {
-                Index CtrIndex;
-
                 if (obj_type == SIMPLE_BOUNDS_OBJECTIVE)
                 {
-                    //if (isActive(CtrIndex))
-                    
-                }
-                else if (obj_type == GENERAL_OBJECTIVE)
-                {
-                    
-                    
+                    Index VarIndex;
+                    ConstraintActivationType CtrType;
+
+                    for (Index CtrIndex=0; CtrIndex<nCtr; CtrIndex++) // loop over all constraints in objective
+                    {
+                        VarIndex = getVarIndex(CtrIndex); // CtrIndex --> VarIndex
+                        CtrType  = getCtrType(CtrIndex);
+
+                        if (CtrType == CTR_INACTIVE)
+                        {
+                            x(VarIndex) = 0.5*(data.coeffRef(CtrIndex,lb_index) + data.coeffRef(CtrIndex,ub_index));
+                        }
+                        else if (CtrType == CTR_ACTIVE_EQ)
+                        {
+                            x(VarIndex) = data.coeffRef(CtrIndex,ub_index);
+                        }
+                        else if (CtrType == CTR_ACTIVE_UB)
+                        {
+                            x(VarIndex) = data.coeffRef(CtrIndex,ub_index);
+                        }
+                        else if (CtrType == CTR_ACTIVE_LB)
+                        {
+                            x(VarIndex) = data.coeffRef(CtrIndex,lb_index);                        
+                        }
+                    }
                 }
             }
-
+            
             /**
-               \brief Initialize Ax
+               \brief Modifies (if possible) the user guess for the initial working set
+
+               \param[in] x                            x_guess provided by the user
+               \param[in] modify_type_active_enabled   flag (see ./doc/hot_start.pdf) 
+               \param[in] modify_type_inactive_enabled flag (see ./doc/hot_start.pdf)
+               \param[in] modify_x_guess_enabled       flag (see ./doc/hot_start.pdf)
+
+               \note This function requires for Ax to be initialized
             */
-            void initialize_Ax(dVectorType &x)
+            void formInitialWorkingSet(dVectorType &x,
+                                       const bool modify_type_active_enabled,
+                                       const bool modify_type_inactive_enabled,
+                                       const bool modify_x_guess_enabled)
             {
-                if (obj_type == GENERAL_OBJECTIVE)
+                if (modify_type_active_enabled || modify_type_inactive_enabled) // if modification is desired
                 {
-                    Ax = data.leftCols(nVar)*x;
-                }
-                else if (obj_type == SIMPLE_BOUNDS_OBJECTIVE)
-                {
-                    for (Index k=0; k<nCtr; k++)
+                    Index CtrIndex, CtrIndexActive;
+
+                    for (CtrIndex=0; CtrIndex<nCtr; CtrIndex++) // loop over all constraints in objective
                     {
-                        Ax(k) = x(var_index[k]); 
+                        if (!isActive(CtrIndex) && modify_type_inactive_enabled)
+                        {
+                            // attempt to deactivate CTR_INACTIVE
+                            if (Ax(CtrIndex) <= data.coeffRef(CtrIndex,lb_index))
+                            {
+                                activate(CtrIndex, CTR_ACTIVE_LB);
+                            }
+                            else if (Ax(CtrIndex) >= data.coeffRef(CtrIndex,ub_index))
+                            {
+                                activate(CtrIndex, CTR_ACTIVE_UB);
+                            }
+                        }
+                        else if ((getCtrType(CtrIndex) == CTR_ACTIVE_LB) && modify_type_inactive_enabled)
+                        {
+                            // attempt to modify the type of CTR_ACTIVE_LB
+                            if (Ax(CtrIndex) > data.coeffRef(CtrIndex,lb_index))
+                            {
+                                CtrIndexActive = working_set.getCtrIndex(CtrIndex); // CtrIndex --> CtrIndexActive
+                                deactivate(CtrIndexActive); 
+                                if (Ax(CtrIndex) >= data.coeffRef(CtrIndex,ub_index))
+                                {
+                                    activate(CtrIndex, CTR_ACTIVE_UB);
+                                }
+                            }
+                        }
+                        else if ((getCtrType(CtrIndex) == CTR_ACTIVE_UB) && modify_type_inactive_enabled)
+                        {
+                            // attempt to modify the type of CTR_ACTIVE_UB
+                            if (Ax(CtrIndex) < data.coeffRef(CtrIndex,ub_index))
+                            {
+                                CtrIndexActive = working_set.getCtrIndex(CtrIndex); // CtrIndex --> CtrIndexActive
+                                deactivate(CtrIndexActive); 
+                                if (Ax(CtrIndex) <= data.coeffRef(CtrIndex,lb_index))
+                                {
+                                    activate(CtrIndex, CTR_ACTIVE_LB);
+                                }
+                            }
+                        }
                     }
+                }
+
+                if ((getObjType() == SIMPLE_BOUNDS_OBJECTIVE) && modify_x_guess_enabled)
+                {
+                    ensureZeroCtrViolationForSimpleBounds(x);
+                    initialize_Ax(x); // re-initialize Ax if x is modified
                 }
             }
 
             /**
                \brief Given x, generate a v such that (x,v) is a feasible initial pair for the
                constraints involved in the objective 
-
-               \note #Ax is initialized
             */
-            void phase1(dVectorType &x)
+            void initialize_v0()
             {
-                initialize_Ax(x);
-
                 Index CtrIndex;
                 ConstraintActivationType CtrType;
             
-                // put in function initialize_w0
-
                 v  = Ax - 0.5*(data.col(lb_index)+data.col(ub_index)); 
             
                 // overwrite v for the active constraints
@@ -147,7 +205,98 @@ namespace LexLS
                         }
                     }
                 }
+            }
 
+            /**
+               \brief Initialize Ax
+            */
+            void initialize_Ax(dVectorType &x)
+            {
+                if (obj_type == GENERAL_OBJECTIVE)
+                {
+                    Ax = data.leftCols(nVar)*x;
+                }
+                else if (obj_type == SIMPLE_BOUNDS_OBJECTIVE)
+                {
+                    for (Index k=0; k<nCtr; k++)
+                    {
+                        Ax(k) = x(var_index[k]); 
+                    }
+                }
+            }
+
+            /**
+               \brief Form Adx
+            */
+            void form_Adx(dVectorType &dx)
+            {
+                if (obj_type == GENERAL_OBJECTIVE)
+                {
+                    Adx = data.leftCols(nVar)*dx; // form Adx
+                }
+                else if (obj_type == SIMPLE_BOUNDS_OBJECTIVE)
+                {
+                    for (Index k=0; k<nCtr; k++) // form Adx
+                    {
+                        Adx(k) = dx(var_index[k]); 
+                    }
+                }
+            }
+
+            /*
+              \brief Form #dv
+          
+              \verbatim
+              dv{inactive} =              0 - v{inactive}, where 0 corresponds to v{inactive}_star
+              dv{active}   = v{active}_star - v{active} = A{active}*x{next} - b{active} - (A{active}*x{current} - b{active})
+                                                        = A{active}*(x{next} - x{current}) = A{active}*dx
+              \endverbatim
+            */
+            void formStep(dVectorType &dx)
+            {
+                form_Adx(dx);
+                for (Index CtrIndex=0; CtrIndex<nCtr; CtrIndex++)
+                {                
+                    if (isActive(CtrIndex)) 
+                    {
+                        dv.coeffRef(CtrIndex) = Adx.coeffRef(CtrIndex);
+                    }
+                    else
+                    {
+                        dv.coeffRef(CtrIndex) = -v.coeffRef(CtrIndex);
+                    }
+                }
+            }
+
+            /**
+               \brief Form the initial working set and compute a feasible initial pair (x,v).
+
+               \param[in,out] x                        x
+               \param[in] x_guess_is_specified         flag (see ./doc/hot_start.pdf) 
+               \param[in] modify_type_active_enabled   flag (see ./doc/hot_start.pdf) 
+               \param[in] modify_type_inactive_enabled flag (see ./doc/hot_start.pdf)
+               \param[in] modify_x_guess_enabled       flag (see ./doc/hot_start.pdf) 
+
+               \note #Ax is initialized
+            */
+            void phase1(dVectorType &x,
+                        const bool x_guess_is_specified,
+                        const bool modify_type_active_enabled,
+                        const bool modify_type_inactive_enabled,
+                        const bool modify_x_guess_enabled)
+            {
+                initialize_Ax(x);
+                
+                if (x_guess_is_specified)
+                {
+                    // note: x might be modified inside (if modify_x_guess_enabled == true)
+                    formInitialWorkingSet(x, 
+                                          modify_type_active_enabled, 
+                                          modify_type_inactive_enabled, 
+                                          modify_x_guess_enabled);
+                }
+
+                initialize_v0();
             }
 
             /** 
@@ -269,56 +418,6 @@ namespace LexLS
                 }
             }           
 
-            /*
-              \brief Form #dv
-          
-              \verbatim
-              dv{inactive} =              0 - v{inactive}, where 0 corresponds to v{inactive}_star
-              dv{active}   = v{active}_star - v{active}
-              \endverbatim
-            */
-            void formStep(dVectorType &dx)
-            {
-                RealScalar rhs;
-                Index CtrIndex;
-                ConstraintActivationType CtrType;
-
-                if (obj_type == GENERAL_OBJECTIVE)
-                {
-                    Adx = data.leftCols(nVar)*dx; // form Adx
-                }
-                else if (obj_type == SIMPLE_BOUNDS_OBJECTIVE)
-                {
-                    for (Index k=0; k<nCtr; k++) // form Adx
-                    {
-                        Adx(k) = dx(var_index[k]); 
-                    }
-                }
-
-                dv = -v;
-                for (Index CtrIndexActive=0; CtrIndexActive<getActiveCtrCount(); CtrIndexActive++)
-                {
-                    CtrIndex = getActiveCtrIndex(CtrIndexActive); // CtrIndexActive --> CtrIndex
-                    CtrType  = getActiveCtrType(CtrIndexActive);
-
-                    if (CtrType == CTR_ACTIVE_EQ)
-                    {
-                        rhs = data.coeffRef(CtrIndex,ub_index); // take upper bound by convention
-                    }
-                    else if (CtrType == CTR_ACTIVE_UB)
-                    {
-                        rhs = data.coeffRef(CtrIndex,ub_index);
-                    }
-                    else if (CtrType == CTR_ACTIVE_LB)
-                    {
-                        rhs = data.coeffRef(CtrIndex,lb_index);
-                    }
-                
-                    // v{active}_star - v{active}
-                    dv.coeffRef(CtrIndex) += Ax.coeffRef(CtrIndex) + Adx.coeffRef(CtrIndex) - rhs;
-                }
-            }
-
             /**
                \brief Check for blocking constraints
 
@@ -357,7 +456,7 @@ namespace LexLS
                         
                 for (Index CtrIndexInactive=0; CtrIndexInactive<getInactiveCtrCount(); CtrIndexInactive++) // loop over inactive constraints
                 {
-                    CtrIndex = getInactiveCtrIndex(CtrIndexInactive); // CtrIndexActive --> CtrIndex
+                    CtrIndex = getInactiveCtrIndex(CtrIndexInactive); // CtrIndexInactive --> CtrIndex
                 
                     den = Adx.coeffRef(CtrIndex) - dv.coeffRef(CtrIndex);
                 
