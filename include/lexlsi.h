@@ -104,6 +104,48 @@ namespace LexLS
                 nDeactivations++;
             }
 
+            /** 
+                \brief Some tests on the validity of hot-start (currently only related to advanced initialization)
+
+                \todo Additional tests shouls be implemented.
+            */
+            void hot_start_related_tests()
+            {
+                // make sure that v0 is not only partially specified 
+                bool v0_is_only_partially_specified = false;
+                bool user_attempted_to_spevify_v0 = objectives[0].getFlag_v0_is_specified();
+                for (Index ObjIndex=1; ObjIndex<nObj; ObjIndex++)
+                {
+                    if (objectives[ObjIndex].getFlag_v0_is_specified() != user_attempted_to_spevify_v0)
+                    {
+                        // here just print a warning (actually disregard it below)
+                        printf("WARNING: disregarding v0 because it is only partially initialized. \n");
+                        
+                        user_attempted_to_spevify_v0 = true;
+                        v0_is_only_partially_specified = true;
+                        break;
+                    }
+                }
+
+                // make sure that the user did not hot-start with {W0,v0} or {v0}
+                bool user_attempted_to_spevify_v0_but_forgot_x_guess = false;
+                if ((!x_guess_is_specified) && user_attempted_to_spevify_v0)
+                {
+                    // here just print a warning (actually disregard it below)
+                    printf("WARNING: disregarding v0 because x_guess is not set. \n");
+                    user_attempted_to_spevify_v0_but_forgot_x_guess = true;
+                }
+
+                if (v0_is_only_partially_specified || user_attempted_to_spevify_v0_but_forgot_x_guess)
+                {
+                    // disregard user input for v0
+                    for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
+                    {
+                        objectives[ObjIndex].setFlag_v0_is_specified(false);
+                    }
+                }
+            }
+
             /**
                \brief Computes an initial feasible pair (x,w)
 
@@ -111,10 +153,14 @@ namespace LexLS
                 ----------------------------------------------------------------------------------------------------
                 two cases:
                 ----------------------------------------------------------------------------------------------------
-                1.  x = x_star        ,  v{active} = A{active}*x-b{active},  v{inactive} = middle of bounds
+                1. x_guess is not specified
+
+                    x = x_star        ,  v{active} = A{active}*x-b{active},  v{inactive} = middle of bounds
                    dx = x_star - x = 0, dv{active} = A{active}*dx = 0     , dv{inactive} = -v{inactive}
                 
-                2.  x = x_guess       ,  v{active} = A{active}*x-b{active},  v{inactive} = middle of bounds
+                2. x_guess is specified
+
+                    x = x_guess       ,  v{active} = A{active}*x-b{active},  v{inactive} = middle of bounds
                    dx = x_star - x    , dv{active} = A{active}*dx         , dv{inactive} = -v{inactive}
                 
                    dv{active} = A{active}*x_star - b{active} - (A{active}*x - b{active}) = A{active}*(x_star - x) 
@@ -122,7 +168,9 @@ namespace LexLS
                 \endverbatim
             */
             void phase1()
-            {   
+            { 
+                hot_start_related_tests();
+
                 if (!x_guess_is_specified)
                 {
                     formLexLSE();
@@ -271,10 +319,12 @@ namespace LexLS
 
             /**
                \brief Sets the residual for objective k
+
+               \todo Check the validity of the hot-start
             */
-            void set_v0(Index ObjIndex, dVectorType &w)
+            void set_v0(Index ObjIndex, dVectorType &v0_)
             {
-                objectives[ObjIndex].set_v0(w);
+                objectives[ObjIndex].set_v0(v0_);
             }
 
             /**
@@ -715,6 +765,8 @@ namespace LexLS
 
             /**
                \brief Outputs resiadual norm to file
+
+               \todo this function has to be updated (after the change of hot-start)
             */
             void outputStuff(const char *file_name, OperationType operation, bool flag_clear_file = false)
             {

@@ -286,17 +286,20 @@ namespace LexLS
                         const bool modify_x_guess_enabled)
             {
                 initialize_Ax(x);
-                
-                if (x_guess_is_specified)
+              
+                if (!v0_is_specified)
                 {
-                    // note: x might be modified inside (if modify_x_guess_enabled == true)
-                    formInitialWorkingSet(x, 
-                                          modify_type_active_enabled, 
-                                          modify_type_inactive_enabled, 
-                                          modify_x_guess_enabled);
+                    if (x_guess_is_specified)
+                    {
+                        // note: x might be modified inside (if modify_x_guess_enabled == true)
+                        formInitialWorkingSet(x, 
+                                              modify_type_active_enabled, 
+                                              modify_type_inactive_enabled, 
+                                              modify_x_guess_enabled);
+                    }
+                    
+                    initialize_v0();
                 }
-
-                initialize_v0();
             }
 
             /** 
@@ -622,6 +625,22 @@ namespace LexLS
             }
             
             /**
+               \brief Returns the value of v0_is_specified.
+            */
+            bool getFlag_v0_is_specified() const
+            {
+                return v0_is_specified;
+            }
+
+            /**
+               \brief Set the value of v0_is_specified.
+            */
+            void setFlag_v0_is_specified(bool flag_value)
+            {
+                v0_is_specified = flag_value;
+            }
+
+            /**
                \brief Set v0
 
                \note Use this function with caution (advanced initialization)
@@ -629,7 +648,7 @@ namespace LexLS
             void set_v0(const dVectorType& v_)
             {
                 v = v_;
-                v0_is_specified = true;
+                setFlag_v0_is_specified(true);
             }
 
             /**

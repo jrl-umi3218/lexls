@@ -132,7 +132,7 @@ algorithm (they need not be the same).
 
 \item {\color{blue}$\{\mathcal{W}^{(0)}, x^{(0)}, v^{(0)}\}$}
 
-  Advanced initialization.
+  Advanced initialization (see Section~\ref{sec.advanced_initialization}).
 
 \end{itemize}
 
@@ -470,6 +470,28 @@ cases. % todo
             }
       }
 \end{algorithm}
+
+\clearpage
+
+\section{Advanced initialization} \label{sec.advanced_initialization}
+
+The user can initialize directly $\{\mathcal{W}^{(0)}, x^{(0)}, v^{(0)}\}$. This can be achieved by
+specifying $v^{(0)}$ in addition to $\mathcal{W}^{\mathit{guess}}$ and $x^{\mathit{guess}}$. The bahevior of the solver then is 
+%
+\begin{enumerate}
+\item Set $\mathcal{W}^{(0)} \leftarrow \mathcal{W}^{\mathit{guess}}$.
+\item Detect equality constraints and add them to $\mathcal{W}^{(0)}$.
+\item Set $x^{(0)} \leftarrow x^{\mathit{guess}}$.
+\end{enumerate}
+%
+Several important notes:
+%
+\begin{itemize}
+\item Hot-start with $\{\mathcal{W}^{(0)}, v^{(0)}\}$ or $\{v^{(0)}\}$ is not allowed.
+\item For the moment no check of the validity of $\{\mathcal{W}^{(0)}, x^{(0)}, v^{(0)}\}$ is
+  made. Note that if $(x^{(0)}, v^{(0)})$ is not a feasible initial pair, the behavior of the solver
+  is unpredictable.
+\end{itemize}
 
 \end{document}
 

@@ -1,5 +1,5 @@
 /*
-  API for LexLSE
+  API for internal::LexLSE and internal::LexLSI
 */
 
 #ifndef LEXLSE_API
