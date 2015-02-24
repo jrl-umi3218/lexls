@@ -103,119 +103,6 @@ namespace LexLS
 
                 nDeactivations++;
             }
-
-            /** 
-                \brief Some tests on the validity of hot-start (currently only related to advanced initialization)
-
-                \todo Additional tests shouls be implemented.
-            */
-            void hot_start_related_tests()
-            {
-                // make sure that v0 is not only partially specified 
-                bool v0_is_only_partially_specified = false;
-                bool user_attempted_to_spevify_v0 = objectives[0].getFlag_v0_is_specified();
-                for (Index ObjIndex=1; ObjIndex<nObj; ObjIndex++)
-                {
-                    if (objectives[ObjIndex].getFlag_v0_is_specified() != user_attempted_to_spevify_v0)
-                    {
-                        // here just print a warning (actually disregard it below)
-                        printf("WARNING: disregarding v0 because it is only partially initialized. \n");
-                        
-                        user_attempted_to_spevify_v0 = true;
-                        v0_is_only_partially_specified = true;
-                        break;
-                    }
-                }
-
-                // make sure that the user did not hot-start with {W0,v0} or {v0}
-                bool user_attempted_to_spevify_v0_but_forgot_x_guess = false;
-                if ((!x_guess_is_specified) && user_attempted_to_spevify_v0)
-                {
-                    // here just print a warning (actually disregard it below)
-                    printf("WARNING: disregarding v0 because x_guess is not set. \n");
-                    user_attempted_to_spevify_v0_but_forgot_x_guess = true;
-                }
-
-                if (v0_is_only_partially_specified || user_attempted_to_spevify_v0_but_forgot_x_guess)
-                {
-                    // disregard user input for v0
-                    for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
-                    {
-                        objectives[ObjIndex].setFlag_v0_is_specified(false);
-                    }
-                }
-            }
-
-            /**
-               \brief Computes an initial feasible pair (x,w)
-
-                \verbatim
-                ----------------------------------------------------------------------------------------------------
-                two cases:
-                ----------------------------------------------------------------------------------------------------
-                1. x_guess is not specified
-
-                    x = x_star        ,  v{active} = A{active}*x-b{active},  v{inactive} = middle of bounds
-                   dx = x_star - x = 0, dv{active} = A{active}*dx = 0     , dv{inactive} = -v{inactive}
-                
-                2. x_guess is specified
-
-                    x = x_guess       ,  v{active} = A{active}*x-b{active},  v{inactive} = middle of bounds
-                   dx = x_star - x    , dv{active} = A{active}*dx         , dv{inactive} = -v{inactive}
-                
-                   dv{active} = A{active}*x_star - b{active} - (A{active}*x - b{active}) = A{active}*(x_star - x) 
-                ----------------------------------------------------------------------------------------------------
-                \endverbatim
-            */
-            void phase1()
-            { 
-                hot_start_related_tests();
-
-                if (!x_guess_is_specified)
-                {
-                    formLexLSE();
-                    lexlse.factorize();
-                    lexlse.solve(); // solve lexlse based on initial working set
-                    x = lexlse.get_x();
-                }
-
-                // --------------------------------------------------------
-                // form initial working set and a feasible pair (x,v)
-                // --------------------------------------------------------
-                for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
-                {
-                    objectives[ObjIndex].phase1(x, // either x = x_guess or x = lexlse.get_x()
-                                                x_guess_is_specified,
-                                                parameters.modify_type_active_enabled,
-                                                parameters.modify_type_inactive_enabled,
-                                                parameters.modify_x_guess_enabled);
-                }
-                
-                // --------------------------------------------------------
-                // form dx
-                // --------------------------------------------------------
-                if (x_guess_is_specified) 
-                {
-                    formLexLSE();
-                    lexlse.factorize();
-                    lexlse.solve(); // solve lexlse based on initial working set
-
-                    dx = lexlse.get_x() - x; // take a step towards x_star
-                }
-                else
-                {
-                    // dx.setZero(); // already set to zero in initialize() 
-                }
-                     
-                // --------------------------------------------------------
-                // form step for v (similar to formStep() but dx is initialized above)
-                // --------------------------------------------------------
-                for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
-                    objectives[ObjIndex].formStep(dx);
-                // --------------------------------------------------------
-
-                nFactorizations++; // one factorization is performed
-            }
         
             /**
                \brief solve a LexLSI problem
@@ -225,9 +112,16 @@ namespace LexLS
             TerminationStatus solve()
             {
                 OperationType operation;
-
-                phase1();
-
+                
+                if (parameters.use_phase1_v0)
+                {
+                    phase1_v0();
+                }
+                else
+                {
+                    phase1();
+                }
+                
                 if (!parameters.output_file_name.empty())
                     outputStuff(parameters.output_file_name.c_str(), OPERATION_UNDEFINED, true);
 
@@ -557,9 +451,162 @@ namespace LexLS
             }
                 
         private:
-            /// \brief Parameters of the solver.
-            ParametersLexLSI parameters;
 
+            /** 
+                \brief Some tests on the validity of hot-start (currently only related to advanced initialization)
+
+                \todo Additional tests shouls be implemented (e.g., feasibility of (x0,v0)).
+            */
+            void hot_start_related_tests()
+            {
+                // make sure that v0 is not only partially specified 
+                bool v0_is_only_partially_specified = false;
+                bool user_attempted_to_spevify_v0 = objectives[0].getFlag_v0_is_specified();
+                for (Index ObjIndex=1; ObjIndex<nObj; ObjIndex++)
+                {
+                    if (objectives[ObjIndex].getFlag_v0_is_specified() != user_attempted_to_spevify_v0)
+                    {
+                        // here just print a warning (actually disregard the user specified v0 below)
+                        printf("WARNING: disregarding v0 because it is only partially initialized. \n");
+                        
+                        user_attempted_to_spevify_v0 = true;
+                        v0_is_only_partially_specified = true;
+                        break;
+                    }
+                }
+
+                // make sure that the user did not attempt to hot-start with {W0,v0} or {v0}
+                bool user_attempted_to_spevify_v0_but_forgot_x_guess = false;
+                if ((!x_guess_is_specified) && user_attempted_to_spevify_v0)
+                {
+                    // here just print a warning (actually disregard the user specified v0 below)
+                    printf("WARNING: disregarding v0 because x_guess is not set. \n");
+                    user_attempted_to_spevify_v0_but_forgot_x_guess = true;
+                }
+
+                if (v0_is_only_partially_specified || user_attempted_to_spevify_v0_but_forgot_x_guess)
+                {
+                    // disregard user input for v0
+                    for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
+                    {
+                        objectives[ObjIndex].setFlag_v0_is_specified(false);
+                    }
+                }
+            }
+
+            /**
+               \brief Computes an initial feasible pair (x,w)
+
+                \verbatim
+                ----------------------------------------------------------------------------------------------------
+                two cases:
+                ----------------------------------------------------------------------------------------------------
+                1. x_guess is not specified
+
+                    x = x_star        ,  v{active} = A{active}*x-b{active},  v{inactive} = middle of bounds
+                   dx = x_star - x = 0, dv{active} = A{active}*dx = 0     , dv{inactive} = -v{inactive}
+                
+                2. x_guess is specified
+
+                    x = x_guess       ,  v{active} = A{active}*x-b{active},  v{inactive} = middle of bounds
+                   dx = x_star - x    , dv{active} = A{active}*dx         , dv{inactive} = -v{inactive}
+                
+                   dv{active} = A{active}*x_star - b{active} - (A{active}*x - b{active}) = A{active}*(x_star - x) 
+                ----------------------------------------------------------------------------------------------------
+                \endverbatim
+            */
+            void phase1()
+            { 
+                hot_start_related_tests();
+
+                if (!x_guess_is_specified)
+                {
+                    formLexLSE();
+                    lexlse.factorize();
+                    lexlse.solve(); // solve lexlse based on initial working set
+                    x = lexlse.get_x();
+                }
+
+                // --------------------------------------------------------
+                // form initial working set and a feasible pair (x,v)
+                // --------------------------------------------------------
+                for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
+                {
+                    objectives[ObjIndex].phase1(x, // either x = x_guess or x = lexlse.get_x()
+                                                x_guess_is_specified,
+                                                parameters.modify_type_active_enabled,
+                                                parameters.modify_type_inactive_enabled,
+                                                parameters.modify_x_guess_enabled);
+                }
+
+                // --------------------------------------------------------
+                // form dx
+                // --------------------------------------------------------
+                if (x_guess_is_specified) 
+                {
+                    formLexLSE();
+                    lexlse.factorize();
+                    lexlse.solve(); // solve lexlse based on initial working set
+
+                    dx = lexlse.get_x() - x; // take a step towards x_star
+                }
+                else
+                {
+                    // dx.setZero(); // already set to zero in initialize() 
+                }
+                     
+                // --------------------------------------------------------
+                // form step for v (similar to formStep() but dx is initialized above)
+                // --------------------------------------------------------
+                for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
+                    objectives[ObjIndex].formStep(dx);
+                // --------------------------------------------------------
+
+                nFactorizations++; // one factorization is performed
+            }
+
+            /**
+               \brief An alternative to #phase1()
+
+               \note dx = 0, dv{active} = 0, dv{inactive} = -v{inactive}
+
+               \note A factorization is NOT performed here
+
+               \attention x_guess has to be specified by the user.
+            */
+            void phase1_v0()
+            { 
+                if (!x_guess_is_specified)
+                {
+                    throw Exception("when use_phase1_v0 = true, x_guess has to be specified");
+                }
+
+                hot_start_related_tests();
+
+                // --------------------------------------------------------
+                // form initial working set and a feasible pair (x,v)
+                // --------------------------------------------------------
+                for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
+                {
+                    objectives[ObjIndex].phase1(x,                    // x = x_guess
+                                                x_guess_is_specified, // true
+                                                parameters.modify_type_active_enabled,
+                                                parameters.modify_type_inactive_enabled,
+                                                parameters.modify_x_guess_enabled);
+                }
+                
+                // --------------------------------------------------------
+                // form dx
+                // --------------------------------------------------------
+                // dx.setZero(); // already set to zero in initialize()
+                
+                // --------------------------------------------------------
+                // form step for v (similar to formStep() but dx is initialized above)
+                // --------------------------------------------------------
+                for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
+                    objectives[ObjIndex].formStep(dx);
+                // --------------------------------------------------------
+            }
 
             /** 
                 \brief Resize LexLSI problem
@@ -688,13 +735,14 @@ namespace LexLS
 
             /**
                \brief One iteration of an active-set method
-            */        
+            */
             OperationType verifyWorkingSet()
             {
                 // ----------------------------------------------------------------------
                 Index ObjIndex2Manipulate, CtrIndex2Manipulate;
                 ConstraintActivationType CtrType2Manipulate = CTR_INACTIVE;
 
+                bool normalIteration = true;
                 OperationType operation = OPERATION_UNDEFINED;
                 ConstraintIdentifier constraint_identifier;
 
@@ -712,6 +760,13 @@ namespace LexLS
 
                     nFactorizations++;
                 }
+                else // if this is the first time we enter verifyWorkingSet()
+                {
+                    if (parameters.use_phase1_v0) // if we have used phase1_v0()
+                    {
+                        normalIteration = false; // i.e.,, only check for blocking constraints and make a step
+                    }
+                }
 
                 if (checkBlockingConstraints(ObjIndex2Manipulate, CtrIndex2Manipulate, CtrType2Manipulate, alpha))
                 {
@@ -725,21 +780,24 @@ namespace LexLS
                 }
                 else
                 {
-                    if (findActiveCtr2Remove(ObjIndex2Manipulate, CtrIndex2Manipulate))
+                    if (normalIteration)
                     {
-                        if (parameters.cycling_handling_enabled)
+                        if (findActiveCtr2Remove(ObjIndex2Manipulate, CtrIndex2Manipulate))
                         {
-                            constraint_identifier.set(ObjIndex2Manipulate, 
-                                                      objectives[ObjIndex2Manipulate].getActiveCtrIndex(CtrIndex2Manipulate), 
-                                                      objectives[ObjIndex2Manipulate].getActiveCtrType(CtrIndex2Manipulate));
+                            if (parameters.cycling_handling_enabled)
+                            {
+                                constraint_identifier.set(ObjIndex2Manipulate, 
+                                                          objectives[ObjIndex2Manipulate].getActiveCtrIndex(CtrIndex2Manipulate), 
+                                                          objectives[ObjIndex2Manipulate].getActiveCtrType(CtrIndex2Manipulate));
+                            }
+                        
+                            operation = OPERATION_REMOVE;
+                            deactivate(ObjIndex2Manipulate, CtrIndex2Manipulate); 
                         }
-                            
-                        operation = OPERATION_REMOVE;
-                        deactivate(ObjIndex2Manipulate, CtrIndex2Manipulate); 
-                    }
-                    else
-                    {
-                        status = PROBLEM_SOLVED;
+                        else
+                        {
+                            status = PROBLEM_SOLVED;
+                        }
                     }
                 }
 
@@ -994,6 +1052,11 @@ namespace LexLS
                 \brief Handle cycling
             */       
             CyclingHandler cycling_handler;
+
+            /** 
+                \brief Parameters of the solver.
+            */       
+            ParametersLexLSI parameters;
 
         }; // END class LexLSI 
 

@@ -200,9 +200,34 @@ namespace LexLS
         */
         bool modify_type_inactive_enabled;
 
+        /** 
+            \brief If true, use phase1_v0() instead of phase1()
+        */
+        bool use_phase1_v0;
+       
         ParametersLexLSI()
         {
             setDefaults();
+        }
+
+        void print()
+        {
+            printf("max_number_of_factorizations   = %d \n", max_number_of_factorizations);
+            printf("tol_linear_dependence          = %e \n", tol_linear_dependence);
+            printf("tol_wrong_sign_lambda          = %e \n", tol_wrong_sign_lambda);
+            printf("tol_correct_sign_lambda        = %e \n", tol_correct_sign_lambda);
+            printf("tol_feasibility                = %e \n", tol_feasibility);
+            printf("cycling_handling_enabled       = %d \n", cycling_handling_enabled);
+            printf("cycling_max_counter            = %d \n", cycling_max_counter);
+            printf("cycling_relax_step             = %e \n", cycling_relax_step);
+            printf("regularization_type            = %d \n", regularization_type);
+            printf("max_number_of_CG_iterations    = %d \n", max_number_of_CG_iterations);
+            printf("variable_regularization_factor = %e \n", variable_regularization_factor);
+            printf("modify_x_guess_enabled         = %d \n", modify_x_guess_enabled);
+            printf("modify_type_active_enabled     = %d \n", modify_type_active_enabled);
+            printf("modify_type_inactive_enabled   = %d \n", modify_type_inactive_enabled);
+            printf("use_phase1_v0                  = %d \n", use_phase1_v0);
+            printf("\n");
         }
 
         void setDefaults()
@@ -225,6 +250,7 @@ namespace LexLS
             modify_x_guess_enabled         = false;
             modify_type_active_enabled     = false;
             modify_type_inactive_enabled   = false;
+            use_phase1_v0                  = false;
         }
     };
 

@@ -98,7 +98,6 @@ void mexFunction( int num_output, mxArray *output[],
 
 
     bool    is_simple_bounds_handling_enabled = false;
-
     bool                is_regularization_set = false;
     std::vector<double> regularization_factors;
 
@@ -157,6 +156,10 @@ void mexFunction( int num_output, mxArray *output[],
             getOptionBool(  &is_simple_bounds_handling_enabled,
                             options_struct, 
                             "enable_simple_bounds");
+
+            getOptionBool(  &lexlsi_parameters.use_phase1_v0,
+                            options_struct, 
+                            "use_phase1_v0");
 
             unsigned int regularization_type = 0;
             if (getOptionUnsignedInteger( &regularization_type, 
