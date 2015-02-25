@@ -536,7 +536,8 @@ namespace LexLS
                                                 x_guess_is_specified,
                                                 parameters.modify_type_active_enabled,
                                                 parameters.modify_type_inactive_enabled,
-                                                parameters.modify_x_guess_enabled);
+                                                parameters.modify_x_guess_enabled,
+                                                parameters.tol_feasibility);
                 }
 
                 // --------------------------------------------------------
@@ -592,7 +593,8 @@ namespace LexLS
                                                 x_guess_is_specified, // true
                                                 parameters.modify_type_active_enabled,
                                                 parameters.modify_type_inactive_enabled,
-                                                parameters.modify_x_guess_enabled);
+                                                parameters.modify_x_guess_enabled,
+                                                parameters.tol_feasibility);
                 }
                 
                 // --------------------------------------------------------

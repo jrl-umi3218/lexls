@@ -101,6 +101,15 @@ namespace LexLS
             setDefaults();
         }
 
+        void print()
+        {
+            printf("tol_linear_dependence          = %d \n", tol_linear_dependence);
+            printf("max_number_of_CG_iterations    = %d \n", max_number_of_CG_iterations);
+            printf("regularization_type            = %d \n", regularization_type);
+            printf("variable_regularization_factor = %d \n", variable_regularization_factor);
+            printf("\n");
+        }
+
         void setDefaults()
         {
             tol_linear_dependence          = 1e-12;

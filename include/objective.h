@@ -172,8 +172,10 @@ namespace LexLS
             /**
                \brief Given x, generate a v such that (x,v) is a feasible initial pair for the
                constraints involved in the objective 
+
+               \todo Consider rewriting this function. 
             */
-            void initialize_v0()
+            void initialize_v0(const RealScalar tol_feasibility)
             {
                 Index CtrIndex;
                 ConstraintActivationType CtrType;
@@ -192,14 +194,14 @@ namespace LexLS
                         v.coeffRef(CtrIndex) = Ax.coeffRef(CtrIndex) - data.coeffRef(CtrIndex,ub_index);
                 }
             
-                // For inactive constraints, even when lb[i] <= Ax[i] <= ub[i], a nonzero v[i] can be
-                // generated. So overwrite v[i] = 0.
+                // For inactive constraints, even when lb[i] <= Ax[i] <= ub[i], a nonzero v[i] can be generated. 
+                // So overwrite v[i] = 0.
                 for (CtrIndex=0; CtrIndex<nCtr; CtrIndex++)
                 {
                     if (!isActive(CtrIndex))
                     {
-                        if (Ax.coeffRef(CtrIndex) >= data.coeffRef(CtrIndex,lb_index) && 
-                            Ax.coeffRef(CtrIndex) <= data.coeffRef(CtrIndex,ub_index))
+                        if (Ax.coeffRef(CtrIndex) >= (data.coeffRef(CtrIndex,lb_index) - tol_feasibility) && 
+                            Ax.coeffRef(CtrIndex) <= (data.coeffRef(CtrIndex,ub_index) + tol_feasibility))
                         {
                             v.coeffRef(CtrIndex) = 0.0;
                         }
@@ -283,7 +285,8 @@ namespace LexLS
                         const bool x_guess_is_specified,
                         const bool modify_type_active_enabled,
                         const bool modify_type_inactive_enabled,
-                        const bool modify_x_guess_enabled)
+                        const bool modify_x_guess_enabled,
+                        const RealScalar tol_feasibility)
             {
                 initialize_Ax(x);
               
@@ -298,7 +301,7 @@ namespace LexLS
                                               modify_x_guess_enabled);
                     }
                     
-                    initialize_v0();
+                    initialize_v0(tol_feasibility);
                 }
             }
 
