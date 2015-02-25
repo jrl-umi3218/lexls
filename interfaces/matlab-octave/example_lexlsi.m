@@ -37,7 +37,7 @@ lexobj(2).A = rand(4,5);
 lexobj(2).ub = rand(4,1);
 lexobj(2).lb = lexobj(2).ub - rand(4,1);
 
-active_set = cell();
+active_set = {};
 active_set{1} = [];
 active_set{2} = [0; 1; 2; 0];
 
@@ -58,7 +58,7 @@ lexobj(2).A = rand(4,6);
 lexobj(2).ub = rand(4,1);
 lexobj(2).lb = lexobj(2).ub - rand(4,1);
 
-active_set_guess = cell();
+active_set_guess = {};
 active_set_guess{1} = [0; 1; 2];
 active_set_guess{2} = [];
 
@@ -78,7 +78,7 @@ lexobj(2).A = rand(4,6);
 lexobj(2).ub = rand(4,1);
 lexobj(2).lb = lexobj(2).ub - rand(4,1);
 
-active_set_guess = cell();
+active_set_guess = {};
 active_set_guess{1} = [0; 1; 2];
 active_set_guess{2} = [];
 
@@ -140,7 +140,7 @@ lexobj(2).A = rand(4,6);
 lexobj(2).ub = rand(4,1);
 lexobj(2).lb = lexobj(2).ub - rand(4,1);
 
-active_set_guess = cell();
+active_set_guess = {};
 active_set_guess{1} = [0; 1; 2];
 active_set_guess{2} = [];
 
@@ -168,7 +168,7 @@ lexobj(2).A = rand(4,6);
 lexobj(2).ub = rand(4,1);
 lexobj(2).lb = lexobj(2).ub - rand(4,1);
 
-active_set_guess = cell();
+active_set_guess = {};
 active_set_guess{1} = [0; 1; 2];
 active_set_guess{2} = [];
 
