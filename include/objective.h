@@ -173,6 +173,8 @@ namespace LexLS
                \brief Given x, generate a v such that (x,v) is a feasible initial pair for the
                constraints involved in the objective 
 
+               \param[in] tol_feasibility feasibility tolerance 
+
                \todo Consider rewriting this function. 
             */
             void initialize_v0(const RealScalar tol_feasibility)
@@ -278,6 +280,7 @@ namespace LexLS
                \param[in] modify_type_active_enabled   flag (see ./doc/hot_start.pdf) 
                \param[in] modify_type_inactive_enabled flag (see ./doc/hot_start.pdf)
                \param[in] modify_x_guess_enabled       flag (see ./doc/hot_start.pdf) 
+               \param[in] tol_feasibility              feasibility tolerance
 
                \note #Ax is initialized
             */
