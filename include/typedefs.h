@@ -104,9 +104,9 @@ namespace LexLS
         void print()
         {
             printf("tol_linear_dependence          = %e \n", tol_linear_dependence);
-            printf("max_number_of_CG_iterations    = %d \n", max_number_of_CG_iterations);
             printf("regularization_type            = %d \n", regularization_type);
             printf("variable_regularization_factor = %e \n", variable_regularization_factor);
+            printf("max_number_of_CG_iterations    = %d \n", max_number_of_CG_iterations);
             printf("\n");
         }
 
@@ -144,6 +144,8 @@ namespace LexLS
 
         /** 
             \brief Tolerance: used to determine whether a constraint has been violated
+
+            \note This tolerance is used when checking for blocking constraint and when initializing v0. 
         */
         RealScalar tol_feasibility;
 
