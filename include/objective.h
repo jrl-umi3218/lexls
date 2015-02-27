@@ -535,6 +535,35 @@ namespace LexLS
             }
 
             /**
+               \brief Returns the (minimal) constraint violation
+
+               \param[out] ctr_violation vector of constraint violations
+
+               \note The result might be different from get_v() if the active-set iterations are
+               prematurely terminated.
+            */
+            void getConstraintViolation(dVectorType &ctr_violation)
+            {
+                ctr_violation.resize(nCtr);
+
+                for (Index CtrIndex=0; CtrIndex<nCtr; CtrIndex++)
+                {
+                    if (Ax.coeffRef(CtrIndex) <= data.coeffRef(CtrIndex,lb_index)) // <= LB
+                    {
+                        ctr_violation.coeffRef(CtrIndex) = Ax.coeffRef(CtrIndex) - data.coeffRef(CtrIndex,lb_index);
+                    }
+                    else if (Ax.coeffRef(CtrIndex) <= data.coeffRef(CtrIndex,ub_index)) // >= UB
+                    {
+                        ctr_violation.coeffRef(CtrIndex) = Ax.coeffRef(CtrIndex) - data.coeffRef(CtrIndex,ub_index);
+                    }
+                    else
+                    {
+                        ctr_violation.coeffRef(CtrIndex) = 0.0;
+                    }
+                }
+            }
+
+            /**
                \brief Returns #dv
             */
             dVectorType& get_dv()

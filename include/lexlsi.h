@@ -342,6 +342,20 @@ namespace LexLS
                 return objectives[ObjIndex].get_v();
             }
 
+            /**
+               \brief Returns the (minimal) constraint violation for objective ObjIndex
+
+               \param[in]  ObjIndex      objective index
+               \param[out] ctr_violation vector of constraint violations
+
+               \note The result might be different from get_v() if the active-set iterations are
+               prematurely terminated.
+            */
+            void getConstraintViolation(Index ObjIndex, dVectorType &ctr_violation)
+            {
+                objectives[ObjIndex].getConstraintViolation(ctr_violation);
+            }
+
             /** 
                 \brief Outputs the Lagrange multipliers associated to the constraintes involved in all objectives
 

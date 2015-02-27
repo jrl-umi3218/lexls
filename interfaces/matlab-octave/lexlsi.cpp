@@ -531,7 +531,9 @@ void mexFunction( int num_output, mxArray *output[],
 
             try
             {
-                LexLS::dVectorType& w = lexlsi.get_v(i);
+                //LexLS::dVectorType& w = lexlsi.get_v(i);
+                LexLS::dVectorType w;
+                lexlsi.getConstraintViolation(i,w);
                 mxArray * wi = mxCreateDoubleMatrix(num_constr[i], 1, mxREAL);
                 for (LexLS::Index j = 0; j < num_constr[i]; ++j)
                 {
