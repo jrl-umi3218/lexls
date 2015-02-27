@@ -552,7 +552,7 @@ namespace LexLS
                     {
                         ctr_violation.coeffRef(CtrIndex) = Ax.coeffRef(CtrIndex) - data.coeffRef(CtrIndex,lb_index);
                     }
-                    else if (Ax.coeffRef(CtrIndex) <= data.coeffRef(CtrIndex,ub_index)) // >= UB
+                    else if (Ax.coeffRef(CtrIndex) >= data.coeffRef(CtrIndex,ub_index)) // >= UB
                     {
                         ctr_violation.coeffRef(CtrIndex) = Ax.coeffRef(CtrIndex) - data.coeffRef(CtrIndex,ub_index);
                     }
