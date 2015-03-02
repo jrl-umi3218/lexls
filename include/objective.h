@@ -259,6 +259,41 @@ namespace LexLS
             void formStep(dVectorType &dx)
             {
                 form_Adx(dx);
+
+                RealScalar rhs;
+                Index CtrIndex;
+                ConstraintActivationType CtrType;
+
+                dv = -v;
+                for (Index CtrIndexActive=0; CtrIndexActive<getActiveCtrCount(); CtrIndexActive++)
+                {
+                    CtrIndex = getActiveCtrIndex(CtrIndexActive); // CtrIndexActive --> CtrIndex
+                    CtrType  = getActiveCtrType(CtrIndexActive);
+                    
+                    if (CtrType == CTR_ACTIVE_EQ)
+                    {
+                        rhs = data.coeffRef(CtrIndex,ub_index); // take upper bound by convention
+                    }
+                    else if (CtrType == CTR_ACTIVE_UB)
+                    {
+                        rhs = data.coeffRef(CtrIndex,ub_index);
+                    }
+                    else if (CtrType == CTR_ACTIVE_LB)
+                    {
+                        rhs = data.coeffRef(CtrIndex,lb_index);
+                    }
+                    else
+                    {
+                        throw Exception("UNKNOWN constraint type"); // we should not be here
+                    }
+                    
+                    // w{active}_star - w{active}
+                    dv.coeffRef(CtrIndex) += Ax.coeffRef(CtrIndex) + Adx.coeffRef(CtrIndex) - rhs;
+                }
+
+                /*
+                // This is mathematically equivalent to the above code 
+                // but there is a numerical drift since rhs is not used. 
                 for (Index CtrIndex=0; CtrIndex<nCtr; CtrIndex++)
                 {                
                     if (isActive(CtrIndex)) 
@@ -270,6 +305,7 @@ namespace LexLS
                         dv.coeffRef(CtrIndex) = -v.coeffRef(CtrIndex);
                     }
                 }
+                */
             }
 
             /**
