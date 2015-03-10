@@ -551,6 +551,7 @@ namespace LexLS
                                                 parameters.modify_type_active_enabled,
                                                 parameters.modify_type_inactive_enabled,
                                                 parameters.modify_x_guess_enabled,
+                                                parameters.set_min_init_ctr_violation,
                                                 parameters.tol_feasibility);
                 }
 
@@ -608,6 +609,7 @@ namespace LexLS
                                                 parameters.modify_type_active_enabled,
                                                 parameters.modify_type_inactive_enabled,
                                                 parameters.modify_x_guess_enabled,
+                                                parameters.set_min_init_ctr_violation,
                                                 parameters.tol_feasibility);
                 }
                 

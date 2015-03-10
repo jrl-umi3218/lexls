@@ -175,9 +175,11 @@ namespace LexLS
 
                \param[in] tol_feasibility feasibility tolerance 
 
-               \todo Consider rewriting this function. 
+               \todo Consider rewriting this function (it is correct by the implementation can be
+               improved).
             */
-            void initialize_v0(const RealScalar tol_feasibility)
+            void initialize_v0(const RealScalar tol_feasibility,
+                               const bool set_min_init_ctr_violation)
             {
                 Index CtrIndex;
                 ConstraintActivationType CtrType;
@@ -202,10 +204,28 @@ namespace LexLS
                 {
                     if (!isActive(CtrIndex))
                     {
-                        if (Ax.coeffRef(CtrIndex) >= (data.coeffRef(CtrIndex,lb_index) - tol_feasibility) && 
-                            Ax.coeffRef(CtrIndex) <= (data.coeffRef(CtrIndex,ub_index) + tol_feasibility))
+                        if (set_min_init_ctr_violation) 
                         {
-                            v.coeffRef(CtrIndex) = 0.0;
+                            if (Ax.coeffRef(CtrIndex) <= data.coeffRef(CtrIndex,lb_index)) // <= LB
+                            {
+                                v.coeffRef(CtrIndex) = Ax.coeffRef(CtrIndex) - data.coeffRef(CtrIndex,lb_index);
+                            }
+                            else if (Ax.coeffRef(CtrIndex) >= data.coeffRef(CtrIndex,ub_index)) // >= UB
+                            {
+                                v.coeffRef(CtrIndex) = Ax.coeffRef(CtrIndex) - data.coeffRef(CtrIndex,ub_index);
+                            }
+                            else
+                            {
+                                v.coeffRef(CtrIndex) = 0.0;
+                            }
+                        }
+                        else
+                        {
+                            if (Ax.coeffRef(CtrIndex) >= (data.coeffRef(CtrIndex,lb_index) - tol_feasibility) && 
+                                Ax.coeffRef(CtrIndex) <= (data.coeffRef(CtrIndex,ub_index) + tol_feasibility))
+                            {
+                                v.coeffRef(CtrIndex) = 0.0;
+                            }
                         }
                     }
                 }
@@ -312,10 +332,11 @@ namespace LexLS
                \brief Form the initial working set and compute a feasible initial pair (x,v).
 
                \param[in,out] x                        x
-               \param[in] x_guess_is_specified         flag (see ./doc/hot_start.pdf) 
-               \param[in] modify_type_active_enabled   flag (see ./doc/hot_start.pdf) 
+               \param[in] x_guess_is_specified         flag (see ./doc/hot_start.pdf)
+               \param[in] modify_type_active_enabled   flag (see ./doc/hot_start.pdf)
                \param[in] modify_type_inactive_enabled flag (see ./doc/hot_start.pdf)
-               \param[in] modify_x_guess_enabled       flag (see ./doc/hot_start.pdf) 
+               \param[in] modify_x_guess_enabled       flag (see ./doc/hot_start.pdf)
+               \param[in] set_min_init_ctr_violation   flag (see ./doc/hot_start.pdf)
                \param[in] tol_feasibility              feasibility tolerance
 
                \note #Ax is initialized
@@ -325,6 +346,7 @@ namespace LexLS
                         const bool modify_type_active_enabled,
                         const bool modify_type_inactive_enabled,
                         const bool modify_x_guess_enabled,
+                        const bool set_min_init_ctr_violation,
                         const RealScalar tol_feasibility)
             {
                 initialize_Ax(x);
@@ -340,7 +362,7 @@ namespace LexLS
                                               modify_x_guess_enabled);
                     }
                     
-                    initialize_v0(tol_feasibility);
+                    initialize_v0(tol_feasibility, set_min_init_ctr_violation);
                 }
             }
 

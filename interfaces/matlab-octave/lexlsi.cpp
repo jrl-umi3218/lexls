@@ -161,6 +161,10 @@ void mexFunction( int num_output, mxArray *output[],
                             options_struct, 
                             "use_phase1_v0");
 
+            getOptionBool(  &lexlsi_parameters.set_min_init_ctr_violation,
+                            options_struct, 
+                            "set_min_init_ctr_violation");
+
             unsigned int regularization_type = 0;
             if (getOptionUnsignedInteger( &regularization_type, 
                               options_struct, 

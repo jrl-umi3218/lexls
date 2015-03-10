@@ -212,6 +212,11 @@ namespace LexLS
         bool modify_type_inactive_enabled;
 
         /** 
+            \brief Generate the smallest possible v0 (see doc/hot_start.pdf)
+        */
+        bool set_min_init_ctr_violation;
+
+        /** 
             \brief If true, use phase1_v0() instead of phase1()
         */
         bool use_phase1_v0;
@@ -237,6 +242,7 @@ namespace LexLS
             printf("modify_x_guess_enabled         = %d \n", modify_x_guess_enabled);
             printf("modify_type_active_enabled     = %d \n", modify_type_active_enabled);
             printf("modify_type_inactive_enabled   = %d \n", modify_type_inactive_enabled);
+            printf("set_min_init_ctr_violation     = %d \n", set_min_init_ctr_violation);
             printf("use_phase1_v0                  = %d \n", use_phase1_v0);
             printf("\n");
         }
@@ -261,6 +267,8 @@ namespace LexLS
             modify_x_guess_enabled         = false;
             modify_type_active_enabled     = false;
             modify_type_inactive_enabled   = false;
+            set_min_init_ctr_violation     = false;
+
             use_phase1_v0                  = false;
         }
     };

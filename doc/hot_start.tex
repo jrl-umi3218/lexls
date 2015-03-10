@@ -57,6 +57,7 @@
 \SaveVerb{phase1_v0}|phase1_v0()|
 \SaveVerb{verifyWorkingSet}|verifyWorkingSet()|
 \SaveVerb{normalIteration}|normalIteration|
+\SaveVerb{set_min_init_ctr_violation}|set_min_init_ctr_violation|
 
 \section{Hot-start related input (a summary)}
 
@@ -262,14 +263,21 @@ to specifying the initial guess.
   $\ubar{b}_i \neq \bar{b}_i$). Note that the flag \UseVerb{x_guess_is_specified} is not directly set
   by the user.
 
+\item \UseVerb{set_min_init_ctr_violation}
+
+  \begin{itemize}
+  \item[\ding{237}] \UseVerb{false} ({\bf default}) (see Sections~\ref{sec.v0_inactive}).
+
+  \item[\ding{237}] \UseVerb{true}: set the amallest possible initial constraint violation (for inactive constraints).
+  \end{itemize} 
+
 \item \UseVerb{use_phase1_v0}
 
   \begin{itemize}
-  \item[\ding{237}] \UseVerb{false} ({\bf default}) during the initialization use function \UseVerb{phase1} (see Sections~\ref{sec.phase1})
+  \item[\ding{237}] \UseVerb{false} ({\bf default}) during the initialization use function \UseVerb{phase1} (see Sections~\ref{sec.phase1}).
 
   \item[\ding{237}] \UseVerb{true}: during the initialization use function \UseVerb{phase1_v0} (see Sections~\ref{sec.phase1_v0}).
   \end{itemize} 
-
   
 \end{itemize}
 
@@ -342,18 +350,21 @@ $i\not\in \mathcal{W}^{(k)}$, $v_i^{\star(k)} = 0$.
   \end{array} \right.
 \end{align}
 
-\subsection{Initialize $v_i^{(0)}, i\not\in\mathcal{W}^{(0)}$}
+\subsection{Initialize $v_i^{(0)}, i\not\in\mathcal{W}^{(0)}$} \label{sec.v0_inactive}
+%
+If $a_i^Tx^{(0)} \in [\ubar{b}_i,\bar{b}_i]$, $v_i^{(0)} \leftarrow 0$. Otherwise
 %
 \begin{align} \label{eq.v0_inactive}
   v_i^{(0)} \leftarrow \left\{ 
   \begin{array}{l l}
-    0 & \quad a_i^Tx^{(0)} \in [\ubar{b}_i,\bar{b}_i] \\
-    a^T_ix^{(0)} - \frac{1}{2}(\ubar{b}_i + \bar{b}_i) & \quad \text{otherwise}
-  \end{array} \right.
+    a^T_ix^{(0)} - b_{\mathit{closest}} & \quad \UseVerb{set_min_init_ctr_violation} = \UseVerb{true} \\
+    a^T_ix^{(0)} - \frac{1}{2}(\ubar{b}_i + \bar{b}_i) & \quad \UseVerb{set_min_init_ctr_violation} = \UseVerb{false}
+  \end{array} \right.,
 \end{align}
 %
-When one of $\abs{\bar{b}_i}$ or $\abs{\ubar{b}_i}$ is very large, we might want to have additional
-cases. % todo
+where $b_{\mathit{closest}}$ is the bound closest to $a^T_ix^{(0)}$. When
+\UseVerb{set_min_init_ctr_violation} = \UseVerb{false} and one of $\abs{\bar{b}_i}$ or
+$\abs{\ubar{b}_i}$ is very large, we might want to have an additional option. % todo
 
 \clearpage
 
