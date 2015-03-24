@@ -165,6 +165,18 @@ void mexFunction( int num_output, mxArray *output[],
                             options_struct, 
                             "set_min_init_ctr_violation");
 
+            getOptionBool(  &lexlsi_parameters.modify_x_guess_enabled,
+                            options_struct, 
+                            "modify_x_guess_enabled");
+
+            getOptionBool(  &lexlsi_parameters.modify_type_active_enabled,
+                            options_struct, 
+                            "modify_type_active_enabled");
+
+            getOptionBool(  &lexlsi_parameters.modify_type_inactive_enabled,
+                            options_struct, 
+                            "modify_type_inactive_enabled");
+
             unsigned int regularization_type = 0;
             if (getOptionUnsignedInteger( &regularization_type, 
                               options_struct, 
