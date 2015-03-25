@@ -7,7 +7,7 @@
 namespace LexLS
 {
     namespace internal
-    {    
+    {
         /**
            \brief Defines an objective of a LexLSI problem
         */
@@ -18,7 +18,7 @@ namespace LexLS
             /**
                \brief Default constructor
             */
-            Objective(): 
+            Objective():
                 nCtr(0),
                 obj_type(GENERAL_OBJECTIVE),
                 regularization_factor(0.0),
@@ -49,16 +49,16 @@ namespace LexLS
                 {
                     data.resize(nCtr,nVar + 2); // [A,LowerBounds,UpperBounds]
 
-                    lb_index = nVar; 
-                    ub_index = nVar+1; 
+                    lb_index = nVar;
+                    ub_index = nVar+1;
                 }
                 else if (obj_type == SIMPLE_BOUNDS_OBJECTIVE)
                 {
                     data.resize(nCtr,2);         // [LowerBounds,UpperBounds]
                     var_index.resize(nCtr);
 
-                    lb_index = 0; 
-                    ub_index = 1; 
+                    lb_index = 0;
+                    ub_index = 1;
                 }
                 else
                 {
@@ -94,17 +94,17 @@ namespace LexLS
                         }
                         else if (CtrType == CTR_ACTIVE_LB)
                         {
-                            x(VarIndex) = data.coeffRef(CtrIndex,lb_index);                        
+                            x(VarIndex) = data.coeffRef(CtrIndex,lb_index);
                         }
                     }
                 }
             }
-            
+
             /**
                \brief Modifies (if possible) the user guess for the initial working set
 
                \param[in] x                            x_guess provided by the user
-               \param[in] modify_type_active_enabled   flag (see ./doc/hot_start.pdf) 
+               \param[in] modify_type_active_enabled   flag (see ./doc/hot_start.pdf)
                \param[in] modify_type_inactive_enabled flag (see ./doc/hot_start.pdf)
                \param[in] modify_x_guess_enabled       flag (see ./doc/hot_start.pdf)
 
@@ -133,26 +133,26 @@ namespace LexLS
                                 activate(CtrIndex, CTR_ACTIVE_UB);
                             }
                         }
-                        else if ((getCtrType(CtrIndex) == CTR_ACTIVE_LB) && modify_type_inactive_enabled)
+                        else if ((getCtrType(CtrIndex) == CTR_ACTIVE_LB) && modify_type_active_enabled)
                         {
                             // attempt to modify the type of CTR_ACTIVE_LB
                             if (Ax(CtrIndex) > data.coeffRef(CtrIndex,lb_index))
                             {
                                 CtrIndexActive = working_set.getCtrIndex(CtrIndex); // CtrIndex --> CtrIndexActive
-                                deactivate(CtrIndexActive); 
+                                deactivate(CtrIndexActive);
                                 if (Ax(CtrIndex) >= data.coeffRef(CtrIndex,ub_index))
                                 {
                                     activate(CtrIndex, CTR_ACTIVE_UB);
                                 }
                             }
                         }
-                        else if ((getCtrType(CtrIndex) == CTR_ACTIVE_UB) && modify_type_inactive_enabled)
+                        else if ((getCtrType(CtrIndex) == CTR_ACTIVE_UB) && modify_type_active_enabled)
                         {
                             // attempt to modify the type of CTR_ACTIVE_UB
                             if (Ax(CtrIndex) < data.coeffRef(CtrIndex,ub_index))
                             {
                                 CtrIndexActive = working_set.getCtrIndex(CtrIndex); // CtrIndex --> CtrIndexActive
-                                deactivate(CtrIndexActive); 
+                                deactivate(CtrIndexActive);
                                 if (Ax(CtrIndex) <= data.coeffRef(CtrIndex,lb_index))
                                 {
                                     activate(CtrIndex, CTR_ACTIVE_LB);
@@ -171,9 +171,9 @@ namespace LexLS
 
             /**
                \brief Given x, generate a v such that (x,v) is a feasible initial pair for the
-               constraints involved in the objective 
+               constraints involved in the objective
 
-               \param[in] tol_feasibility feasibility tolerance 
+               \param[in] tol_feasibility feasibility tolerance
 
                \todo Consider rewriting this function (it is correct by the implementation can be
                improved).
@@ -183,28 +183,28 @@ namespace LexLS
             {
                 Index CtrIndex;
                 ConstraintActivationType CtrType;
-            
-                v  = Ax - 0.5*(data.col(lb_index)+data.col(ub_index)); 
-            
+
+                v  = Ax - 0.5*(data.col(lb_index)+data.col(ub_index));
+
                 // overwrite v for the active constraints
                 for (Index CtrIndexActive=0; CtrIndexActive<getActiveCtrCount(); CtrIndexActive++)
                 {
                     CtrIndex = getActiveCtrIndex(CtrIndexActive); // CtrIndexActive --> CtrIndex
                     CtrType  = getActiveCtrType(CtrIndexActive);
-                
+
                     if (CtrType == CTR_ACTIVE_LB)
                         v.coeffRef(CtrIndex) = Ax.coeffRef(CtrIndex) - data.coeffRef(CtrIndex,lb_index);
                     else if (CtrType == CTR_ACTIVE_UB)
                         v.coeffRef(CtrIndex) = Ax.coeffRef(CtrIndex) - data.coeffRef(CtrIndex,ub_index);
                 }
-            
-                // For inactive constraints, even when lb[i] <= Ax[i] <= ub[i], a nonzero v[i] can be generated. 
+
+                // For inactive constraints, even when lb[i] <= Ax[i] <= ub[i], a nonzero v[i] can be generated.
                 // So overwrite v[i] = 0.
                 for (CtrIndex=0; CtrIndex<nCtr; CtrIndex++)
                 {
                     if (!isActive(CtrIndex))
                     {
-                        if (set_min_init_ctr_violation) 
+                        if (set_min_init_ctr_violation)
                         {
                             if (Ax.coeffRef(CtrIndex) <= data.coeffRef(CtrIndex,lb_index)) // <= LB
                             {
@@ -221,7 +221,7 @@ namespace LexLS
                         }
                         else
                         {
-                            if (Ax.coeffRef(CtrIndex) >= (data.coeffRef(CtrIndex,lb_index) - tol_feasibility) && 
+                            if (Ax.coeffRef(CtrIndex) >= (data.coeffRef(CtrIndex,lb_index) - tol_feasibility) &&
                                 Ax.coeffRef(CtrIndex) <= (data.coeffRef(CtrIndex,ub_index) + tol_feasibility))
                             {
                                 v.coeffRef(CtrIndex) = 0.0;
@@ -244,7 +244,7 @@ namespace LexLS
                 {
                     for (Index k=0; k<nCtr; k++)
                     {
-                        Ax(k) = x(var_index[k]); 
+                        Ax(k) = x(var_index[k]);
                     }
                 }
             }
@@ -262,14 +262,14 @@ namespace LexLS
                 {
                     for (Index k=0; k<nCtr; k++) // form Adx
                     {
-                        Adx(k) = dx(var_index[k]); 
+                        Adx(k) = dx(var_index[k]);
                     }
                 }
             }
 
             /*
               \brief Form #dv
-          
+
               \verbatim
               dv{inactive} =              0 - v{inactive}, where 0 corresponds to v{inactive}_star
               dv{active}   = v{active}_star - v{active} = A{active}*x{next} - b{active} - (A{active}*x{current} - b{active})
@@ -289,7 +289,7 @@ namespace LexLS
                 {
                     CtrIndex = getActiveCtrIndex(CtrIndexActive); // CtrIndexActive --> CtrIndex
                     CtrType  = getActiveCtrType(CtrIndexActive);
-                    
+
                     if (CtrType == CTR_ACTIVE_EQ)
                     {
                         rhs = data.coeffRef(CtrIndex,ub_index); // take upper bound by convention
@@ -306,17 +306,17 @@ namespace LexLS
                     {
                         throw Exception("UNKNOWN constraint type"); // we should not be here
                     }
-                    
+
                     // w{active}_star - w{active}
                     dv.coeffRef(CtrIndex) += Ax.coeffRef(CtrIndex) + Adx.coeffRef(CtrIndex) - rhs;
                 }
 
                 /*
-                // This is mathematically equivalent to the above code 
-                // but there is a numerical drift since rhs is not used. 
+                // This is mathematically equivalent to the above code
+                // but there is a numerical drift since rhs is not used.
                 for (Index CtrIndex=0; CtrIndex<nCtr; CtrIndex++)
-                {                
-                    if (isActive(CtrIndex)) 
+                {
+                    if (isActive(CtrIndex))
                     {
                         dv.coeffRef(CtrIndex) = Adx.coeffRef(CtrIndex);
                     }
@@ -350,23 +350,23 @@ namespace LexLS
                         const RealScalar tol_feasibility)
             {
                 initialize_Ax(x);
-              
+
                 if (!v0_is_specified)
                 {
                     if (x_guess_is_specified)
                     {
                         // note: x might be modified inside (if modify_x_guess_enabled == true)
-                        formInitialWorkingSet(x, 
-                                              modify_type_active_enabled, 
-                                              modify_type_inactive_enabled, 
+                        formInitialWorkingSet(x,
+                                              modify_type_active_enabled,
+                                              modify_type_inactive_enabled,
                                               modify_x_guess_enabled);
                     }
-                    
+
                     initialize_v0(tol_feasibility, set_min_init_ctr_violation);
                 }
             }
 
-            /** 
+            /**
                 \brief Includes in the working set the constraint with index CtrIndex (and sets its type)
 
                 \param[in] CtrIndex         Index of constraint in a given LexLSI objective
@@ -382,7 +382,7 @@ namespace LexLS
                 working_set.activate(CtrIndex, type);
             }
 
-            /** 
+            /**
                 \brief Removes from the working set the constraint with index CtrIndexActive
 
                 \param[in] CtrIndexActive Index of constraint in the working set in a given objective,
@@ -398,7 +398,7 @@ namespace LexLS
                 working_set.deactivate(CtrIndexActive);
             }
 
-            /** 
+            /**
                 \brief Form an LexLSE problem (using the current working set)
 
                 \verbatim
@@ -409,7 +409,7 @@ namespace LexLS
                 var_index = {3,5,4}
                 active bounds = {2,0}
                 inactive bounds = {1}
-                type = {CTR_ACTIVE_LB, 
+                type = {CTR_ACTIVE_LB,
                 CTR_ACTIVE_UB}
                 -----------------------------------------
                 data(0,0)  = x(3)
@@ -438,7 +438,7 @@ namespace LexLS
                         CtrIndex = getActiveCtrIndex(CtrIndexActive); // CtrIndexActive --> CtrIndex
                         VarIndex = getVarIndex(CtrIndex);             // CtrIndex       --> VarIndex
                         CtrType  = getActiveCtrType(CtrIndexActive);
-                        
+
                         if (CtrType == CTR_ACTIVE_LB)
                         {
                             lexlse.fixVariable(VarIndex, data.coeffRef(CtrIndex,0), CTR_ACTIVE_LB);
@@ -465,7 +465,7 @@ namespace LexLS
                         {
                             rhs = data.coeffRef(CtrIndex,nVar+1); // set equal to upper bound by convention
                             lexlse.setCtrType(ObjIndex, CtrIndexActive, CTR_ACTIVE_EQ);
-                        } 
+                        }
                         else if (CtrType == CTR_ACTIVE_UB)
                         {
                             rhs = data.coeffRef(CtrIndex,nVar+1); // set equal to upper bound
@@ -478,12 +478,12 @@ namespace LexLS
                         }
 
                         lexlse.setCtr(counter, data.row(CtrIndex).head(nVar), rhs);
-                        
+
                         counter++;
                     }
-                    lexlse.setRegularizationFactor(ObjIndex,regularization_factor);                
+                    lexlse.setRegularizationFactor(ObjIndex,regularization_factor);
                 }
-            }           
+            }
 
             /**
                \brief Check for blocking constraints
@@ -503,15 +503,15 @@ namespace LexLS
                den: a'*dx - dv
                num: b - a'*x + v
                ratio: num/den <-- this should be > 0 (in theory)
-           
+
                CTR_ACTIVE_UB: check den > 0
                CTR_ACTIVE_LB: check den < 0
 
                alpha \in [0,1]
                \endverbatim
             */
-            bool checkBlockingConstraints(Index &CtrIndexBlocking, 
-                                          ConstraintActivationType &CtrTypeBlocking, 
+            bool checkBlockingConstraints(Index &CtrIndexBlocking,
+                                          ConstraintActivationType &CtrTypeBlocking,
                                           RealScalar &alpha,
                                           const RealScalar tol_feasibility)
             {
@@ -520,13 +520,13 @@ namespace LexLS
 
                 Index CtrIndex;
                 ConstraintActivationType CtrType;
-                        
+
                 for (Index CtrIndexInactive=0; CtrIndexInactive<getInactiveCtrCount(); CtrIndexInactive++) // loop over inactive constraints
                 {
                     CtrIndex = getInactiveCtrIndex(CtrIndexInactive); // CtrIndexInactive --> CtrIndex
-                
+
                     den = Adx.coeffRef(CtrIndex) - dv.coeffRef(CtrIndex);
-                
+
                     condition = false;
                     if (den < -tol_feasibility)     // CTR_ACTIVE_LB
                     {
@@ -540,7 +540,7 @@ namespace LexLS
                         rhs       = data.coeffRef(CtrIndex,ub_index);
                         condition = true;
                     }
-                        
+
                     if (condition)
                     {
                         num   = rhs - Ax.coeffRef(CtrIndex) + v.coeffRef(CtrIndex);
@@ -549,12 +549,12 @@ namespace LexLS
                         // ratio should always be positive (but just in case)
                         if (ratio < 0)
                             ratio = 0;
-                            
+
                         // when den is very small, ratio will be grater than alpha (I don't expect numerical problems here)
                         if (ratio < alpha)
                         {
                             alpha = ratio;
-                                
+
                             // store the current blocking constraint
                             CtrIndexBlocking = CtrIndex;
                             CtrTypeBlocking  = CtrType;
@@ -564,14 +564,14 @@ namespace LexLS
                     {
                         //do nothing
                     }
-                }                
-            
+                }
+
                 return (alpha < alpha_input); // true if alpha has been modified
             }
 
             /**
                \brief Take a step alpha from #v in the direction #dv (and update #Ax)
-           
+
                \param[in] alpha step scaling
             */
             void step(RealScalar alpha)
@@ -579,7 +579,7 @@ namespace LexLS
                 v  += alpha*dv;
                 Ax += alpha*Adx;
             }
-        
+
             // --------------------------------------------------------------------
             // set & get
             // --------------------------------------------------------------------
@@ -678,7 +678,7 @@ namespace LexLS
             }
 
             /**
-               \brief Returns the index storde in var_index[k] 
+               \brief Returns the index storde in var_index[k]
             */
             Index getVarIndex(Index k) const
             {
@@ -701,7 +701,7 @@ namespace LexLS
                 return nCtr;
             }
 
-            /** 
+            /**
                 \brief Get objective data
             */
             dMatrixType& getData()
@@ -716,7 +716,7 @@ namespace LexLS
             {
                 return working_set.isActive(CtrIndex);
             }
-            
+
             /**
                \brief Returns the value of v0_is_specified.
             */
@@ -799,7 +799,7 @@ namespace LexLS
                 {
                     printf("WARNING: setting a nonzero regularization factor has no effect on an objective of type SIMPLE_BOUNDS_OBJECTIVE. \n");
                 }
-                    
+
                 regularization_factor = factor;
             }
 
@@ -888,7 +888,7 @@ namespace LexLS
 
             /**
                \brief Objective data
-           
+
                \verbatim
                if obj_type = GENERAL_OBJECTIVE      : data = [A, LowerBounds, UpperBounds]
                if obj_type = SIMPLE_BOUNDS_OBJECTIVE: data = [LowerBounds, UpperBounds], var_index is used
@@ -926,7 +926,7 @@ namespace LexLS
             */
             RealScalar regularization_factor;
 
-            /** 
+            /**
                 \brief If v0_is_initialized == true, the function set_v0(...) has been called.
             */
             bool v0_is_specified;

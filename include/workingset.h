@@ -6,29 +6,29 @@
 namespace LexLS
 {
     namespace internal
-    {    
-        /** 
+    {
+        /**
             \brief Definition of a working set
         */
         class WorkingSet
         {
         public:
-        
-            /** 
+
+            /**
                 \brief Resize and initialize the working set
-            
+
                 \param[in] dim Number of constraints
             */
             void resize(Index dim)
             {
                 // initialize all constraints as inactive
                 all_type.resize(dim,CTR_INACTIVE);
-            
-                inactive.resize(dim); 
+
+                inactive.resize(dim);
                 for (Index CtrIndex=0; CtrIndex<dim; CtrIndex++)
                     inactive[CtrIndex] = CtrIndex;
             }
-       
+
             /**
                \brief Includes in the working set the constraint with index CtrIndex (and sets its type)
 
@@ -36,19 +36,19 @@ namespace LexLS
                \param[in] type     Type of the constraint to be included in the working set
 
                \note The order of indexes of remaining inactive constraints is modified (but this is not important)
-            */                                        
+            */
             void activate(Index CtrIndex, ConstraintActivationType type)
             {
                 if (all_type[CtrIndex] != CTR_INACTIVE)
                     throw Exception("Cannot activate an active constraint");
-            
+
                 // ----------------------------------------------------------------------------
                 // remove the constraint with index CtrIndex from the set of inactive constraints
                 // ----------------------------------------------------------------------------
-                Index ind = getCtrIndex(CtrIndex); // get the index among the inactive constraints 
-                
+                Index ind = getCtrIndex(CtrIndex); // get the index among the inactive constraints
+
                 inactive[ind] = inactive.back();
-                inactive.pop_back();            
+                inactive.pop_back();
                 // ----------------------------------------------------------------------------
                 // add to set of active constraints
                 // ----------------------------------------------------------------------------
@@ -57,13 +57,13 @@ namespace LexLS
 
                 active_ctr_type.push_back(type); // set the type
             }
-    
-            /** 
+
+            /**
                 \brief Removes from the working set the constraint with index CtrIndexActive
 
                 \param[in] CtrIndexActive Index of constraint in the working set in a given objective,
                 i.e., Obj[ObjIndex].WorkingSet.active[CtrIndexActive] will be removed.
-            
+
                 \note The order of indexes of the remaining active constraints is preserved (this would
                 be important when we start doing updates).
 
@@ -100,7 +100,7 @@ namespace LexLS
 
             /**
                \brief Returns the index of the k-th active constraint
-            */                                        
+            */
             Index getActiveCtrIndex(Index k) const
             {
                 return active[k];
@@ -155,7 +155,7 @@ namespace LexLS
 
             /**
                \brief Returns the index of the k-th inactive constraint
-            */                                        
+            */
             Index getInactiveCtrIndex(Index k) const
             {
                 return inactive[k];
@@ -163,7 +163,7 @@ namespace LexLS
 
             /**
                \brief Returns true if the k-th constraint is active, otherwise returns false
-            */                                        
+            */
             bool isActive(Index k) const
             {
                 if (all_type[k] == CTR_INACTIVE)
@@ -174,7 +174,7 @@ namespace LexLS
 
             /**
                \brief Prints the contents of the working set
-            */                                        
+            */
             void print() const
             {
                 // -----------------------------------------------------------
@@ -190,7 +190,7 @@ namespace LexLS
                 // type
                 // -----------------------------------------------------------
                 std::cout << "     type = {";
-                std::copy(active_ctr_type.begin(), 
+                std::copy(active_ctr_type.begin(),
                           active_ctr_type.end(),
                           std::ostream_iterator<ConstraintActivationType>(std::cout, " "));
                 std::cout << "}" << std::endl;
@@ -199,50 +199,50 @@ namespace LexLS
                 // active
                 // -----------------------------------------------------------
                 std::cout << "   active = {";
-                std::copy(active.begin(), 
+                std::copy(active.begin(),
                           active.end(),
                           std::ostream_iterator<Index>(std::cout, " "));
                 std::cout << "}" << std::endl;
 
-                // -----------------------------------------------------------                
+                // -----------------------------------------------------------
                 // inactive
                 // -----------------------------------------------------------
                 std::cout << " inactive = {";
                 std::copy(inactive.begin(),
                           inactive.end(),
                           std::ostream_iterator<Index>(std::cout, " "));
-                std::cout << "}" << std::endl;               
+                std::cout << "}" << std::endl;
 
-                std::cout << std::endl;               
+                std::cout << std::endl;
             }
 
         private:
 
             /**
                \brief Indexes of active constraints
-            */                                        
+            */
             std::vector<Index> active;
 
             /**
                \brief Indexes of inactive constraints
-            */                                        
+            */
             std::vector<Index> inactive;
 
             /**
                \brief Type of the active constraints
-            */                                        
+            */
             std::vector<ConstraintActivationType> active_ctr_type;
 
             /**
                \brief Specifies the type of all constraints
 
                \note Introduced for convenience
-            */                                        
+            */
             std::vector<ConstraintActivationType> all_type;
         };
 
     } // END namespace internal
-    
+
 } // END namespace LexLS
 
 #endif // WORKING_SET

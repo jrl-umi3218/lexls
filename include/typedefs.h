@@ -14,11 +14,11 @@ namespace LexLS
     typedef double RealScalar;
 
     typedef Eigen::Matrix<RealScalar, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> dMatrixType; // Eigen::RowMajor
-    
+
     typedef Eigen::Matrix<RealScalar, Eigen::Dynamic, 1> dVectorType;
     typedef Eigen::Matrix<RealScalar, 1, Eigen::Dynamic> dRowVectorType;
     typedef Eigen::Matrix<     Index, Eigen::Dynamic, 1> iVectorType;
-    
+
     typedef Eigen::Block<dMatrixType , Eigen::Dynamic, Eigen::Dynamic> dBlockType;
     typedef Eigen::Block<dMatrixType , Eigen::Dynamic, 1>              dBlockType2Vector;
     typedef Eigen::VectorBlock<dVectorType, Eigen::Dynamic>            dVectorBlockType;
@@ -37,7 +37,7 @@ namespace LexLS
         REGULARIZATION_TIKHONOV_2,     // 8
         REGULARIZATION_TEST            // 9
     };
-    
+
     /**
        \brief Termination status
     */
@@ -50,7 +50,7 @@ namespace LexLS
     };
 
     /**
-       \brief Type of objective function 
+       \brief Type of objective function
     */
     enum ObjectiveType
     {
@@ -73,25 +73,25 @@ namespace LexLS
     class ParametersLexLSE
     {
     public:
-        /** 
+        /**
             \brief Tolerance: linear dependence (used when solving an LexLSE problem)
         */
         RealScalar tol_linear_dependence;
 
-        /** 
+        /**
             \brief Max number of iterations for cg_tikhonov(...)
 
             \note used only with regularization_type = REGULARIZATION_TIKHONOV_CG
         */
         Index max_number_of_CG_iterations;
 
-        /** 
+        /**
             \brief Type of regularization (Tikhonov, Basic Tikhonov, ...)
         */
         RegularizationType regularization_type;
 
         /**
-         * @brief 
+         * @brief
          * @todo add documentation
          */
         RealScalar variable_regularization_factor;
@@ -127,34 +127,34 @@ namespace LexLS
         */
         Index max_number_of_factorizations;
 
-        /** 
+        /**
             \brief Tolerance: linear dependence (used when solving an LexLSE problem)
         */
         RealScalar tol_linear_dependence;
 
-        /** 
+        /**
             \brief Tolerance: absolute value of Lagrange multiplier to be considered with "wrong" sign
         */
         RealScalar tol_wrong_sign_lambda;
 
-        /** 
+        /**
             \brief Tolerance: absolute value of Lagrange multiplier to be considered with "correct" sign
         */
         RealScalar tol_correct_sign_lambda;
 
-        /** 
+        /**
             \brief Tolerance: used to determine whether a constraint has been violated
 
-            \note This tolerance is used when checking for blocking constraint and when initializing v0. 
+            \note This tolerance is used when checking for blocking constraint and when initializing v0.
         */
         RealScalar tol_feasibility;
 
-        /** 
+        /**
             \brief Type of regularization (Tikhonov, Basic Tikhonov, ...)
         */
         RegularizationType regularization_type;
 
-        /** 
+        /**
             \brief Max number of iterations for cg_tikhonov(...)
 
             \note used only with regularization_type = REGULARIZATION_TIKHONOV_CG
@@ -174,7 +174,7 @@ namespace LexLS
          */
         RealScalar variable_regularization_factor;
 
-        /** 
+        /**
             \brief If cycling_handling_enabled == true, cycling handling is performed
         */
         bool cycling_handling_enabled;
@@ -185,9 +185,9 @@ namespace LexLS
          * @todo cycling is not always detected
          */
         Index cycling_max_counter;
-        
+
         /**
-         * \brief Ammount of relaxation performed during each attempt to handle cycling 
+         * \brief Ammount of relaxation performed during each attempt to handle cycling
          */
         RealScalar cycling_relax_step;
 
@@ -196,31 +196,31 @@ namespace LexLS
          */
         std::string output_file_name;
 
-        /** 
+        /**
             \brief Allows modification of the user guess for x (see doc/hot_start.pdf)
         */
         bool modify_x_guess_enabled;
 
-        /** 
+        /**
             \brief Allows modification of the user guess for active constraints (see doc/hot_start.pdf)
         */
         bool modify_type_active_enabled;
 
-        /** 
+        /**
             \brief Allows modification of the user guess for inactive constraints (see doc/hot_start.pdf)
         */
         bool modify_type_inactive_enabled;
 
-        /** 
+        /**
             \brief Generate the smallest possible v0 (see doc/hot_start.pdf)
         */
         bool set_min_init_ctr_violation;
 
-        /** 
+        /**
             \brief If true, use phase1_v0() instead of phase1()
         */
         bool use_phase1_v0;
-       
+
         ParametersLexLSI()
         {
             setDefaults();
@@ -274,23 +274,23 @@ namespace LexLS
     };
 
     /**
-       \brief A class for handling exceptions 
+       \brief A class for handling exceptions
     */
-    class Exception: public std::exception 
+    class Exception: public std::exception
     {
     public:
-        
+
         explicit Exception(const char *message): ExceptionMessage(message) {}
-        
+
         ~Exception() throw() {}
-        
+
         const char* what() const throw()
         {
             return ExceptionMessage.c_str();
         }
 
     private:
-   
+
         std::string ExceptionMessage;
     };
 
@@ -298,7 +298,7 @@ namespace LexLS
     // internal
     // ----------------------------------------------------------------------------------------------------------
     namespace internal
-    {    
+    {
         /**
            \brief Performed operation during the current step
         */
@@ -309,7 +309,7 @@ namespace LexLS
             OPERATION_REMOVE     // when constraint is removed
         };
 
-        /** 
+        /**
             \brief A single Given's rotation (I use this class as a structure)
         */
         class GivensRotation
@@ -321,7 +321,7 @@ namespace LexLS
             {
                 set(a, b, i_, j_);
             }
-        
+
             void set(RealScalar a, RealScalar b, Index i_, Index j_)
             {
                 G.makeGivens(a,b);
@@ -333,17 +333,17 @@ namespace LexLS
             {
                 printf("i = % d, j = % d, c = % f, s = % f \n", i, j, G.c(), G.s());
             }
-        
+
             Eigen::JacobiRotation<RealScalar> G;
             Index i;
             Index j;
         };
 
-        /** 
+        /**
             \brief A sequence of Given's rotations
         */
         class GivensRotationSequence
-        {    
+        {
         public:
             GivensRotationSequence(){}
 
@@ -356,7 +356,7 @@ namespace LexLS
             {
                 seq.push_back(G);
             }
-    
+
             Eigen::JacobiRotation<RealScalar>& get(Index k)
             {
                 return seq[k].G;
@@ -376,18 +376,18 @@ namespace LexLS
             {
                 return seq.size();
             }
-    
+
         private:
             std::vector<GivensRotation> seq;
         };
-    
-        /** 
+
+        /**
             \brief Information about an objective in a LexLSE problem
 
             \note I use this as a data-structure and all fields are public.
         */
         class ObjectiveInfo
-        {    
+        {
         public:
 
             ObjectiveInfo():
@@ -399,40 +399,40 @@ namespace LexLS
 
             /**
                \brief Print objective information.
-            */                                        
+            */
             void print() const
             {
                 printf("first_row_index = %d, first_col_index = %d, dim = %d, rank = %d \n", first_row_index, first_col_index, dim, rank);
             }
 
             /*
-              \brief Number of constraints involved in (LexLSE) objective 
+              \brief Number of constraints involved in (LexLSE) objective
 
               \note set during initialization.
             */
-            Index dim; 
+            Index dim;
 
             /*
-              \brief Rank of constraints involved in (LexLSE) objective 
+              \brief Rank of constraints involved in (LexLSE) objective
 
               \attention The rank is estimated during the factorization step in a naive way (and could
               be wrong) - see p. 260, Example 5.5.1 of "Matrix computations" by Golub & van Loan.
             */
-            Index rank; 
+            Index rank;
 
             /*
               \brief Initial row index - depends only on the number of constraints involved in (LexLSE) objectives
 
               \note computed during initialization.
             */
-            Index first_row_index; 
-    
+            Index first_row_index;
+
             /*
               \brief Initial column index - depends on the ranks of constraints involved in (LexLSE) objectives
-      
-              \note computed during factorization. 
+
+              \note computed during factorization.
             */
-            Index first_col_index; 
+            Index first_col_index;
 
             /*
               \brief Regularization factor for the current objective (default: 0.0)
@@ -440,20 +440,20 @@ namespace LexLS
             RealScalar regularization_factor;
         };
 
-        /** 
+        /**
             \brief A class used to identify a constraint (used only in the cycling detection).
         */
         class ConstraintIdentifier
-        {    
+        {
         public:
-    
+
             ConstraintIdentifier(){}
 
             ConstraintIdentifier(Index obj_index_, Index ctr_index_, ConstraintActivationType ctr_type_):
                 obj_index(obj_index_),
                 ctr_index(ctr_index_),
                 ctr_type(ctr_type_) {}
-        
+
             void set(Index obj_index_, Index ctr_index_, ConstraintActivationType ctr_type_)
             {
                 obj_index = obj_index_;
@@ -500,24 +500,24 @@ namespace LexLS
                 return ctr_type;
             }
 
-            /** 
+            /**
                 \brief Index of objective
-            */ 
+            */
             Index obj_index;
-        
-            /** 
+
+            /**
                 \brief Index of constraint
 
                 \note This index could mean different things (depending on how an instance of this class
                 is used): (i) if a constraint is to be included in the active set ctr_index is the index
                 within objective obj_index; (ii) if a constraint is to be removed from the working set,
                 ctr_index indicates the index within the set of active constraints.
-            */ 
+            */
             Index ctr_index;
 
-            /** 
+            /**
                 \brief Type of constraint
-            */ 
+            */
             ConstraintActivationType ctr_type;
         };
 
@@ -527,4 +527,3 @@ namespace LexLS
 } // END namespace LexLS
 
 #endif // TYPEDEFS
-

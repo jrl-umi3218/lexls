@@ -4,9 +4,9 @@
 #include <typedefs.h>
 
 namespace LexLS
-{    
+{
     /**
-       \brief Matlab does not display cout ... 
+       \brief Matlab does not display cout ...
     */
     inline void print_eigen_matrix(dMatrixType M, const char* variable_name)
     {
@@ -26,7 +26,7 @@ namespace LexLS
     // internal
     // ----------------------------------------------------------------------------------------------------------
     namespace internal
-    {        
+    {
         /**
            \brief Delete the content of an ASCII file
         */
@@ -42,9 +42,9 @@ namespace LexLS
         {
             return std::abs(a - b) < TOLERANCE_FOR_EQUALITY_BETWEEN_DOUBLES;
         }
-    
+
         /**
-           \brief generate random double 
+           \brief generate random double
         */
         inline double rand_double(double min=-1, double max=1)
         {
@@ -54,7 +54,7 @@ namespace LexLS
 
     } // END namespace internal
     // ----------------------------------------------------------------------------------------------------------
-    
+
 } // END namespace LexLS
 
 #endif // UTILITY

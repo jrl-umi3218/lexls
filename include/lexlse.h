@@ -4,10 +4,10 @@
 #include <utility.h>
 
 namespace LexLS
-{    
+{
     namespace internal
-    {    
-        /** 
+    {
+        /**
             \brief Definition of a lexicographic least-squares problem with equality constraints
 
             \todo To describe how variables can be fixed.
@@ -17,20 +17,20 @@ namespace LexLS
         */
         class LexLSE
         {
-        public:  
+        public:
 
             // =================================================================================================
             // Constructors
             // =================================================================================================
 
-            /** 
+            /**
                 \brief Default constructor
             */
-            LexLSE(): 
+            LexLSE():
                 nVarFixed(0),
                 nVarFixedInit(0){}
-        
-            /** 
+
+            /**
                 \param[in] nVar_   Number of variables (only number of elements in x, and not in the residuals v)
                 \param[in] nObj_   Number of objectives
                 \param[in] ObjDim_ Number of constraints involved in each objective
@@ -42,12 +42,12 @@ namespace LexLS
                 resize(nVar_, nObj_, ObjDim_);
                 setObjDim(ObjDim_);
             }
-        
+
             // =================================================================================================
-            // 
+            //
             // =================================================================================================
-        
-            /** 
+
+            /**
                 \brief Allocate memory
 
                 \param[in] nVar_     Number of variables
@@ -62,7 +62,7 @@ namespace LexLS
                 obj_info.resize(nObj);
                 x.resize(nVar);
                 P.resize(nVar);
-            
+
                 Index maxObjDimSum = 0;
                 for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
                     maxObjDimSum += maxObjDim[ObjIndex];
@@ -71,20 +71,20 @@ namespace LexLS
                 ctr_type.resize(maxObjDimSum, CTR_INACTIVE); // used only for initialization purposes
 
                 LOD.resize(maxObjDimSum,nVar+1); // store the RHS as well, thus the "+1"
-            
+
                 null_space.resize(nVar,nVar+1);
                 array.resize(nVar,nVar+1);
 
                 Index dim = std::max(maxObjDimSum,nVar);
                 dWorkspace.resize(2*dim + nVar + 1);
-            
+
                 column_permutations.resize(nVar);
 
                 // no need to initialize them (used in cg_tikhonov(...))
                 rqsp_work.resize(2*nVar,4);
             }
-       
-            /** 
+
+            /**
                 \brief Factorize using Householder QR (with column pivoting) + classical implementation of Gauss elimination
 
                 \note This is an unblocked implementation of both the QR decomposition (essentially,
@@ -95,7 +95,7 @@ namespace LexLS
                 from only when forming the Schur complement (during the Gauss elimination).
             */
             void factorize()
-            { 
+            {
                 RealScalar maxColNormValue, tau, PivotValue;
                 Index RemainingRows, ObjRank, ObjDim, TotalRank, maxColNormIndex;
 
@@ -116,7 +116,7 @@ namespace LexLS
                     {
                         coeff = fixed_var_index.coeffRef(k);
                         column_permutations.coeffRef(k) = coeff;
-                        if (k != coeff) 
+                        if (k != coeff)
                             LOD.col(k).head(nCtr).swap(LOD.col(coeff).head(nCtr));
 
                         for (Index i=k+1; i<nVarFixed; i++)
@@ -127,13 +127,13 @@ namespace LexLS
                                 break;
                             }
                         }
-                    }                
+                    }
                     LOD.col(nVar).head(nCtr).noalias() -= LOD.block(0,0,nCtr,nVarFixed)*x.head(nVarFixed);
                 }
                 // --------------------------------------------------------------------------
 
                 // Jump over the first nVarFixed columns (they are dedicated to the fixed variables)
-                // There is no jump in the rows because the identity matrix is not stored explicitly 
+                // There is no jump in the rows because the identity matrix is not stored explicitly
                 Index ColIndex         = nVarFixed;        // Current variable
                 Index RemainingColumns = nVar - nVarFixed; // Remove the fixed variables from the available variables
 
@@ -144,7 +144,7 @@ namespace LexLS
                     // form the permutation matrix
                     for (Index k=0; k<TotalRank; k++)
                         P.applyTranspositionOnTheRight(k, column_permutations.coeff(k));
-                                
+
                     return; // early termination if possible
                 }
 
@@ -154,7 +154,7 @@ namespace LexLS
                 // ----------------------------------------------------
 
                 for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++) // loop over all (explicitly defined) objectives
-                {    
+                {
                     FirstRowIndex = obj_info[ObjIndex].first_row_index;
                     FirstColIndex = obj_info[ObjIndex].first_col_index = ColIndex;
                     ObjDim        = obj_info[ObjIndex].dim;
@@ -162,7 +162,7 @@ namespace LexLS
                     for(Index k=ColIndex; k<nVar; k++) // initially compute the norms of the columns
                         ColNorms.coeffRef(k) = LOD.col(k).segment(FirstRowIndex,ObjDim).squaredNorm();
 
-                    // QR factorization of constraints involved in objective ObjIndex using the remaining variables 
+                    // QR factorization of constraints involved in objective ObjIndex using the remaining variables
                     for (Index counter=0; counter<ObjDim; counter++) // loop over all constraints in a given objective
                     {
                         RowIndex      = FirstRowIndex + counter; // current row to process
@@ -170,12 +170,12 @@ namespace LexLS
 
                         maxColNormValue = ColNorms.tail(RemainingColumns).maxCoeff(&maxColNormIndex);
                         maxColNormIndex += ColIndex;
-	
-                        // the next two lines are for numerical stability 
+
+                        // the next two lines are for numerical stability
                         // (I use them because this is what is done in ColPivHouseholderQR.h)
                         maxColNormValue = LOD.col(maxColNormIndex).segment(RowIndex,RemainingRows).squaredNorm();
                         ColNorms.coeffRef(maxColNormIndex) = maxColNormValue;
-                    
+
                         // After we break, elimination is performed if there are objectives with lower priority and obj_info[ObjIndex].rank > 0
                         if (maxColNormValue < parameters.tol_linear_dependence)
                             break;
@@ -196,13 +196,13 @@ namespace LexLS
                         // apply Householder transformations (on the RHS as well)
                         // --------------------------------------------------------------------------
                         // when RemainingRows = 1, since sqrt(maxColNormValue) >= parameters.tol_linear_dependence, the Householder matrix is the identity (tau = 0)
-                        if (RemainingRows > 1) 
+                        if (RemainingRows > 1)
                         {
                             LOD.col(ColIndex).segment(RowIndex,RemainingRows).makeHouseholderInPlace(tau,PivotValue);
                             LOD.coeffRef(RowIndex,ColIndex) = PivotValue;
                             LOD.block(RowIndex,ColIndex+1,RemainingRows,RemainingColumns) // apply transformation on the RHS as well
-                                .applyHouseholderOnTheLeft(LOD.col(ColIndex).segment(RowIndex+1,RemainingRows-1), 
-                                                           tau, 
+                                .applyHouseholderOnTheLeft(LOD.col(ColIndex).segment(RowIndex+1,RemainingRows-1),
+                                                           tau,
                                                            &hhWorkspace.coeffRef(0));
                             hh_scalars.coeffRef(FirstRowIndex+counter) = tau;
                         }
@@ -213,9 +213,9 @@ namespace LexLS
 
                         // terminate the QR factorization (after the elimination step below, the LOD is terminated as well)
                         if (RemainingColumns == 0)
-                            break; 
+                            break;
 
-                        // update our table of squared norms of the columns 
+                        // update our table of squared norms of the columns
                         // (note that above ColIndex is incremented and RemainingColumns is decreased)
                         if (RemainingRows > 0)
                             ColNorms.tail(RemainingColumns) -= LOD.row(RowIndex).segment(ColIndex,RemainingColumns).cwiseAbs2();
@@ -237,7 +237,7 @@ namespace LexLS
                     {
                         aRegularizationFactor = 0.0;
                         if (ObjRank > 0)
-                        {                        
+                        {
                             // -----------------------------------------------------------------------
                             // conditioninig estimation
                             // -----------------------------------------------------------------------
@@ -251,8 +251,8 @@ namespace LexLS
                             // -----------------------------------------------------------------------
 
                             /*
-                              see equation (10) in 
-                              Stefano Chiaverini, Bruno Siciliano, "Review of the damped least-squares inverse kinematics 
+                              see equation (10) in
+                              Stefano Chiaverini, Bruno Siciliano, "Review of the damped least-squares inverse kinematics
                               with experiments on an industrial robot manipulator, " 1994.
                             */
                             RealScalar epsilon = parameters.variable_regularization_factor;
@@ -263,37 +263,37 @@ namespace LexLS
                             }
                         }
                     }
-                
+
                     if (ObjRank > 0)
                     {
                         switch(parameters.regularization_type){
 
                         case REGULARIZATION_TIKHONOV:
 
-                            if ( !isEqual(aRegularizationFactor,0.0) ) 
+                            if ( !isEqual(aRegularizationFactor,0.0) )
                             {
                                 if (FirstColIndex + ObjRank <= RemainingColumns)
                                     regularize_tikhonov_2(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
                                 else
                                     regularize_tikhonov_1(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
-                            }            
+                            }
                             accumulate_nullspace_basis(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
 
                             break;
 
                         case REGULARIZATION_TIKHONOV_CG:
 
-                            if ( !isEqual(aRegularizationFactor,0.0) ) 
+                            if ( !isEqual(aRegularizationFactor,0.0) )
                             {
                                 regularize_tikhonov_CG(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
                                 //regularize_tikhonov_CG_x0(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
                             }
                             accumulate_nullspace_basis(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
                             break;
-                            
+
                         case REGULARIZATION_R:
 
-                            if ( !isEqual(aRegularizationFactor,0.0) ) 
+                            if ( !isEqual(aRegularizationFactor,0.0) )
                             {
                                 regularize_R(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
                             }
@@ -302,7 +302,7 @@ namespace LexLS
 
                         case REGULARIZATION_R_NO_Z:
 
-                            if ( !isEqual(aRegularizationFactor,0.0) ) 
+                            if ( !isEqual(aRegularizationFactor,0.0) )
                             {
                                 regularize_R_NO_Z(FirstRowIndex, FirstColIndex, ObjRank);
                             }
@@ -310,7 +310,7 @@ namespace LexLS
 
                         case REGULARIZATION_RT_NO_Z:
 
-                            if ( !isEqual(aRegularizationFactor,0.0) ) 
+                            if ( !isEqual(aRegularizationFactor,0.0) )
                             {
                                 regularize_RT_NO_Z(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
                             }
@@ -318,7 +318,7 @@ namespace LexLS
 
                         case REGULARIZATION_RT_NO_Z_CG:
 
-                            if ( !isEqual(aRegularizationFactor,0.0) ) 
+                            if ( !isEqual(aRegularizationFactor,0.0) )
                             {
                                 regularize_RT_NO_Z_CG(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
                             }
@@ -326,7 +326,7 @@ namespace LexLS
 
                         case REGULARIZATION_TIKHONOV_1:
 
-                            if ( !isEqual(aRegularizationFactor,0.0) ) 
+                            if ( !isEqual(aRegularizationFactor,0.0) )
                             {
                                 regularize_tikhonov_1(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
                             }
@@ -335,16 +335,16 @@ namespace LexLS
 
                         case REGULARIZATION_TIKHONOV_2:
 
-                            if ( !isEqual(aRegularizationFactor,0.0) ) 
+                            if ( !isEqual(aRegularizationFactor,0.0) )
                             {
                                 regularize_tikhonov_2(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
                             }
                             accumulate_nullspace_basis(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
-                            break;                            
+                            break;
 
                         case REGULARIZATION_TEST:
 
-                            if ( !isEqual(aRegularizationFactor,0.0) ) 
+                            if ( !isEqual(aRegularizationFactor,0.0) )
                             {
                                 regularize_test(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
                             }
@@ -362,12 +362,12 @@ namespace LexLS
                     // -----------------------------------------------------------------------
 
                     if (ObjIndex < nObj-1) // if there are objectives with lower priority
-                    {                    
-                        if (ObjRank > 0) // if there are variables to eliminate 
+                    {
+                        if (ObjRank > 0) // if there are variables to eliminate
                         {
-                            FirstRowIndexNextObjective = FirstRowIndex + ObjDim; 
+                            FirstRowIndexNextObjective = FirstRowIndex + ObjDim;
                             RemainingRows = nCtr-FirstRowIndexNextObjective; // VARIABLE REDEFINITION: remaining rows after the current objective
-                        
+
                             // update the trailing block of the matrix LOD
                             // handle the RHS vector as well, hence the "+1" (recall that RemainingColumns = nVar-ColIndex)
                             // here, we cannot use directly LOD.bottomRightCorner(RemainingRows,RemainingColumns+1).noalias()
@@ -375,7 +375,7 @@ namespace LexLS
                             dBlockType LeftBlock(LOD,FirstRowIndexNextObjective, FirstColIndex, RemainingRows, ObjRank);
                             dBlockType UpBlock(LOD,FirstRowIndex,ColIndex,ObjRank,RemainingColumns+1);
                             dBlockType TrailingBlock(LOD,FirstRowIndexNextObjective,ColIndex,RemainingRows,RemainingColumns+1);
-                        
+
                             LOD.block(FirstRowIndex,FirstColIndex,ObjRank,ObjRank)
                                 .triangularView<Eigen::Upper>()
                                 .solveInPlace<Eigen::OnTheRight>(LeftBlock);
@@ -389,7 +389,7 @@ namespace LexLS
                             {
                                 for (Index k=0; k<RemainingColumns+1; k++)
                                     TrailingBlock.col(k).noalias() -= LeftBlock * UpBlock.col(k);
-                            }                        
+                            }
                             else if ((ObjRank == 2) || (ObjRank > 8))
                             {
                                 TrailingBlock.noalias() -= LeftBlock * UpBlock;
@@ -402,9 +402,9 @@ namespace LexLS
                     if (RemainingColumns == 0) // ColIndex = nVar
                     {
                         // Initialize some remaining fields of obj_info before we terminate (used later in ComputeLambda())
-                        for (Index k=ObjIndex+1; k<nObj; k++) 
+                        for (Index k=ObjIndex+1; k<nObj; k++)
                             obj_info[k].first_col_index = obj_info[k-1].first_col_index + obj_info[k-1].rank; // of course, obj_info[>ObjIndex].rank = 0
-                    
+
                         break; // terminate the LOD
                     }
 
@@ -413,22 +413,22 @@ namespace LexLS
                 TotalRank = nVarFixed;
                 for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
                     TotalRank += obj_info[ObjIndex].rank;
-          
+
                 // form the permutation matrix
                 for (Index k=0; k<TotalRank; k++)
                     P.applyTranspositionOnTheRight(k, column_permutations.coeff(k));
 
             } // END factorize()
-        
-            /** 
+
+            /**
                 \brief Computes the sensitivity of objective ObjIndex with respect to (small) variatoins
                 of the constraints involved in the LexLSE problem
 
                 \note Upon exit, the lagrange multipliers associated with objective ObjIndex can be accessed using
                 dWorkspace.head(nVarFixed + nLambda)
             */
-            bool ObjectiveSensitivity(Index ObjIndex, 
-                                      Index &CtrIndex2Remove, int &ObjIndex2Remove, 
+            bool ObjectiveSensitivity(Index ObjIndex,
+                                      Index &CtrIndex2Remove, int &ObjIndex2Remove,
                                       RealScalar tol_wrong_sign_lambda, RealScalar tol_correct_sign_lambda)
             {
                 RealScalar maxAbsValue = 0.0;
@@ -436,7 +436,7 @@ namespace LexLS
                 Index FirstRowIndex, FirstColIndex, ObjDim, ObjRank;
                 Index &ColDim = FirstColIndex; // ColDim will be used to indicate column dimension (I use it for clarity)
 
-                // Even though this computation can be improved, it is very cheap and it is convenient to perform here 
+                // Even though this computation can be improved, it is very cheap and it is convenient to perform here
                 Index nLambda = 0; // Number of constraints that may influence objective ObjIndex (excluding "variable fixing" constraints)
                 Index nRank   = 0; // Total rank of objectives before objective ObjIndex
                 for (Index k=0; k<ObjIndex; k++)
@@ -445,7 +445,7 @@ namespace LexLS
                     nRank   += obj_info[k].rank;
                 }
                 nLambda += obj_info[ObjIndex].dim;
-            
+
                 // ---------------------------------------------------------------------------------
                 dWorkspace.head(nVarFixed + nLambda + nRank + nVarFixed).setZero();
                 dVectorBlockType LambdaFixed(dWorkspace,                   0, nVarFixed);
@@ -463,15 +463,15 @@ namespace LexLS
                 // copy only what is needed to compute the residual v = A*x-b (i.e., -y_hat)
                 Lambda.segment(FirstRowIndex+ObjRank, ObjDim-ObjRank) =     \
                     -LOD.col(nVar).segment(FirstRowIndex+ObjRank, ObjDim-ObjRank);
-            
+
                 // compute the optimal residual associated with objective ObjIndex (apply Q_{ObjIndex} on the left)
                 Lambda.segment(FirstRowIndex, ObjDim)
-                    .applyOnTheLeft(householderSequence(LOD.block(FirstRowIndex, 
-                                                                  FirstColIndex, 
-                                                                  ObjDim, 
+                    .applyOnTheLeft(householderSequence(LOD.block(FirstRowIndex,
+                                                                  FirstColIndex,
+                                                                  ObjDim,
                                                                   ObjRank),
-                                                        hh_scalars.segment(FirstRowIndex,ObjDim))); 
-            
+                                                        hh_scalars.segment(FirstRowIndex,ObjDim)));
+
                 // check for wrong sign of the Lagrange multipliers
                 FoundBetterDescentDirection = findDescentDirection(FirstRowIndex,
                                                                    ObjDim,
@@ -480,18 +480,18 @@ namespace LexLS
                                                                    Lambda,
                                                                    tol_wrong_sign_lambda,
                                                                    tol_correct_sign_lambda);
-            
+
                 if (FoundBetterDescentDirection)
-                    ObjIndex2Remove = ObjIndex;  
-            
-                if (ObjIndex>0) // the first objective has only Lagrange multipliers equal to the optimal residual   
+                    ObjIndex2Remove = ObjIndex;
+
+                if (ObjIndex>0) // the first objective has only Lagrange multipliers equal to the optimal residual
                 {
                     // e.g., for the fourth objective, here we perform [L41, L42, L43]' * {optimal residual from above}
                     rhs.head(ColDim).noalias() = -LOD.block(FirstRowIndex, 0, ObjDim, ColDim).transpose() * \
                         Lambda.segment(FirstRowIndex, ObjDim);
-                
+
                     //for (int k=ObjIndex-1; k>=0; k--)
-                    for (Index k=ObjIndex; k--; ) //ObjIndex-1, ..., 0. 
+                    for (Index k=ObjIndex; k--; ) //ObjIndex-1, ..., 0.
                     {
                         FirstRowIndex = obj_info[k].first_row_index;
                         FirstColIndex = obj_info[k].first_col_index;
@@ -499,20 +499,20 @@ namespace LexLS
                         ObjRank       = obj_info[k].rank;
 
                         // Lambda.segment(FirstRowIndex+ObjRank, ObjDim-ObjRank).setZero(); assumed
-                    
+
                         Lambda.segment(FirstRowIndex, ObjRank) = rhs.segment(FirstColIndex, ObjRank);
-                    
+
                         // apply Q_k' on the left
                         Lambda.segment(FirstRowIndex, ObjDim)
-                            .applyOnTheLeft(householderSequence(LOD.block(FirstRowIndex, 
-                                                                          FirstColIndex, 
-                                                                          ObjDim, 
+                            .applyOnTheLeft(householderSequence(LOD.block(FirstRowIndex,
+                                                                          FirstColIndex,
+                                                                          ObjDim,
                                                                           ObjRank),
                                                                 hh_scalars.segment(FirstRowIndex,ObjDim)));
-                    
+
                         rhs.head(ColDim).noalias() -= LOD.block(FirstRowIndex, 0, ObjDim, ColDim).transpose() * \
                             Lambda.segment(FirstRowIndex, ObjDim);
-                    
+
                         // check for wrong sign of the Lagrange multipliers
                         tmp_bool = findDescentDirection(FirstRowIndex,
                                                         ObjDim,
@@ -521,13 +521,13 @@ namespace LexLS
                                                         Lambda,
                                                         tol_wrong_sign_lambda,
                                                         tol_correct_sign_lambda);
-                    
+
                         if (tmp_bool)
                             ObjIndex2Remove = k;
                         FoundBetterDescentDirection = (FoundBetterDescentDirection || tmp_bool);
                     } // END for (Index k=ObjIndex-1; k>=0; k--)
                 }
-            
+
                 if (nVarFixed>0) // Handle fixed variables (if any)
                 {
                     LambdaFixed = -LOD.block(0, 0, nLambda, nVarFixed).transpose() * Lambda;
@@ -540,7 +540,7 @@ namespace LexLS
                                                     LambdaFixed,
                                                     tol_wrong_sign_lambda,
                                                     tol_correct_sign_lambda);
-                                
+
                     // -1(-st) objective implies the fixed variables
                     //   :if there are no fixed variables we will not be here
                     //   :if there are fixed variables ObjIndex2Remove + ObjOffset is used in LexLSI
@@ -550,21 +550,21 @@ namespace LexLS
                 }
 
                 return FoundBetterDescentDirection;
-            
+
             } // END ObjectiveSensitivity(...)
 
-            /** 
+            /**
                 \brief Can be used to form the matrix of Lagrange multipliers (for debugging purposes).
 
                 \note In the main ObjectiveSensitivity(...) function the real residual might be used. Here
-                only the residual based on the factorization is used. 
+                only the residual based on the factorization is used.
             */
             void ObjectiveSensitivity(Index ObjIndex)
             {
                 Index FirstRowIndex, FirstColIndex, ObjDim, ObjRank;
                 Index &ColDim = FirstColIndex; // ColDim will be used to indicate column dimension (I use it for clarity)
 
-                // Even though this computation can be improved, it is very cheap and it is convenient to perform here 
+                // Even though this computation can be improved, it is very cheap and it is convenient to perform here
                 Index nLambda = 0; // Number of constraints that may influence objective ObjIndex (excluding "variable fixing" constraints)
                 Index nRank   = 0; // Total rank of objectives before objective ObjIndex
                 for (Index k=0; k<ObjIndex; k++)
@@ -573,7 +573,7 @@ namespace LexLS
                     nRank   += obj_info[k].rank;
                 }
                 nLambda += obj_info[ObjIndex].dim;
-            
+
                 // ---------------------------------------------------------------------------------
                 dWorkspace.head(nVarFixed + nLambda + nRank + nVarFixed).setZero();
                 dVectorBlockType LambdaFixed(dWorkspace,                   0, nVarFixed);
@@ -587,58 +587,58 @@ namespace LexLS
                 ObjRank       = obj_info[ObjIndex].rank;
 
                 // Lambda.segment(FirstRowIndex, ObjRank).setZero(); assumed
-            
+
                 // copy only what is needed to compute the residual v = A*x-b (i.e., -y_hat)
                 Lambda.segment(FirstRowIndex+ObjRank, ObjDim-ObjRank) =     \
                     -LOD.col(nVar).segment(FirstRowIndex+ObjRank, ObjDim-ObjRank);
-            
+
                 // compute the optimal residual associated with objective ObjIndex (apply Q_{ObjIndex} on the left)
                 Lambda.segment(FirstRowIndex, ObjDim)
-                    .applyOnTheLeft(householderSequence(LOD.block(FirstRowIndex, 
-                                                                  FirstColIndex, 
-                                                                  ObjDim, 
+                    .applyOnTheLeft(householderSequence(LOD.block(FirstRowIndex,
+                                                                  FirstColIndex,
+                                                                  ObjDim,
                                                                   ObjRank),
-                                                        hh_scalars.segment(FirstRowIndex,ObjDim))); 
-                        
-                if (ObjIndex>0) // the first objective has only Lagrange multipliers equal to the optimal residual   
+                                                        hh_scalars.segment(FirstRowIndex,ObjDim)));
+
+                if (ObjIndex>0) // the first objective has only Lagrange multipliers equal to the optimal residual
                 {
                     // e.g., for the fourth objective, here we perform [L41, L42, L43]' * {optimal residual from above}
                     rhs.head(ColDim).noalias() = -LOD.block(FirstRowIndex, 0, ObjDim, ColDim).transpose() * \
                         Lambda.segment(FirstRowIndex, ObjDim);
-                
+
                     //for (int k=ObjIndex-1; k>=0; k--)
-                    for (Index k=ObjIndex; k--; ) //ObjIndex-1, ..., 0. 
+                    for (Index k=ObjIndex; k--; ) //ObjIndex-1, ..., 0.
                     {
                         FirstRowIndex = obj_info[k].first_row_index;
                         FirstColIndex = obj_info[k].first_col_index;
                         ObjDim        = obj_info[k].dim;
                         ObjRank       = obj_info[k].rank;
-                    
+
                         // Lambda.segment(FirstRowIndex+ObjRank, ObjDim-ObjRank).setZero(); assumed
-                    
+
                         Lambda.segment(FirstRowIndex, ObjRank) = rhs.segment(FirstColIndex, ObjRank);
-                    
+
                         // apply Q_k' on the left
                         Lambda.segment(FirstRowIndex, ObjDim)
-                            .applyOnTheLeft(householderSequence(LOD.block(FirstRowIndex, 
-                                                                          FirstColIndex, 
-                                                                          ObjDim, 
+                            .applyOnTheLeft(householderSequence(LOD.block(FirstRowIndex,
+                                                                          FirstColIndex,
+                                                                          ObjDim,
                                                                           ObjRank),
                                                                 hh_scalars.segment(FirstRowIndex,ObjDim)));
-                    
+
                         rhs.head(ColDim).noalias() -= LOD.block(FirstRowIndex, 0, ObjDim, ColDim).transpose() * \
                             Lambda.segment(FirstRowIndex, ObjDim);
 
                     } // END for (Index k=ObjIndex-1; k>=0; k--)
                 }
-            
+
                 if (nVarFixed>0) // Handle fixed variables (if any)
                     LambdaFixed = -LOD.block(0, 0, nLambda, nVarFixed).transpose() * Lambda;
-            
-                rhs.setZero(); // for convenience (easier to analyze the Lagrange multipliers by hand) 
+
+                rhs.setZero(); // for convenience (easier to analyze the Lagrange multipliers by hand)
 
             } // END ObjectiveSensitivity(...)
-        
+
             /**
                \brief Given a vector of Lagrange multipliers, determine the largest (in absolute value)
                multiplier with a wrong sign.
@@ -667,7 +667,7 @@ namespace LexLS
                                       RealScalar &maxAbsValue,   // modified
                                       Index &CtrIndex,           // modified
                                       const dVectorType& lambda,
-                                      RealScalar tol_wrong_sign_lambda, 
+                                      RealScalar tol_wrong_sign_lambda,
                                       RealScalar tol_correct_sign_lambda)
             {
                 bool FoundBetterDescentDirection = false;
@@ -683,7 +683,7 @@ namespace LexLS
                         aCtrType = &fixed_var_type[ind];
                     }
                     else                   // handle general constraints
-                    {           
+                    {
                         ind      = FirstRowIndex+k;
                         aCtrType = &ctr_type[ind];
                     }
@@ -694,7 +694,7 @@ namespace LexLS
 
                         if (*aCtrType == CTR_ACTIVE_LB)
                             aLambda = -aLambda;
-                            
+
                         if (aLambda > tol_correct_sign_lambda)
                         {
                             *aCtrType = CORRECT_SIGN_OF_LAMBDA;
@@ -716,11 +716,11 @@ namespace LexLS
 
             /**
                \brief Back-solve accounting for the zero blocks due to singular constraints
-           
+
                \note Here I use x as a temporary variable so that at each level of the recursion I can
                perform only one matrix-vector product. The overhead of copying the RHS to x is smaller
                compared to the gain from performing only one matrix-vector product.
-           
+
                \verbatim
                | A  A2  A3 | |x1|   |b1|
                | 0  B   B3 |*|x2| = |b2|
@@ -741,10 +741,10 @@ namespace LexLS
                problems I have tested) from the built-in solvers.
             */
             void solve()
-            {   	
+            {
                 Index ObjRank, AccumulatedRanks = 0;
-                //for(Index k=nObj-1; k>=0; k--) 
-                for (Index k=nObj; k--; ) //nObj-1, ..., 0. 
+                //for(Index k=nObj-1; k>=0; k--)
+                for (Index k=nObj; k--; ) //nObj-1, ..., 0.
                 {
                     ObjRank = obj_info[k].rank;
                     if (ObjRank > 0)
@@ -752,7 +752,7 @@ namespace LexLS
                         dVectorBlockType x_k(x, obj_info[k].first_col_index, ObjRank);
 
                         x_k = LOD.col(nVar).segment(obj_info[k].first_row_index, ObjRank);
-                    
+
                         if (AccumulatedRanks > 0) // Do not enter here the first time ObjRank != 0
                         {
                             x_k.noalias() -= LOD.block(obj_info[k].first_row_index,
@@ -760,17 +760,17 @@ namespace LexLS
                                                        ObjRank,
                                                        AccumulatedRanks) * x.segment(obj_info[k+1].first_col_index, AccumulatedRanks);
                         }
-                    
+
                         LOD.block(obj_info[k].first_row_index, obj_info[k].first_col_index, ObjRank, ObjRank)
                             .triangularView<Eigen::Upper>().solveInPlace(x_k);
-                    
+
                         AccumulatedRanks += ObjRank;
                     }
                 }
-            
+
                 // Apply permutation
                 x = P*x;
-            }      
+            }
 
             /**
                \brief Compute the least-norm solution.
@@ -786,7 +786,7 @@ namespace LexLS
                 // determine dimensions
                 // -------------------------------------------------------------------------
                 for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
-                    nVarRank += obj_info[ObjIndex].rank;           
+                    nVarRank += obj_info[ObjIndex].rank;
 
                 Index nVarFree = nVar - (nVarRank + nVarFixed);
 
@@ -809,10 +809,10 @@ namespace LexLS
                     FirstRowIndex = obj_info[ObjIndex].first_row_index;
                     FirstColIndex = obj_info[ObjIndex].first_col_index;
                     ObjRank       = obj_info[ObjIndex].rank;
-                
+
                     RT.block(counter, counter, ObjRank, col_dim)
                         .triangularView<Eigen::Upper>() = LOD.block(FirstRowIndex,FirstColIndex,ObjRank,col_dim);
-                
+
                     rhs.segment(counter,ObjRank) = LOD.col(nVar).segment(FirstRowIndex,ObjRank);
 
                     counter += ObjRank;
@@ -826,7 +826,7 @@ namespace LexLS
                 for (Index i=0; i<nVarFree; i++)
                 {
                     //for (int j=nVarRank-1; j>=0; j--)
-                    for (Index j=nVarRank; j--; ) //nVarRank-1, ..., 0. 
+                    for (Index j=nVarRank; j--; ) //nVarRank-1, ..., 0.
                     {
                         GivensRotation GR(RT.coeffRef(j,j),RT.coeffRef(j,nVarRank+i),j,nVarRank+i);
                         RT.topRows(j+1).applyOnTheRight(GR.i,GR.j,GR.G);
@@ -844,7 +844,7 @@ namespace LexLS
                 // apply sequence of Givens rotations on the RHS vector
                 // -------------------------------------------------------------------------
                 //for (Index i=gs.size()-1; i>=0; i--)
-                for (Index i=gs.size(); i--; ) //gs.size()-1, ..., 0. 
+                for (Index i=gs.size(); i--; ) //gs.size()-1, ..., 0.
                     rhs.applyOnTheLeft(gs.get_i(i), gs.get_j(i), gs.get(i));
 
                 // -------------------------------------------------------------------------
@@ -868,7 +868,7 @@ namespace LexLS
                 // determine dimensions
                 // -------------------------------------------------------------------------
                 for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
-                    nVarRank += obj_info[ObjIndex].rank;           
+                    nVarRank += obj_info[ObjIndex].rank;
 
                 Index nVarFree = nVar - (nVarRank + nVarFixed);
 
@@ -891,7 +891,7 @@ namespace LexLS
                     FirstRowIndex = obj_info[ObjIndex].first_row_index;
                     FirstColIndex = obj_info[ObjIndex].first_col_index;
                     ObjRank       = obj_info[ObjIndex].rank;
-              
+
                     RT.block(counter, counter, ObjRank, col_dim+1)
                         .triangularView<Eigen::Upper>() = LOD.block(FirstRowIndex,FirstColIndex,ObjRank,col_dim+1);
 
@@ -918,9 +918,9 @@ namespace LexLS
                     FirstColIndex = obj_info[ObjIndex].first_col_index;
                     ObjRank       = obj_info[ObjIndex].rank;
 
-                    x.segment(nVarFixed+counter,ObjRank) = LOD.col(nVar).segment(FirstRowIndex,ObjRank) - 
+                    x.segment(nVarFixed+counter,ObjRank) = LOD.col(nVar).segment(FirstRowIndex,ObjRank) -
                         LOD.block(FirstRowIndex,nVarRank+nVarFixed,ObjRank,nVarFree)*x.tail(nVarFree);
-                                            
+
                     counter += ObjRank;
                 }
                 R.triangularView<Eigen::Upper>().solveInPlace<Eigen::OnTheLeft>(x.segment(nVarFixed,nVarRank));
@@ -929,7 +929,7 @@ namespace LexLS
                 // Apply permutation
                 // -------------------------------------------------------------------------
                 x = P*x;
-            }        
+            }
 
             /**
                \brief Compute the least-norm solution.
@@ -947,7 +947,7 @@ namespace LexLS
                 // determine dimensions
                 // -------------------------------------------------------------------------
                 for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
-                    nVarRank += obj_info[ObjIndex].rank;           
+                    nVarRank += obj_info[ObjIndex].rank;
 
                 Index nVarFree = nVar - (nVarRank + nVarFixed);
 
@@ -977,9 +977,9 @@ namespace LexLS
                     FirstRowIndex = obj_info[ObjIndex].first_row_index;
                     ObjRank       = obj_info[ObjIndex].rank;
 
-                    x.segment(nVarFixed+counter,ObjRank) = LOD.col(nVar).segment(FirstRowIndex,ObjRank) - 
+                    x.segment(nVarFixed+counter,ObjRank) = LOD.col(nVar).segment(FirstRowIndex,ObjRank) -
                         LOD.block(FirstRowIndex,nVarRank+nVarFixed,ObjRank,nVarFree)*x.tail(nVarFree);
-                                            
+
                     counter += ObjRank;
                 }
                 x.segment(nVarFixed,nVarRank) = iR.triangularView<Eigen::Upper>() * x.segment(nVarFixed,nVarRank);
@@ -996,7 +996,7 @@ namespace LexLS
 
                \note using the normal equations
 
-               \note M is copied (because I modify it below) 
+               \note M is copied (because I modify it below)
             */
             void solveGeneralNorm(dMatrixType M)
             {
@@ -1009,7 +1009,7 @@ namespace LexLS
                 // determine dimensions
                 // -------------------------------------------------------------------------
                 for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
-                    nVarRank += obj_info[ObjIndex].rank;           
+                    nVarRank += obj_info[ObjIndex].rank;
 
                 Index nVarFree = nVar - (nVarRank + nVarFixed);
 
@@ -1035,7 +1035,7 @@ namespace LexLS
                     FirstRowIndex = obj_info[ObjIndex].first_row_index;
                     FirstColIndex = obj_info[ObjIndex].first_col_index;
                     ObjRank       = obj_info[ObjIndex].rank;
-              
+
                     RT.block(counter, counter, ObjRank, col_dim+1)
                         .triangularView<Eigen::Upper>() = LOD.block(FirstRowIndex,FirstColIndex,ObjRank,col_dim+1);
 
@@ -1061,9 +1061,9 @@ namespace LexLS
                     FirstColIndex = obj_info[ObjIndex].first_col_index;
                     ObjRank       = obj_info[ObjIndex].rank;
 
-                    x.segment(nVarFixed+counter,ObjRank) = LOD.col(nVar).segment(FirstRowIndex,ObjRank) - 
+                    x.segment(nVarFixed+counter,ObjRank) = LOD.col(nVar).segment(FirstRowIndex,ObjRank) -
                         LOD.block(FirstRowIndex,nVarRank+nVarFixed,ObjRank,nVarFree)*x.tail(nVarFree);
-                                            
+
                     counter += ObjRank;
                 }
                 R.triangularView<Eigen::Upper>().solveInPlace<Eigen::OnTheLeft>(x.segment(nVarFixed,nVarRank));
@@ -1072,7 +1072,7 @@ namespace LexLS
                 // Apply permutation
                 // -------------------------------------------------------------------------
                 x = P*x;
-            }        
+            }
 
             // =================================================================================================
             // set & get
@@ -1095,11 +1095,11 @@ namespace LexLS
                 fixed_var_index(nVarFixedInit) = VarIndex;
                 x(nVarFixedInit)               = VarValue;
                 fixed_var_type[nVarFixedInit]  = type;
-            
+
                 nVarFixedInit++;
             }
 
-            /** 
+            /**
                 \brief Declare some of the variables as fixed
 
                 \param[in] nVarFixed_ Number of fixed variables
@@ -1116,20 +1116,20 @@ namespace LexLS
 
                 fixed_var_index.resize(nVarFixed);
                 fixed_var_type.resize(nVarFixed);
-                
+
                 // copy data
                 fixed_var_index     = Eigen::Map<iVectorType>(VarIndex, nVarFixed);
                 x.head(nVarFixed) = Eigen::Map<dVectorType>(VarValue, nVarFixed); // x will be permuted later
                 fixed_var_type.assign(type, type+nVarFixed);
             }
 
-            /** 
+            /**
                 \brief Set dimension of objectives
 
                 \param[in] ObjDim_ Number of constraints involved in each objective
             */
             void setObjDim(Index *ObjDim_)
-            { 
+            {
                 nCtr = 0;
                 for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
                 {
@@ -1139,23 +1139,23 @@ namespace LexLS
                     if (ObjIndex > 0)
                         obj_info[ObjIndex].first_row_index = obj_info[ObjIndex-1].first_row_index + obj_info[ObjIndex-1].dim;
                 }
-            
+
                 initialize();
             }
 
 
-            /** 
+            /**
                 \brief Set number of fixed variables
 
                 \param[in] nVarFixed_ Number of fixed variables
-            */        
+            */
             void setFixedVariablesCount(Index nVarFixed_)
             {
                 if (nVarFixed_ > nVar)
                     throw Exception("Cannot fix more than nVar variables");
                 else
                     nVarFixed = nVarFixed_;
-            
+
                 fixed_var_index.resize(nVarFixed);
                 fixed_var_type.resize(nVarFixed);
             }
@@ -1169,35 +1169,35 @@ namespace LexLS
                 parameters = parameters_;
             }
 
-            /** 
+            /**
                 \brief Set (a non-negative) regularization factor for objective ObjIndex
 
                 \note Note that fixed variables are not counted as an objective
             */
             void setRegularizationFactor(Index ObjIndex, RealScalar factor)
             {
-                /// @todo: check whether ObjIndex and factor make sense. 
+                /// @todo: check whether ObjIndex and factor make sense.
 
                 obj_info[ObjIndex].regularization_factor = factor;
             }
 
-            /** 
+            /**
                 \brief Get number of fixed variables
-            */        
+            */
             Index getFixedVariablesCount()
             {
                 return nVarFixed;
             }
 
-            /** 
+            /**
                 \brief Get indexes of fixed variables
-            */        
+            */
             iVectorType& getFixedVarIndex()
             {
                 return fixed_var_index;
             }
 
-            /** 
+            /**
                 \brief set a random problem [A,RHS]
             */
             void setProblem(const dMatrixType& data)
@@ -1205,7 +1205,7 @@ namespace LexLS
                 LOD = data;
             }
 
-            /** 
+            /**
                 \brief Set data of objective ObjIndex [A,RHS] - the data is copied
 
                 \param[in] ObjIndex Index of objective
@@ -1213,13 +1213,13 @@ namespace LexLS
             */
             void setData(Index ObjIndex, const dMatrixType& data)
             {
-                if (ObjIndex >= nObj)                
+                if (ObjIndex >= nObj)
                     throw Exception("ObjIndex >= nObj");
-            
+
                 LOD.block(obj_info[ObjIndex].first_row_index,0,obj_info[ObjIndex].dim,nVar+1) = data;
             }
 
-            /** 
+            /**
                 \brief Set one constraint
 
                 \param[in] CtrIndex Index of row in LOD (regardless of objective)
@@ -1231,16 +1231,16 @@ namespace LexLS
                 LOD.row(CtrIndex).head(nVar) = row;
                 LOD.coeffRef(CtrIndex,nVar)  = rhs;
             }
-        
-            /** 
+
+            /**
                 \brief Set the type of a constraint with index CtrIndex in LexLSE objective ObjIndex
-            */      
+            */
             void setCtrType(Index ObjIndex, Index CtrIndex, ConstraintActivationType type)
             {
                 Index FirstRowIndex = obj_info[ObjIndex].first_row_index;
                 ctr_type[FirstRowIndex + CtrIndex] = type;
             }
-        
+
             /**
                \brief Form the residuals (A*x-RHS) through the LOD. The residual of the
                fixed variables is always zero (and is not included).
@@ -1258,22 +1258,22 @@ namespace LexLS
                     FirstColIndex = obj_info[ObjIndex].first_col_index;
                     ObjDim        = obj_info[ObjIndex].dim;
                     ObjRank       = obj_info[ObjIndex].rank;
-                
+
                     v.segment(FirstRowIndex, ObjRank).setZero(); // Zero-out first ObjRank elements
                     v.segment(FirstRowIndex+ObjRank, ObjDim-ObjRank) = -LOD.col(nVar).segment(FirstRowIndex+ObjRank, ObjDim-ObjRank);
-                
+
                     v.segment(FirstRowIndex, ObjDim)
-                        .applyOnTheLeft(householderSequence(LOD.block(FirstRowIndex, 
-                                                                      FirstColIndex, 
-                                                                      ObjDim, 
+                        .applyOnTheLeft(householderSequence(LOD.block(FirstRowIndex,
+                                                                      FirstColIndex,
+                                                                      ObjDim,
                                                                       ObjRank),
                                                             hh_scalars.segment(FirstRowIndex,ObjDim)));
                 }
-                        
+
                 return dWorkspace; // return directly a reference to the working array (use dWorkspace.head(nCtr) outside)
             }
 
-            /** 
+            /**
                 \brief Return the (primal) solution vector
             */
             dVectorType& get_x()
@@ -1281,17 +1281,17 @@ namespace LexLS
                 return x;
             }
 
-            /** 
+            /**
                 \brief Return the number of equations in objective ObjIndex
-            */        
+            */
             Index getDim(Index ObjIndex) const
             {
                 return obj_info[ObjIndex].dim;
             }
 
-            /** 
+            /**
                 \brief Return the rank of the equations in objective ObjIndex
-            */        
+            */
             Index getRank(Index ObjIndex) const
             {
                 return obj_info[ObjIndex].rank;
@@ -1307,7 +1307,7 @@ namespace LexLS
                 return nVar;
             }
 
-            /** 
+            /**
                 \brief Return dWorkspace
             */
             dVectorType& getWorkspace()
@@ -1315,23 +1315,23 @@ namespace LexLS
                 return dWorkspace;
             }
 
-            /** 
+            /**
                 \brief Reset the factorization (initialize A separately)
             */
             void reset()
             {
                 initialize();
                 x.head(nVarFixed).setZero();
-            }     
-            
+            }
+
             // =================================================================================================
             // Utilities
-            // =================================================================================================     
-        
+            // =================================================================================================
+
         private:
-        
-            /** 
-                \brief Initialize some of the fields	  
+
+            /**
+                \brief Initialize some of the fields
 
                 \note Some of the fields have already been initialized in the constructors but it is
                 necessary to initialize them again here. This is necessary when an instance of the class
@@ -1342,7 +1342,7 @@ namespace LexLS
                 nVarFixedInit = 0;
 
                 for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
-                    obj_info[ObjIndex].rank = 0; 
+                    obj_info[ObjIndex].rank = 0;
 
                 hh_scalars.setZero();
 
@@ -1353,11 +1353,11 @@ namespace LexLS
                 x.tail(nVar-nVarFixed).setZero(); // x.head(nVarFixed) has already been initialized in fixVariable(...)
             }
 
-            /** 
+            /**
                 \brief Tikhonov regularization (using the normal equations inv(A'*A+I)*A'*b)
 
                 \note fast when column-dimension is small
-            */        
+            */
             void regularize_tikhonov_1(Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
             {
                 RealScalar mu = aRegularizationFactor*aRegularizationFactor;
@@ -1396,11 +1396,11 @@ namespace LexLS
                 LOD.col(nVar).segment(FirstRowIndex,ObjRank).noalias() += Tk * d.tail(RemainingColumns);
             }
 
-            /** 
+            /**
                 \brief Tikhonov regularization (option: A'*inv(A*A'+I)*b)
 
                 \note fast when row-dimension is small
-            */        
+            */
             void regularize_tikhonov_2(Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
             {
                 RealScalar mu = aRegularizationFactor*aRegularizationFactor;
@@ -1422,12 +1422,12 @@ namespace LexLS
 
                 D.block(ObjRank,ObjRank,FirstColIndex-nVarFixed,FirstColIndex-nVarFixed).triangularView<Eigen::Lower>() = mu*up*up.transpose();
 
-                D.block(ObjRank, 0, FirstColIndex-nVarFixed, ObjRank).noalias()  = 
+                D.block(ObjRank, 0, FirstColIndex-nVarFixed, ObjRank).noalias()  =
                     aRegularizationFactor*up.leftCols(ObjRank)*Rk.triangularView<Eigen::Upper>().transpose();
-            
-                D.block(ObjRank, 0, FirstColIndex-nVarFixed, ObjRank).noalias() += 
+
+                D.block(ObjRank, 0, FirstColIndex-nVarFixed, ObjRank).noalias() +=
                     aRegularizationFactor*up.rightCols(RemainingColumns)*Tk.transpose();
-            
+
                 for (Index i=0; i<FirstColIndex-nVarFixed+ObjRank; i++)
                     D.coeffRef(i,i) += mu;
 
@@ -1448,9 +1448,9 @@ namespace LexLS
                 LOD.col(nVar).segment(FirstRowIndex,ObjRank) = d.head(ObjRank);
             }
 
-            /** 
+            /**
                 \brief Tikhonov regularization (basic variables)
-            */        
+            */
             void regularize_R(Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
             {
                 RealScalar mu = aRegularizationFactor*aRegularizationFactor;
@@ -1482,9 +1482,9 @@ namespace LexLS
                 LOD.col(nVar).segment(FirstRowIndex,ObjRank).noalias() = Rk.triangularView<Eigen::Upper>() * d;
             }
 
-            /** 
+            /**
                 \brief Tikhonov regularization (basic variables no Z)
-            */        
+            */
             void regularize_R_NO_Z(Index FirstRowIndex, Index FirstColIndex, Index ObjRank)
             {
                 RealScalar mu = aRegularizationFactor*aRegularizationFactor;
@@ -1511,9 +1511,9 @@ namespace LexLS
                 LOD.col(nVar).segment(FirstRowIndex,ObjRank).noalias() = Rk.triangularView<Eigen::Upper>() * d;
             }
 
-            /** 
+            /**
                 \brief RT regularization (no Z): [R,T;I]*x = [b;0]
-            */        
+            */
             void regularize_RT_NO_Z(Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
             {
                 RealScalar mu = aRegularizationFactor*aRegularizationFactor;
@@ -1524,7 +1524,7 @@ namespace LexLS
                 dBlockType Rk(  LOD, FirstRowIndex,         FirstColIndex, ObjRank,          ObjRank);
                 dBlockType Tk(  LOD, FirstRowIndex, FirstColIndex+ObjRank, ObjRank, RemainingColumns);
                 dBlockType  D(array,             0,                     0, ObjRank,          ObjRank);
-            
+
                 dBlockType2Vector d(array, 0, nVar, ObjRank, 1);
 
                 // -------------------------------------------------------------------------
@@ -1556,9 +1556,9 @@ namespace LexLS
                 LOD.col(nVar).segment(FirstRowIndex,ObjRank) *= aRegularizationFactor;
             }
 
-            /** 
+            /**
                 \brief Tikhonov regularization using CGLS
-            */        
+            */
             void regularize_tikhonov_CG(Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
             {
                 // -------------------------------------------------------------------------
@@ -1580,11 +1580,11 @@ namespace LexLS
                 LOD.col(nVar).segment(FirstRowIndex,ObjRank).noalias() += Tk*sol_x.tail(RemainingColumns);
             }
 
-            /** 
+            /**
                 \brief Tikhonov regularization using CGLS
 
                 \note hot-start from RT_NO_Z
-            */        
+            */
             void regularize_tikhonov_CG_x0(Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
             {
                 RealScalar mu = aRegularizationFactor*aRegularizationFactor;
@@ -1595,12 +1595,12 @@ namespace LexLS
                 dBlockType Rk(  LOD, FirstRowIndex,         FirstColIndex, ObjRank,          ObjRank);
                 dBlockType Tk(  LOD, FirstRowIndex, FirstColIndex+ObjRank, ObjRank, RemainingColumns);
                 dBlockType  D(array,             0,                     0, ObjRank,          ObjRank);
-            
+
                 dBlockType2Vector d(array, 0, nVar, ObjRank, 1);
 
                 // ----------------------------------------------------------------------------------------------
                 // generate x0
-                // ----------------------------------------------------------------------------------------------    
+                // ----------------------------------------------------------------------------------------------
                 D.triangularView<Eigen::Lower>() = (Rk.triangularView<Eigen::Upper>()*Rk.transpose()).eval();
                 D.triangularView<Eigen::Lower>() += Tk*Tk.transpose();
 
@@ -1623,9 +1623,9 @@ namespace LexLS
                 LOD.col(nVar).segment(FirstRowIndex,ObjRank).noalias() += Tk*sol.tail(RemainingColumns);
             }
 
-            /** 
+            /**
                 \brief RT_NO_Z regularization using CGLS
-            */        
+            */
             void regularize_RT_NO_Z_CG(Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
             {
                 // -------------------------------------------------------------------------
@@ -1674,10 +1674,10 @@ namespace LexLS
                 dBlockType2Vector q(rqsp_work, 0, 1, ObjRank + FirstColIndex-nVarFixed + ObjRank + RemainingColumns, 1);
                 dBlockType2Vector s(rqsp_work, 0, 2,                                     ObjRank + RemainingColumns, 1);
                 dBlockType2Vector p(rqsp_work, 0, 3,                                     ObjRank + RemainingColumns, 1);
-            
+
                 // ------------------------------------------------------------------------------------------------
                 /*
-                  | yk |   | Rk Tk | 
+                  | yk |   | Rk Tk |
                   r = | sk | - |  Sk   | * x
                   |  0 |   |  Ik   |
                 */
@@ -1752,7 +1752,7 @@ namespace LexLS
               |  Ik   | 0  | row_dim: rk + RemainingColumns
               --------------------------------------------------------------------------
             */
-            Index cg_RT(dVectorType &sol_x, 
+            Index cg_RT(dVectorType &sol_x,
                         Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
             {
                 RealScalar alpha, beta, gamma, gamma_previous;
@@ -1773,7 +1773,7 @@ namespace LexLS
 
                 // ------------------------------------------------------------------------------------------------
                 /*
-                  | yk |   | Rk Tk | 
+                  | yk |   | Rk Tk |
                   r = |    | - |       | * x
                   |  0 |   |  Ik   |
                 */
@@ -1832,7 +1832,7 @@ namespace LexLS
                 return iter;
             }
 
-            /** 
+            /**
                 \brief Accumulate nullspace basis
             */
             void accumulate_nullspace_basis(Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
@@ -1864,37 +1864,37 @@ namespace LexLS
             // ==================================================================
             // definition of scalars
             // ==================================================================
-      
-            /** 
+
+            /**
                 \brief Number of variables (including fixed variables, see #nVarFixed)
             */
-            Index nVar;  
+            Index nVar;
 
-            /** 
+            /**
                 \brief Number of fixed variables
             */
             Index nVarFixed;
 
-            /** 
+            /**
                 \brief Number of fixed variables that have been initialized
 
                 \note It is used when variables to be fixed are defined one by one e.g.,
                 #fixVariable(...).
             */
             Index nVarFixedInit;
-  
-            /** 
+
+            /**
                 \brief Number of objectives
             */
             Index nObj;
-       
+
             /**
                \brief Total number of constraints in the objectives of the problem (this does not
                include the constraints used to fix variables)
             */
             Index nCtr;
 
-            /** 
+            /**
                 \brief Regularization factor used at the current level
 
                 \note Based on obj_info[:].regularization_factor
@@ -1905,12 +1905,12 @@ namespace LexLS
             // definition of vectors of integers
             // ==================================================================
 
-            /** 
+            /**
                 \brief Stores the indexes of permuted columns
             */
             iVectorType column_permutations;
 
-            /** 
+            /**
                 \brief Indexes of fixed variables
 
                 \attention This field is changed in #factorize().
@@ -1920,10 +1920,10 @@ namespace LexLS
             // ==================================================================
             // definition of vectors of doubles
             // ==================================================================
-        
-            /** 
+
+            /**
                 \brief Workspace array of doubles
-            
+
                 \verbatim
                 --------------------------------------
                 factorize()
@@ -1936,7 +1936,7 @@ namespace LexLS
                 Lambda          maxObjDimSum + nVar
                 tmp_RHS         maxObjDimSum
 
-                the "+ nVar" in Lambda is necessary 
+                the "+ nVar" in Lambda is necessary
                 when there are fixed variables
                 --------------------------------------
                 Others
@@ -1944,36 +1944,36 @@ namespace LexLS
                 w               maxObjDimSum
                 \endverbatim
 
-                \note #LOD and #x are kept separately for convenience. 
+                \note #LOD and #x are kept separately for convenience.
             */
             dVectorType dWorkspace;
 
-            /** 
+            /**
                 \brief A (primal) solution
 
-                \note When TotalRank < nVar the problem is under-determined and x is a "basic solution" 
+                \note When TotalRank < nVar the problem is under-determined and x is a "basic solution"
                 (see p. 106 of "Numerical Methods for Least Squares Problems" by Bjorck, 1996).
             */
             dVectorType x;
 
             /*
-              \note Householder scalars associated with the QR factorization for a (LexLSE) objective. 
-          
+              \note Householder scalars associated with the QR factorization for a (LexLSE) objective.
+
               \note computed during the factorization.
             */
-            dVectorType hh_scalars; 
+            dVectorType hh_scalars;
 
-            /** 
+            /**
                 \brief Used in implementation of conjugate gradients (CG)
             */
             dMatrixType rqsp_work;
-        
+
             // ==================================================================
             // definition of matrices
             // ==================================================================
 
-            /** 
-                \brief Constraint matrix 
+            /**
+                \brief Constraint matrix
 
                 \note On input, LOD contains the matrix of constraints (the last column contains the RHS
                 vector) of the lexicographic problem. On output, LOD contains the matrices L, Q and R
@@ -1987,38 +1987,38 @@ namespace LexLS
             */
             dMatrixType LOD;
 
-            /** 
+            /**
                 \brief nVar x (nVar+1) matrix containing the remaining null-space + right-hand-side
 
                 \note Used for Tikhonov regularization or terminal objective of the form (x = 0)
-            */        
+            */
             dMatrixType null_space;
 
-            /** 
+            /**
                 \brief Used for temporary storage when doing Tikhonov regularization (option: A'*inv(A*A'+I)*b)
-            */        
+            */
             dMatrixType array;
 
             // ==================================================================
             // other
             // ==================================================================
 
-            /** 
+            /**
                 \brief Vector containing information about the constraints involved in each objective
             */
             std::vector<ObjectiveInfo> obj_info;
 
-            /** 
+            /**
                 \brief Type of fixed variables
             */
             std::vector<ConstraintActivationType> fixed_var_type;
 
-            /** 
+            /**
                 \brief Type of (active) constraints
             */
             std::vector<ConstraintActivationType> ctr_type;
 
-            /** 
+            /**
                 \brief Permutation matrix
             */
             Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> P;

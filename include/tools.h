@@ -9,7 +9,7 @@ namespace LexLS
     {
         enum HierarchyType
         {
-            HIERARCHY_TYPE_NONE         = 0, 
+            HIERARCHY_TYPE_NONE         = 0,
             HIERARCHY_TYPE_EQUALITY     = 1, // equality constraints
             HIERARCHY_TYPE_INEQUALITY   = 2 // inequality constraints
         };
@@ -26,7 +26,7 @@ namespace LexLS
                     HEADER_HIERARCHY_INEQUALITIES_WITH_AS  = 210  // inequality constraints with active set guess
                 };
 
-                
+
                 enum ObjectiveTypeHeader
                 {
                     HEADER_OBJECTIVE_TYPE_SIMPLE   = 100,
@@ -146,7 +146,7 @@ namespace LexLS
                             number_of_constraints.push_back(ctr_num);
                         }
                     }
-                    
+
                     set_number_of_constraints = true;
                 }
 
@@ -233,7 +233,7 @@ namespace LexLS
                         {
                             unsigned int    activation_type;
                             line_stream >>  activation_type;
-                            
+
                             if (!line_stream.fail())
                             {
                                 switch(activation_type)
@@ -242,7 +242,7 @@ namespace LexLS
                                     case CTR_ACTIVE_LB:
                                     case CTR_ACTIVE_UB:
                                     case CTR_ACTIVE_EQ:
-                                        active_set_guess[objective_index][row_index] = 
+                                        active_set_guess[objective_index][row_index] =
                                             static_cast<ConstraintActivationType> (activation_type);
                                         break;
                                     default:
@@ -271,7 +271,7 @@ namespace LexLS
                         }
                     }
                 }
-                        
+
 
 
             public:
@@ -309,7 +309,7 @@ namespace LexLS
                     active_set_guess.resize(0);
                     solution_guess.resize(0);
                     solution.resize(0);
-                    
+
 
                     std::ifstream ifs;
                     ifs.open(file_name.c_str());
@@ -337,8 +337,8 @@ namespace LexLS
 
                     // read header, fields in the header can be in an arbitrary order
                     while (getline(ifs, line) &&
-                            ! ( set_number_of_variables && set_number_of_objectives && 
-                                set_type_of_hierarchy   && set_types_of_objectives && 
+                            ! ( set_number_of_variables && set_number_of_objectives &&
+                                set_type_of_hierarchy   && set_types_of_objectives &&
                                 set_number_of_constraints) )
                     {
                         // remove empty space from a string (just in case)
@@ -349,7 +349,7 @@ namespace LexLS
                             readNumberOfVariables(ifs, set_number_of_variables, number_of_variables);
                             continue;
                         }
-                        
+
                         if (line.compare(NUMBER_OF_OBJECTIVES) == 0)
                         {
                             readNumberOfObjectives(ifs, set_number_of_objectives, number_of_objectives);
@@ -376,32 +376,32 @@ namespace LexLS
                     }
 
 
-                    if (    !set_number_of_variables        || !set_number_of_objectives || 
-                            !set_type_of_hierarchy          || !set_types_of_objectives || 
+                    if (    !set_number_of_variables        || !set_number_of_objectives ||
+                            !set_type_of_hierarchy          || !set_types_of_objectives ||
                             !set_number_of_constraints)
                     {
                         throw std::runtime_error("At least one required parameters is not set.");
                     }
 
 
-                    if (    (types_of_objectives.size() != number_of_objectives) || 
+                    if (    (types_of_objectives.size() != number_of_objectives) ||
                             (number_of_constraints.size() != number_of_objectives))
                     {
                         throw std::runtime_error("Wrong number of objectives.");
                     }
-                   
+
 
                     // ---------------------------------------------------------------------------
 
 
                     objectives.resize(number_of_objectives);
 
-                    // find OBJECTIVE_DATA 
+                    // find OBJECTIVE_DATA
                     // (objectives are assumed to be stored in ascending order after header fields)
                     unsigned int  objective_index = 0;
                     unsigned int  number_of_columns = 0;
                     unsigned int  number_of_bounds = 0;
-                    
+
                     switch (type_of_hierarchy_header)
                     {
                         case HEADER_HIERARCHY_EQUALITIES:
@@ -466,7 +466,7 @@ namespace LexLS
                     {
                         throw std::runtime_error("The number of objectives is lower than expected.");
                     }
-                    
+
 
                     while (getline(ifs, line))
                     {

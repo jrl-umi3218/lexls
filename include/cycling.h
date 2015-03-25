@@ -2,16 +2,16 @@
 #define CYCLING
 
 namespace LexLS
-{   
+{
     namespace internal
     {
-        /** 
+        /**
             \brief A class used for cycling detection.
         */
         class CyclingHandler
-        {    
+        {
         public:
-    
+
             CyclingHandler():
                 counter(0),
                 max_counter(50),
@@ -42,8 +42,8 @@ namespace LexLS
                 }
             }
 
-            TerminationStatus update(OperationType operation, 
-                                     ConstraintIdentifier ctr_identifier, 
+            TerminationStatus update(OperationType operation,
+                                     ConstraintIdentifier ctr_identifier,
                                      std::vector<Objective> &Obj,
                                      Index iter,
                                      bool print_flag=false)
@@ -60,10 +60,10 @@ namespace LexLS
                 if (print_flag)
                 {
                     printf("============================================= \n");
-                    printf("iter = %d, counter = %d\n   previous_operation = %s\n   operation          = %s \n", 
+                    printf("iter = %d, counter = %d\n   previous_operation = %s\n   operation          = %s \n",
                            iter,
                            counter,
-                           previous_operation == OPERATION_ADD ? "ADD" : "REMOVE", 
+                           previous_operation == OPERATION_ADD ? "ADD" : "REMOVE",
                            operation == OPERATION_ADD ? "ADD" : "REMOVE");
                 }
 
@@ -89,7 +89,7 @@ namespace LexLS
                         previous_operation = OPERATION_ADD;
                         ctr_added.clear();
                     }
-                
+
                     ctr_added.push_back(ctr_identifier);
                 }
                 else if (operation == OPERATION_REMOVE)
@@ -102,7 +102,7 @@ namespace LexLS
                             {
                                 if (print_flag)
                                     print();
-                            
+
                                 return PROBLEM_SOLVED_CYCLING_HANDLING;
                             }
                             else
@@ -110,13 +110,13 @@ namespace LexLS
                                 relax_bounds(Obj);
                             }
                         }
-   
+
                         previous_operation = OPERATION_REMOVE;
                         ctr_removed.clear();
                     }
 
                     ctr_removed.push_back(ctr_identifier);
-                }    
+                }
 
                 if (print_flag)
                     print();
@@ -126,7 +126,7 @@ namespace LexLS
 
             bool check_condition()
             {
-                if (ctr_removed.size() == 0 || ctr_added.size() == 0) // disregard cases with empty containers 
+                if (ctr_removed.size() == 0 || ctr_added.size() == 0) // disregard cases with empty containers
                     return false;
 
                 bool condition = true;
@@ -141,7 +141,7 @@ namespace LexLS
                         }
                     }
                 }
-            
+
                 return condition;
             }
 
@@ -170,40 +170,39 @@ namespace LexLS
                 return counter;
             }
 
-            /** 
+            /**
                 \brief Number of relaxations performed
-            */ 
+            */
             Index counter;
 
-            /** 
+            /**
                 \brief Maximum number of relaxations to be performed
-            */ 
+            */
             Index max_counter;
 
-            /** 
+            /**
                 \brief Relaxation step
-            */ 
+            */
             RealScalar relax_step;
 
-            /** 
+            /**
                 \brief Operation performed during the previous iteration
-            */ 
+            */
             OperationType previous_operation;
-        
-            /** 
+
+            /**
                 \brief List of added constraints after the last removed constraints
-            */       
+            */
             std::vector<ConstraintIdentifier> ctr_added;
-        
-            /** 
+
+            /**
                 \brief List of removed constraints after the last added constraints
-            */       
-            std::vector<ConstraintIdentifier> ctr_removed;        
+            */
+            std::vector<ConstraintIdentifier> ctr_removed;
         };
 
     } // END namespace internal
-    
+
 } // END namespace LexLS
 
 #endif // CYCLING
-
