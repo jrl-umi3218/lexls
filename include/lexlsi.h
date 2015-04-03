@@ -148,16 +148,6 @@ namespace LexLS
 
                     if ((status == PROBLEM_SOLVED) || (status == PROBLEM_SOLVED_CYCLING_HANDLING))
                     {
-                        /*
-                        // todo: remove
-                        printf("\n=====================================================\n");
-                        for (Index i=0; i<ctr_info_all.size(); i++)
-                        {
-                            ctr_info_all[i].print1();
-                        }
-                        printf("\n=====================================================\n");
-                        */
-
                         break; // we are done ...
                     }
                     else
@@ -521,11 +511,11 @@ namespace LexLS
             }
 
             /**
-                \brief Returns ctr_info_all
+                \brief Returns working_set_log
             */
             std::vector<ConstraintIdentifier>& getWorkingSetLog()
             {
-                return ctr_info_all;
+                return working_set_log;
             }
 
         private:
@@ -845,9 +835,6 @@ namespace LexLS
             */
             OperationType verifyWorkingSet()
             {
-                // todo: remove
-                //parameters.log_working_set_enabled = true;
-
                 // ----------------------------------------------------------------------
                 Index ObjIndex2Manipulate, CtrIndex2Manipulate;
                 ConstraintActivationType CtrType2Manipulate = CTR_INACTIVE;
@@ -894,7 +881,7 @@ namespace LexLS
                                                 CtrType2Manipulate,
                                                 alpha);
 
-                        ctr_info_all.push_back(ci);
+                        working_set_log.push_back(ci);
                     }
 
                     operation = OPERATION_ADD;
@@ -921,7 +908,7 @@ namespace LexLS
                                                         CTR_INACTIVE,
                                                         lambda_wrong_sign);
 
-                                ctr_info_all.push_back(ci);
+                                working_set_log.push_back(ci);
                             }
 
                             operation = OPERATION_REMOVE;
@@ -962,7 +949,7 @@ namespace LexLS
 
                     if (parameters.log_working_set_enabled)
                     {
-                        ctr_info_all.back().cycling_detected = cycling_detected;
+                        working_set_log.back().cycling_detected = cycling_detected;
                     }
                 }
 
@@ -1192,7 +1179,7 @@ namespace LexLS
             /**
                 \brief Vector containing activation/deactivation info for each iteration
             */
-            std::vector<ConstraintIdentifier> ctr_info_all;
+            std::vector<ConstraintIdentifier> working_set_log;
 
             /**
                 \brief Handle cycling

@@ -206,12 +206,12 @@ namespace LexLS
             OperationType previous_operation;
 
             /**
-                \brief List of added constraints after the last removed constraints
+                \brief List of added constraints after the last removed constraint
             */
             std::vector<ConstraintIdentifier> ctr_added;
 
             /**
-                \brief List of removed constraints after the last added constraints
+                \brief List of removed constraints after the last added constraint
             */
             std::vector<ConstraintIdentifier> ctr_removed;
         };
