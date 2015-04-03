@@ -193,9 +193,13 @@ namespace LexLS
                     CtrType  = getActiveCtrType(CtrIndexActive);
 
                     if (CtrType == CTR_ACTIVE_LB)
+                    {
                         v.coeffRef(CtrIndex) = Ax.coeffRef(CtrIndex) - data.coeffRef(CtrIndex,lb_index);
+                    }
                     else if (CtrType == CTR_ACTIVE_UB)
+                    {
                         v.coeffRef(CtrIndex) = Ax.coeffRef(CtrIndex) - data.coeffRef(CtrIndex,ub_index);
+                    }
                 }
 
                 // For inactive constraints, even when lb[i] <= Ax[i] <= ub[i], a nonzero v[i] can be generated.
@@ -826,7 +830,9 @@ namespace LexLS
                 {
                     std::cout << "data = \n" << data << std::endl << std::endl;
                     if (obj_type == SIMPLE_BOUNDS_OBJECTIVE)
+                    {
                         std::cout << "var_index = {" << var_index.transpose() << "}"<< std::endl;
+                    }
                 }
                 else if (!strcmp(field, "v"))
                 {

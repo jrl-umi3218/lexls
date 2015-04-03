@@ -65,7 +65,9 @@ namespace LexLS
 
                 Index maxObjDimSum = 0;
                 for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
+                {
                     maxObjDimSum += maxObjDim[ObjIndex];
+                }
 
                 hh_scalars.resize(maxObjDimSum);
                 ctr_type.resize(maxObjDimSum, CTR_INACTIVE); // used only for initialization purposes
@@ -117,7 +119,9 @@ namespace LexLS
                         coeff = fixed_var_index.coeffRef(k);
                         column_permutations.coeffRef(k) = coeff;
                         if (k != coeff)
+                        {
                             LOD.col(k).head(nCtr).swap(LOD.col(coeff).head(nCtr));
+                        }
 
                         for (Index i=k+1; i<nVarFixed; i++)
                         {
@@ -143,7 +147,9 @@ namespace LexLS
 
                     // form the permutation matrix
                     for (Index k=0; k<TotalRank; k++)
+                    {
                         P.applyTranspositionOnTheRight(k, column_permutations.coeff(k));
+                    }
 
                     return; // early termination if possible
                 }
@@ -160,7 +166,9 @@ namespace LexLS
                     ObjDim        = obj_info[ObjIndex].dim;
 
                     for(Index k=ColIndex; k<nVar; k++) // initially compute the norms of the columns
+                    {
                         ColNorms.coeffRef(k) = LOD.col(k).segment(FirstRowIndex,ObjDim).squaredNorm();
+                    }
 
                     // QR factorization of constraints involved in objective ObjIndex using the remaining variables
                     for (Index counter=0; counter<ObjDim; counter++) // loop over all constraints in a given objective
@@ -178,7 +186,9 @@ namespace LexLS
 
                         // After we break, elimination is performed if there are objectives with lower priority and obj_info[ObjIndex].rank > 0
                         if (maxColNormValue < parameters.tol_linear_dependence)
+                        {
                             break;
+                        }
 
                         // --------------------------------------------------------------------------
                         // apply column permutation
@@ -213,12 +223,16 @@ namespace LexLS
 
                         // terminate the QR factorization (after the elimination step below, the LOD is terminated as well)
                         if (RemainingColumns == 0)
+                        {
                             break;
+                        }
 
                         // update our table of squared norms of the columns
                         // (note that above ColIndex is incremented and RemainingColumns is decreased)
                         if (RemainingRows > 0)
+                        {
                             ColNorms.tail(RemainingColumns) -= LOD.row(RowIndex).segment(ColIndex,RemainingColumns).cwiseAbs2();
+                        }
 
                     } // END for (counter=0; counter<ObjDim; counter++)
 
@@ -273,9 +287,13 @@ namespace LexLS
                             if ( !isEqual(aRegularizationFactor,0.0) )
                             {
                                 if (FirstColIndex + ObjRank <= RemainingColumns)
+                                {
                                     regularize_tikhonov_2(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
+                                }
                                 else
+                                {
                                     regularize_tikhonov_1(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
+                                }
                             }
                             accumulate_nullspace_basis(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
 
@@ -388,7 +406,9 @@ namespace LexLS
                             else if (ObjRank > 2 && ObjRank <= 8)
                             {
                                 for (Index k=0; k<RemainingColumns+1; k++)
+                                {
                                     TrailingBlock.col(k).noalias() -= LeftBlock * UpBlock.col(k);
+                                }
                             }
                             else if ((ObjRank == 2) || (ObjRank > 8))
                             {
@@ -403,7 +423,10 @@ namespace LexLS
                     {
                         // Initialize some remaining fields of obj_info before we terminate (used later in ComputeLambda())
                         for (Index k=ObjIndex+1; k<nObj; k++)
-                            obj_info[k].first_col_index = obj_info[k-1].first_col_index + obj_info[k-1].rank; // of course, obj_info[>ObjIndex].rank = 0
+                        {
+                            // of course, obj_info[>ObjIndex].rank = 0
+                            obj_info[k].first_col_index = obj_info[k-1].first_col_index + obj_info[k-1].rank;
+                        }
 
                         break; // terminate the LOD
                     }
@@ -412,11 +435,15 @@ namespace LexLS
 
                 TotalRank = nVarFixed;
                 for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
+                {
                     TotalRank += obj_info[ObjIndex].rank;
+                }
 
                 // form the permutation matrix
                 for (Index k=0; k<TotalRank; k++)
+                {
                     P.applyTranspositionOnTheRight(k, column_permutations.coeff(k));
+                }
 
             } // END factorize()
 
@@ -429,9 +456,10 @@ namespace LexLS
             */
             bool ObjectiveSensitivity(Index ObjIndex,
                                       Index &CtrIndex2Remove, int &ObjIndex2Remove,
-                                      RealScalar tol_wrong_sign_lambda, RealScalar tol_correct_sign_lambda)
+                                      RealScalar tol_wrong_sign_lambda, RealScalar tol_correct_sign_lambda,
+                                      RealScalar &maxAbsValue)
             {
-                RealScalar maxAbsValue = 0.0;
+                maxAbsValue = 0.0;
                 bool tmp_bool, FoundBetterDescentDirection = false;
                 Index FirstRowIndex, FirstColIndex, ObjDim, ObjRank;
                 Index &ColDim = FirstColIndex; // ColDim will be used to indicate column dimension (I use it for clarity)
@@ -482,7 +510,9 @@ namespace LexLS
                                                                    tol_correct_sign_lambda);
 
                 if (FoundBetterDescentDirection)
+                {
                     ObjIndex2Remove = ObjIndex;
+                }
 
                 if (ObjIndex>0) // the first objective has only Lagrange multipliers equal to the optimal residual
                 {
@@ -523,7 +553,9 @@ namespace LexLS
                                                         tol_correct_sign_lambda);
 
                         if (tmp_bool)
+                        {
                             ObjIndex2Remove = k;
+                        }
                         FoundBetterDescentDirection = (FoundBetterDescentDirection || tmp_bool);
                     } // END for (Index k=ObjIndex-1; k>=0; k--)
                 }
@@ -545,7 +577,9 @@ namespace LexLS
                     //   :if there are no fixed variables we will not be here
                     //   :if there are fixed variables ObjIndex2Remove + ObjOffset is used in LexLSI
                     if (tmp_bool)
+                    {
                         ObjIndex2Remove = -1;
+                    }
                     FoundBetterDescentDirection = (FoundBetterDescentDirection || tmp_bool);
                 }
 
@@ -633,7 +667,9 @@ namespace LexLS
                 }
 
                 if (nVarFixed>0) // Handle fixed variables (if any)
+                {
                     LambdaFixed = -LOD.block(0, 0, nLambda, nVarFixed).transpose() * Lambda;
+                }
 
                 rhs.setZero(); // for convenience (easier to analyze the Lagrange multipliers by hand)
 
@@ -693,7 +729,9 @@ namespace LexLS
                         aLambda = lambda.coeff(ind);
 
                         if (*aCtrType == CTR_ACTIVE_LB)
+                        {
                             aLambda = -aLambda;
+                        }
 
                         if (aLambda > tol_correct_sign_lambda)
                         {
@@ -786,7 +824,9 @@ namespace LexLS
                 // determine dimensions
                 // -------------------------------------------------------------------------
                 for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
+                {
                     nVarRank += obj_info[ObjIndex].rank;
+                }
 
                 Index nVarFree = nVar - (nVarRank + nVarFixed);
 
@@ -845,7 +885,9 @@ namespace LexLS
                 // -------------------------------------------------------------------------
                 //for (Index i=gs.size()-1; i>=0; i--)
                 for (Index i=gs.size(); i--; ) //gs.size()-1, ..., 0.
+                {
                     rhs.applyOnTheLeft(gs.get_i(i), gs.get_j(i), gs.get(i));
+                }
 
                 // -------------------------------------------------------------------------
                 // Apply permutation
@@ -868,7 +910,9 @@ namespace LexLS
                 // determine dimensions
                 // -------------------------------------------------------------------------
                 for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
+                {
                     nVarRank += obj_info[ObjIndex].rank;
+                }
 
                 Index nVarFree = nVar - (nVarRank + nVarFixed);
 
@@ -904,7 +948,9 @@ namespace LexLS
 
                 D.triangularView<Eigen::Lower>() = T.leftCols(nVarFree).transpose()*T.leftCols(nVarFree);
                 for (Index i=0; i<nVarFree; i++)
+                {
                     D.coeffRef(i,i) += 1.0;
+                }
 
                 d = T.leftCols(nVarFree).transpose() * T.col(nVarFree);
 
@@ -947,7 +993,9 @@ namespace LexLS
                 // determine dimensions
                 // -------------------------------------------------------------------------
                 for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
+                {
                     nVarRank += obj_info[ObjIndex].rank;
+                }
 
                 Index nVarFree = nVar - (nVarRank + nVarFixed);
 
@@ -964,7 +1012,9 @@ namespace LexLS
 
                 D.triangularView<Eigen::Lower>() = T.leftCols(nVarFree).transpose()*T.leftCols(nVarFree);
                 for (Index i=0; i<nVarFree; i++)
+                {
                     D.coeffRef(i,i) += 1.0;
+                }
 
                 d = T.leftCols(nVarFree).transpose() * T.col(nVarFree);
 
@@ -1009,7 +1059,9 @@ namespace LexLS
                 // determine dimensions
                 // -------------------------------------------------------------------------
                 for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
+                {
                     nVarRank += obj_info[ObjIndex].rank;
+                }
 
                 Index nVarFree = nVar - (nVarRank + nVarFixed);
 
@@ -1110,9 +1162,13 @@ namespace LexLS
             void fixVariables(Index nVarFixed_, Index *VarIndex, RealScalar *VarValue, ConstraintActivationType *type)
             {
                 if (nVarFixed_ > nVar)
+                {
                     throw Exception("Cannot fix more than nVar variables");
+                }
                 else
+                {
                     nVarFixed = nVarFixed_;
+                }
 
                 fixed_var_index.resize(nVarFixed);
                 fixed_var_type.resize(nVarFixed);
@@ -1137,7 +1193,9 @@ namespace LexLS
 
                     obj_info[ObjIndex].dim = ObjDim_[ObjIndex];
                     if (ObjIndex > 0)
+                    {
                         obj_info[ObjIndex].first_row_index = obj_info[ObjIndex-1].first_row_index + obj_info[ObjIndex-1].dim;
+                    }
                 }
 
                 initialize();
@@ -1152,9 +1210,13 @@ namespace LexLS
             void setFixedVariablesCount(Index nVarFixed_)
             {
                 if (nVarFixed_ > nVar)
+                {
                     throw Exception("Cannot fix more than nVar variables");
+                }
                 else
+                {
                     nVarFixed = nVarFixed_;
+                }
 
                 fixed_var_index.resize(nVarFixed);
                 fixed_var_type.resize(nVarFixed);
@@ -1214,7 +1276,9 @@ namespace LexLS
             void setData(Index ObjIndex, const dMatrixType& data)
             {
                 if (ObjIndex >= nObj)
+                {
                     throw Exception("ObjIndex >= nObj");
+                }
 
                 LOD.block(obj_info[ObjIndex].first_row_index,0,obj_info[ObjIndex].dim,nVar+1) = data;
             }
@@ -1342,7 +1406,9 @@ namespace LexLS
                 nVarFixedInit = 0;
 
                 for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
+                {
                     obj_info[ObjIndex].rank = 0;
+                }
 
                 hh_scalars.setZero();
 
@@ -1380,7 +1446,9 @@ namespace LexLS
                 D.triangularView<Eigen::Lower>() += mu*up.transpose()*up;
 
                 for (Index i=0; i<RemainingColumns+ObjRank; i++)
+                {
                     D.coeffRef(i,i) += mu;
+                }
 
                 // ==============================================================================================
                 d.head(ObjRank).noalias() = Rk.triangularView<Eigen::Upper>().transpose()*LOD.col(nVar).segment(FirstRowIndex,ObjRank);
@@ -1429,7 +1497,9 @@ namespace LexLS
                     aRegularizationFactor*up.rightCols(RemainingColumns)*Tk.transpose();
 
                 for (Index i=0; i<FirstColIndex-nVarFixed+ObjRank; i++)
+                {
                     D.coeffRef(i,i) += mu;
+                }
 
                 d.head(ObjRank) = LOD.col(nVar).segment(FirstRowIndex,ObjRank);
                 d.segment(ObjRank,FirstColIndex-nVarFixed) = aRegularizationFactor*null_space.col(nVar).head(FirstColIndex-nVarFixed);
@@ -1442,7 +1512,9 @@ namespace LexLS
                 // -------------------------------------------------------------------------
 
                 for (Index i=0; i<FirstColIndex-nVarFixed+ObjRank; i++)
+                {
                     D.coeffRef(i,i) -= mu;
+                }
 
                 d = D.selfadjointView<Eigen::Lower>() * d;
                 LOD.col(nVar).segment(FirstRowIndex,ObjRank) = d.head(ObjRank);
@@ -1469,7 +1541,9 @@ namespace LexLS
                 D.triangularView<Eigen::Lower>()  = (Rk.transpose()*Rk.triangularView<Eigen::Upper>()).eval();
                 D.triangularView<Eigen::Lower>() += mu*up.transpose()*up;
                 for (Index i=0; i<ObjRank; i++)
+                {
                     D.coeffRef(i,i) += mu;
+                }
 
                 d.noalias()  = up.transpose() * null_space.col(nVar).head(FirstColIndex-nVarFixed);
                 d *= mu;
@@ -1500,7 +1574,9 @@ namespace LexLS
 
                 D.triangularView<Eigen::Lower>() = (Rk.transpose()*Rk.triangularView<Eigen::Upper>()).eval();
                 for (Index i=0; i<ObjRank; i++)
+                {
                     D.coeffRef(i,i) += mu;
+                }
 
                 d.noalias() = Rk.triangularView<Eigen::Upper>().transpose()*LOD.col(nVar).segment(FirstRowIndex,ObjRank);
 
@@ -1533,7 +1609,9 @@ namespace LexLS
                 D.triangularView<Eigen::Lower>() += Tk*Tk.transpose();
 
                 for (Index i=0; i<ObjRank; i++)
+                {
                     D.coeffRef(i,i) += mu;
+                }
 
                 d = LOD.col(nVar).segment(FirstRowIndex,ObjRank);
 
@@ -1543,7 +1621,9 @@ namespace LexLS
                 // -------------------------------------------------------------------------
 
                 for (Index i=0; i<ObjRank; i++)
+                {
                     D.coeffRef(i,i) -= mu;
+                }
                 LOD.col(nVar).segment(FirstRowIndex,ObjRank).noalias() = D.selfadjointView<Eigen::Lower>() * d;
             }
 
@@ -1605,7 +1685,9 @@ namespace LexLS
                 D.triangularView<Eigen::Lower>() += Tk*Tk.transpose();
 
                 for (Index i=0; i<ObjRank; i++)
+                {
                     D.coeffRef(i,i) += mu;
+                }
 
                 d = LOD.col(nVar).segment(FirstRowIndex,ObjRank);
 
@@ -1853,7 +1935,9 @@ namespace LexLS
                 else if (ObjRank > 2 && ObjRank <= 8)
                 {
                     for (Index k=0; k<RemainingColumns+1; k++)
+                    {
                         TrailingBlock.col(k).noalias() -= LeftBlock * UpBlock.col(k);
+                    }
                 }
                 else if ((ObjRank == 2) || (ObjRank > 8))
                 {

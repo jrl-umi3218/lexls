@@ -26,7 +26,9 @@ namespace LexLS
 
                 inactive.resize(dim);
                 for (Index CtrIndex=0; CtrIndex<dim; CtrIndex++)
+                {
                     inactive[CtrIndex] = CtrIndex;
+                }
             }
 
             /**
@@ -40,7 +42,9 @@ namespace LexLS
             void activate(Index CtrIndex, ConstraintActivationType type)
             {
                 if (all_type[CtrIndex] != CTR_INACTIVE)
+                {
                     throw Exception("Cannot activate an active constraint");
+                }
 
                 // ----------------------------------------------------------------------------
                 // remove the constraint with index CtrIndex from the set of inactive constraints
@@ -75,7 +79,9 @@ namespace LexLS
                 Index CtrIndex = getActiveCtrIndex(CtrIndexActive); // CtrIndexActive --> CtrIndex
 
                 if (all_type[CtrIndex] == CTR_INACTIVE)
+                {
                     throw Exception("Cannot deactivate an inactive constraint");
+                }
 
                 // ----------------------------------------------------------------------------
                 // remove the constraint with index CtrIndexActive in the working set
@@ -167,9 +173,13 @@ namespace LexLS
             bool isActive(Index k) const
             {
                 if (all_type[k] == CTR_INACTIVE)
+                {
                     return false;
+                }
                 else
+                {
                     return true;
+                }
             }
 
             /**

@@ -221,6 +221,11 @@ namespace LexLS
         */
         bool use_phase1_v0;
 
+        /**
+            \brief If true, gather information about activations and deactivations
+        */
+        bool gather_info_enabled;
+
         ParametersLexLSI()
         {
             setDefaults();
@@ -244,6 +249,7 @@ namespace LexLS
             printf("modify_type_inactive_enabled   = %d \n", modify_type_inactive_enabled);
             printf("set_min_init_ctr_violation     = %d \n", set_min_init_ctr_violation);
             printf("use_phase1_v0                  = %d \n", use_phase1_v0);
+            printf("gather_info_enabled            = %d \n", gather_info_enabled);
             printf("\n");
         }
 
@@ -270,6 +276,7 @@ namespace LexLS
             set_min_init_ctr_violation     = false;
 
             use_phase1_v0                  = false;
+            gather_info_enabled            = false;
         }
     };
 
@@ -441,7 +448,7 @@ namespace LexLS
         };
 
         /**
-            \brief A class used to identify a constraint (used only in the cycling detection).
+            \brief A class used to identify a constraint.
         */
         class ConstraintIdentifier
         {
@@ -453,6 +460,14 @@ namespace LexLS
                 obj_index(obj_index_),
                 ctr_index(ctr_index_),
                 ctr_type(ctr_type_) {}
+
+            ConstraintIdentifier(Index obj_index_, Index ctr_index_, ConstraintActivationType ctr_type_,
+                                 RealScalar alpha_or_lambda_):
+                obj_index(obj_index_),
+                ctr_index(ctr_index_),
+                ctr_type(ctr_type_),
+                alpha_or_lambda(alpha_or_lambda_),
+                cycling_detected(false) {}
 
             void set(Index obj_index_, Index ctr_index_, ConstraintActivationType ctr_type_)
             {
@@ -469,35 +484,32 @@ namespace LexLS
             bool compare(const ConstraintIdentifier& ci)
             {
                 if (obj_index != ci.obj_index)
+                {
                     return false;
+                }
 
                 if (ctr_index != ci.ctr_index)
+                {
                     return false;
+                }
 
                 if (ctr_type != ci.ctr_type)
+                {
                     return false;
+                }
 
                 return true;
             }
 
             void print()
             {
-                printf("obj_index = %d, ctr_index = %d, ctr_type = %d\n", obj_index, ctr_index, ctr_type);
+                printf("type = %d, obj = %2d, ind = %3d \n", ctr_type, obj_index, ctr_index);
             }
 
-            Index getObjIndex()
+            void print1()
             {
-                return obj_index;
-            }
-
-            Index getCtrIndex()
-            {
-                return ctr_index;
-            }
-
-            ConstraintActivationType getCtrType()
-            {
-                return ctr_type;
+                printf("%s", cycling_detected ? "(*)" : "( )");
+                printf(" type = %d, obj = %2d, ind = %3d, (% e) \n", ctr_type, obj_index, ctr_index, alpha_or_lambda);
             }
 
             /**
@@ -519,6 +531,19 @@ namespace LexLS
                 \brief Type of constraint
             */
             ConstraintActivationType ctr_type;
+
+            /**
+               \brief Used to store the step length when constraint is added and largest (in
+               absolute value) worng lambda when constraint is removed
+
+               \note: not used when comparing
+            */
+            RealScalar alpha_or_lambda;
+
+            /**
+               \brief it true, cycling has been detected
+            */
+            bool cycling_detected;
         };
 
     } // END namespace internal
