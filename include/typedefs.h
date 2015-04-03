@@ -224,7 +224,7 @@ namespace LexLS
         /**
             \brief If true, gather information about activations and deactivations
         */
-        bool gather_info_enabled;
+        bool log_working_set_enabled;
 
         ParametersLexLSI()
         {
@@ -249,7 +249,7 @@ namespace LexLS
             printf("modify_type_inactive_enabled   = %d \n", modify_type_inactive_enabled);
             printf("set_min_init_ctr_violation     = %d \n", set_min_init_ctr_violation);
             printf("use_phase1_v0                  = %d \n", use_phase1_v0);
-            printf("gather_info_enabled            = %d \n", gather_info_enabled);
+            printf("log_working_set_enabled            = %d \n", log_working_set_enabled);
             printf("\n");
         }
 
@@ -276,7 +276,7 @@ namespace LexLS
             set_min_init_ctr_violation     = false;
 
             use_phase1_v0                  = false;
-            gather_info_enabled            = false;
+            log_working_set_enabled            = false;
         }
     };
 
@@ -300,6 +300,103 @@ namespace LexLS
 
         std::string ExceptionMessage;
     };
+
+
+    /**
+        \brief A class used to identify a constraint.
+    */
+    class ConstraintIdentifier
+    {
+    public:
+
+        ConstraintIdentifier(){}
+
+        ConstraintIdentifier(Index obj_index_, Index ctr_index_, ConstraintActivationType ctr_type_):
+            obj_index(obj_index_),
+            ctr_index(ctr_index_),
+            ctr_type(ctr_type_) {}
+
+        ConstraintIdentifier(Index obj_index_, Index ctr_index_, ConstraintActivationType ctr_type_,
+                             RealScalar alpha_or_lambda_):
+            obj_index(obj_index_),
+            ctr_index(ctr_index_),
+            ctr_type(ctr_type_),
+            alpha_or_lambda(alpha_or_lambda_),
+            cycling_detected(false) {}
+
+        void set(Index obj_index_, Index ctr_index_, ConstraintActivationType ctr_type_)
+        {
+            obj_index = obj_index_;
+            ctr_index = ctr_index_;
+            ctr_type  = ctr_type_;
+        }
+
+        bool operator==(const ConstraintIdentifier& ci)
+        {
+            return compare(ci);
+        }
+
+        bool compare(const ConstraintIdentifier& ci)
+        {
+            if (obj_index != ci.obj_index)
+            {
+                return false;
+            }
+
+            if (ctr_index != ci.ctr_index)
+            {
+                return false;
+            }
+
+            if (ctr_type != ci.ctr_type)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        void print()
+        {
+            printf("type = %d, obj = %2d, ind = %3d \n", ctr_type, obj_index, ctr_index);
+        }
+
+
+        /**
+            \brief Index of objective
+        */
+        Index obj_index;
+
+        /**
+            \brief Index of constraint
+
+            \note This index could mean different things (depending on how an instance of this class
+            is used): (i) if a constraint is to be included in the active set ctr_index is the index
+            within objective obj_index; (ii) if a constraint is to be removed from the working set,
+            ctr_index indicates the index within the set of active constraints.
+        */
+        Index ctr_index;
+
+        /**
+            \brief Type of constraint
+        */
+        ConstraintActivationType ctr_type;
+
+        /**
+           \brief Used to store the step length when constraint is added and largest (in
+           absolute value) worng lambda when constraint is removed
+
+           \note: not used when comparing
+        */
+        RealScalar alpha_or_lambda;
+
+        /**
+           \brief it true, cycling has been detected
+        */
+        bool cycling_detected;
+    };
+
+
 
     // ----------------------------------------------------------------------------------------------------------
     // internal
@@ -445,105 +542,6 @@ namespace LexLS
               \brief Regularization factor for the current objective (default: 0.0)
             */
             RealScalar regularization_factor;
-        };
-
-        /**
-            \brief A class used to identify a constraint.
-        */
-        class ConstraintIdentifier
-        {
-        public:
-
-            ConstraintIdentifier(){}
-
-            ConstraintIdentifier(Index obj_index_, Index ctr_index_, ConstraintActivationType ctr_type_):
-                obj_index(obj_index_),
-                ctr_index(ctr_index_),
-                ctr_type(ctr_type_) {}
-
-            ConstraintIdentifier(Index obj_index_, Index ctr_index_, ConstraintActivationType ctr_type_,
-                                 RealScalar alpha_or_lambda_):
-                obj_index(obj_index_),
-                ctr_index(ctr_index_),
-                ctr_type(ctr_type_),
-                alpha_or_lambda(alpha_or_lambda_),
-                cycling_detected(false) {}
-
-            void set(Index obj_index_, Index ctr_index_, ConstraintActivationType ctr_type_)
-            {
-                obj_index = obj_index_;
-                ctr_index = ctr_index_;
-                ctr_type  = ctr_type_;
-            }
-
-            bool operator==(const ConstraintIdentifier& ci)
-            {
-                return compare(ci);
-            }
-
-            bool compare(const ConstraintIdentifier& ci)
-            {
-                if (obj_index != ci.obj_index)
-                {
-                    return false;
-                }
-
-                if (ctr_index != ci.ctr_index)
-                {
-                    return false;
-                }
-
-                if (ctr_type != ci.ctr_type)
-                {
-                    return false;
-                }
-
-                return true;
-            }
-
-            void print()
-            {
-                printf("type = %d, obj = %2d, ind = %3d \n", ctr_type, obj_index, ctr_index);
-            }
-
-            void print1()
-            {
-                printf("%s", cycling_detected ? "(*)" : "( )");
-                printf(" type = %d, obj = %2d, ind = %3d, (% e) \n", ctr_type, obj_index, ctr_index, alpha_or_lambda);
-            }
-
-            /**
-                \brief Index of objective
-            */
-            Index obj_index;
-
-            /**
-                \brief Index of constraint
-
-                \note This index could mean different things (depending on how an instance of this class
-                is used): (i) if a constraint is to be included in the active set ctr_index is the index
-                within objective obj_index; (ii) if a constraint is to be removed from the working set,
-                ctr_index indicates the index within the set of active constraints.
-            */
-            Index ctr_index;
-
-            /**
-                \brief Type of constraint
-            */
-            ConstraintActivationType ctr_type;
-
-            /**
-               \brief Used to store the step length when constraint is added and largest (in
-               absolute value) worng lambda when constraint is removed
-
-               \note: not used when comparing
-            */
-            RealScalar alpha_or_lambda;
-
-            /**
-               \brief it true, cycling has been detected
-            */
-            bool cycling_detected;
         };
 
     } // END namespace internal

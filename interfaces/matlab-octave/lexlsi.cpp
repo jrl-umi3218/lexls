@@ -24,17 +24,19 @@ mxArray * formInfoStructure (
         const int num_activations, 
         const int num_deactivations,
         const int num_factorizations,
-        const int cycling_counter)
+        const int cycling_counter,
+        const std::vector<LexLS::ConstraintIdentifier> &working_set_log)
 {
     mxArray * info_struct;
 
-    int num_info_fields = 5; 
+    int num_info_fields = 6; 
     const char *info_field_names[] = {
         "status",
         "number_of_activations",
         "number_of_deactivations",
         "number_of_factorizations",
-        "cycling_counter"
+        "cycling_counter",
+        "working_set_log"
     }; 
 
 
@@ -57,25 +59,63 @@ mxArray * formInfoStructure (
             status = STATUS_UNKNOWN_FAILURE;
             break;
     }
-    mxArray *info_status = mxCreateNumericMatrix(1, 1, mxINT32_CLASS, mxREAL);
-    ((INT32_T *) mxGetData (info_status))[0] = status;
+    mxArray *info_status = mxCreateNumericMatrix(1, 1, mxINT64_CLASS, mxREAL);
+    ((INT64_T *) mxGetData (info_status))[0] = status;
     mxSetField (info_struct, 0, "status", info_status);
 
-    mxArray *info_activations = mxCreateNumericMatrix(1, 1, mxINT32_CLASS, mxREAL);
-    ((INT32_T *) mxGetData (info_activations))[0] = num_activations;
+    mxArray *info_activations = mxCreateNumericMatrix(1, 1, mxINT64_CLASS, mxREAL);
+    ((INT64_T *) mxGetData (info_activations))[0] = num_activations;
     mxSetField (info_struct, 0, "number_of_activations", info_activations);
 
-    mxArray *info_deactivations = mxCreateNumericMatrix(1, 1, mxINT32_CLASS, mxREAL);
-    ((INT32_T *) mxGetData (info_deactivations))[0] = num_deactivations;
+    mxArray *info_deactivations = mxCreateNumericMatrix(1, 1, mxINT64_CLASS, mxREAL);
+    ((INT64_T *) mxGetData (info_deactivations))[0] = num_deactivations;
     mxSetField (info_struct, 0, "number_of_deactivations", info_deactivations);
 
-    mxArray *info_factorizations = mxCreateNumericMatrix(1, 1, mxINT32_CLASS, mxREAL);
-    ((INT32_T *) mxGetData (info_factorizations))[0] = num_factorizations;
+    mxArray *info_factorizations = mxCreateNumericMatrix(1, 1, mxINT64_CLASS, mxREAL);
+    ((INT64_T *) mxGetData (info_factorizations))[0] = num_factorizations;
     mxSetField (info_struct, 0, "number_of_factorizations", info_factorizations);
 
-    mxArray *info_cycling = mxCreateNumericMatrix(1, 1, mxINT32_CLASS, mxREAL);
-    ((INT32_T *) mxGetData (info_cycling))[0] = cycling_counter;
+    mxArray *info_cycling = mxCreateNumericMatrix(1, 1, mxINT64_CLASS, mxREAL);
+    ((INT64_T *) mxGetData (info_cycling))[0] = cycling_counter;
     mxSetField (info_struct, 0, "cycling_counter", info_cycling);
+
+
+    mxArray * ws_info_struct;
+
+    int num_ws_info_fields = 5; 
+    const char *ws_info_field_names[] = {
+        "obj_index",
+        "ctr_index",
+        "ctr_type",
+        "alpha_or_lambda",
+        "cycling_detected"
+    }; 
+
+    ws_info_struct = mxCreateStructMatrix(working_set_log.size(), 1, num_ws_info_fields, ws_info_field_names);
+
+
+    for (unsigned int i = 0; i < working_set_log.size(); ++i)
+    {
+        mxArray *obj_index          = mxCreateNumericMatrix(1, 1, mxINT64_CLASS, mxREAL);
+        mxArray *ctr_index          = mxCreateNumericMatrix(1, 1, mxINT64_CLASS, mxREAL);
+        mxArray *ctr_type           = mxCreateNumericMatrix(1, 1, mxINT64_CLASS, mxREAL);
+        mxArray *alpha_or_lambda    = mxCreateNumericMatrix(1, 1, mxDOUBLE_CLASS, mxREAL);
+        mxArray *cycling_detected   = mxCreateNumericMatrix(1, 1, mxINT64_CLASS, mxREAL);
+
+        ((INT64_T *) mxGetData (obj_index       ))[0] = working_set_log[i].obj_index;
+        ((INT64_T *) mxGetData (ctr_index       ))[0] = working_set_log[i].ctr_index;
+        ((INT64_T *) mxGetData (ctr_type        ))[0] = working_set_log[i].ctr_type;
+        ((double *)  mxGetData (alpha_or_lambda ))[0] = working_set_log[i].alpha_or_lambda;
+        ((INT64_T *) mxGetData (cycling_detected))[0] = working_set_log[i].cycling_detected;
+
+        mxSetField (ws_info_struct, i, "obj_index", obj_index);
+        mxSetField (ws_info_struct, i, "ctr_index", ctr_index);
+        mxSetField (ws_info_struct, i, "ctr_type", ctr_type);
+        mxSetField (ws_info_struct, i, "alpha_or_lambda", alpha_or_lambda );
+        mxSetField (ws_info_struct, i, "cycling_detected", cycling_detected);
+    }
+
+    mxSetField (info_struct, 0, "working_set_log", ws_info_struct);
 
     return (info_struct);
 }
@@ -95,7 +135,7 @@ void mexFunction( int num_output, mxArray *output[],
     LexLS::ParametersLexLSI lexlsi_parameters;
 
     lexlsi_parameters.setDefaults();
-
+    lexlsi_parameters.log_working_set_enabled = true;
 
     bool    is_simple_bounds_handling_enabled = false;
     bool                is_regularization_set = false;
@@ -523,6 +563,7 @@ void mexFunction( int num_output, mxArray *output[],
         LexLS::Index num_deactivations;
         LexLS::Index num_factorizations;
         LexLS::Index cycling_counter;
+        std::vector<LexLS::ConstraintIdentifier> working_set_log;
 
         try
         {
@@ -530,12 +571,18 @@ void mexFunction( int num_output, mxArray *output[],
             num_deactivations = lexlsi.getDeactivationsCount();
             num_factorizations = lexlsi.getFactorizationsCount();
             cycling_counter = lexlsi.getCyclingCounter();
+            working_set_log = lexlsi.getWorkingSetLog();
         }
         catch (std::exception &e)
         {
             mexErrMsgTxt(e.what());
         }
-        output[1] = formInfoStructure(status, num_activations, num_deactivations, num_factorizations, cycling_counter);
+        output[1] = formInfoStructure(  status, 
+                                        num_activations, 
+                                        num_deactivations, 
+                                        num_factorizations, 
+                                        cycling_counter,
+                                        working_set_log);
     }
 
 // output residual

@@ -523,7 +523,7 @@ namespace LexLS
             /**
                 \brief Returns ctr_info_all
             */
-            std::vector<ConstraintIdentifier>& getCtrInfo()
+            std::vector<ConstraintIdentifier>& getWorkingSetLog()
             {
                 return ctr_info_all;
             }
@@ -846,7 +846,7 @@ namespace LexLS
             OperationType verifyWorkingSet()
             {
                 // todo: remove
-                //parameters.gather_info_enabled = true;
+                //parameters.log_working_set_enabled = true;
 
                 // ----------------------------------------------------------------------
                 Index ObjIndex2Manipulate, CtrIndex2Manipulate;
@@ -887,7 +887,7 @@ namespace LexLS
                         constraint_identifier.set(ObjIndex2Manipulate, CtrIndex2Manipulate, CtrType2Manipulate);
                     }
 
-                    if (parameters.gather_info_enabled)
+                    if (parameters.log_working_set_enabled)
                     {
                         ConstraintIdentifier ci(ObjIndex2Manipulate,
                                                 CtrIndex2Manipulate,
@@ -914,7 +914,7 @@ namespace LexLS
                                                           objectives[ObjIndex2Manipulate].getActiveCtrType(CtrIndex2Manipulate));
                             }
 
-                            if (parameters.gather_info_enabled)
+                            if (parameters.log_working_set_enabled)
                             {
                                 ConstraintIdentifier ci(ObjIndex2Manipulate,
                                                         objectives[ObjIndex2Manipulate].getActiveCtrIndex(CtrIndex2Manipulate),
@@ -960,7 +960,10 @@ namespace LexLS
                                                     nIterations,
                                                     cycling_detected, false);
 
-                    ctr_info_all.back().cycling_detected = cycling_detected;
+                    if (parameters.log_working_set_enabled)
+                    {
+                        ctr_info_all.back().cycling_detected = cycling_detected;
+                    }
                 }
 
                 nIterations++;
