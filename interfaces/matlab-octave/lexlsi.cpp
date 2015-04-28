@@ -20,24 +20,26 @@ const int MIN_NUMBER_OF_FIELDS_IN_OBJ = 3;
 
 
 mxArray * formInfoStructure (
-        const LexLS::TerminationStatus lexlsi_status, 
-        const int num_activations, 
+        const LexLS::TerminationStatus lexlsi_status,
+        const int num_activations,
         const int num_deactivations,
         const int num_factorizations,
         const int cycling_counter,
+        const int rank,
         const std::vector<LexLS::ConstraintIdentifier> &working_set_log)
 {
     mxArray * info_struct;
 
-    int num_info_fields = 6; 
+    int num_info_fields = 7;
     const char *info_field_names[] = {
         "status",
         "number_of_activations",
         "number_of_deactivations",
         "number_of_factorizations",
         "cycling_counter",
-        "working_set_log"
-    }; 
+        "working_set_log",
+        "rank"
+    };
 
 
     info_struct = mxCreateStructMatrix(1, 1, num_info_fields, info_field_names);
@@ -79,17 +81,21 @@ mxArray * formInfoStructure (
     ((INT64_T *) mxGetData (info_cycling))[0] = cycling_counter;
     mxSetField (info_struct, 0, "cycling_counter", info_cycling);
 
+    mxArray *info_rank = mxCreateNumericMatrix(1, 1, mxINT64_CLASS, mxREAL);
+    ((INT64_T *) mxGetData (info_rank))[0] = rank;
+    mxSetField (info_struct, 0, "rank", info_rank);
+
 
     mxArray * ws_info_struct;
 
-    int num_ws_info_fields = 5; 
+    int num_ws_info_fields = 5;
     const char *ws_info_field_names[] = {
         "obj_index",
         "ctr_index",
         "ctr_type",
         "alpha_or_lambda",
         "cycling_detected"
-    }; 
+    };
 
     ws_info_struct = mxCreateStructMatrix(working_set_log.size(), 1, num_ws_info_fields, ws_info_field_names);
 
@@ -127,7 +133,7 @@ mxArray * formInfoStructure (
 void mexFunction( int num_output, mxArray *output[],
                   int num_input, const mxArray *input[])
 {
-    checkInputOutput(num_output, output, num_input, input, 
+    checkInputOutput(num_output, output, num_input, input,
                     MIN_OUTPUTS, MAX_OUTPUTS, MIN_INPUTS, MAX_INPUTS,
                     MIN_NUMBER_OF_FIELDS_IN_OBJ);
 
@@ -152,98 +158,98 @@ void mexFunction( int num_output, mxArray *output[],
             // ================================================
             // parse options
 
-            getOptionDouble(&lexlsi_parameters.tol_linear_dependence, 
-                            options_struct, 
+            getOptionDouble(&lexlsi_parameters.tol_linear_dependence,
+                            options_struct,
                             "tol_linear_dependence");
 
-            getOptionDouble(&lexlsi_parameters.tol_wrong_sign_lambda, 
-                            options_struct, 
+            getOptionDouble(&lexlsi_parameters.tol_wrong_sign_lambda,
+                            options_struct,
                             "tol_wrong_sign_lambda");
 
-            getOptionDouble(&lexlsi_parameters.tol_correct_sign_lambda, 
-                            options_struct, 
+            getOptionDouble(&lexlsi_parameters.tol_correct_sign_lambda,
+                            options_struct,
                             "tol_correct_sign_lambda");
 
-            getOptionDouble(&lexlsi_parameters.tol_feasibility, 
-                            options_struct, 
+            getOptionDouble(&lexlsi_parameters.tol_feasibility,
+                            options_struct,
                             "tol_feasibility");
 
 
-            getOptionUnsignedInteger(   &lexlsi_parameters.max_number_of_factorizations, 
-                                options_struct, 
+            getOptionUnsignedInteger(   &lexlsi_parameters.max_number_of_factorizations,
+                                options_struct,
                                 "max_number_of_factorizations");
 
-            getOptionBool(  &lexlsi_parameters.cycling_handling_enabled, 
-                            options_struct, 
+            getOptionBool(  &lexlsi_parameters.cycling_handling_enabled,
+                            options_struct,
                             "cycling_handling_enabled");
 
-            getOptionUnsignedInteger(   &lexlsi_parameters.cycling_max_counter, 
-                                options_struct, 
+            getOptionUnsignedInteger(   &lexlsi_parameters.cycling_max_counter,
+                                options_struct,
                                 "cycling_max_counter");
 
 
-            getOptionDouble(&lexlsi_parameters.cycling_relax_step, 
-                            options_struct, 
+            getOptionDouble(&lexlsi_parameters.cycling_relax_step,
+                            options_struct,
                             "cycling_relax_step");
 
 
 
-            is_regularization_set = getOptionArray( regularization_factors, 
+            is_regularization_set = getOptionArray( regularization_factors,
                                                     mxGetNumberOfElements (input[0]),
-                                                    options_struct, 
+                                                    options_struct,
                                                     "regularization_factors");
 
             getOptionBool(  &is_simple_bounds_handling_enabled,
-                            options_struct, 
+                            options_struct,
                             "enable_simple_bounds");
 
             getOptionBool(  &lexlsi_parameters.use_phase1_v0,
-                            options_struct, 
+                            options_struct,
                             "use_phase1_v0");
 
             getOptionBool(  &lexlsi_parameters.set_min_init_ctr_violation,
-                            options_struct, 
+                            options_struct,
                             "set_min_init_ctr_violation");
 
             getOptionBool(  &lexlsi_parameters.modify_x_guess_enabled,
-                            options_struct, 
+                            options_struct,
                             "modify_x_guess_enabled");
 
             getOptionBool(  &lexlsi_parameters.modify_type_active_enabled,
-                            options_struct, 
+                            options_struct,
                             "modify_type_active_enabled");
 
             getOptionBool(  &lexlsi_parameters.modify_type_inactive_enabled,
-                            options_struct, 
+                            options_struct,
                             "modify_type_inactive_enabled");
 
             unsigned int regularization_type = 0;
-            if (getOptionUnsignedInteger( &regularization_type, 
-                              options_struct, 
+            if (getOptionUnsignedInteger( &regularization_type,
+                              options_struct,
                               "regularization_type"))
             {
                 lexlsi_parameters.regularization_type = static_cast <LexLS::RegularizationType> (regularization_type);
             }
 
 
-            getOptionUnsignedInteger(&lexlsi_parameters.max_number_of_CG_iterations, 
-                                     options_struct, 
+            getOptionUnsignedInteger(&lexlsi_parameters.max_number_of_CG_iterations,
+                                     options_struct,
                                      "max_number_of_CG_iterations");
 
-            getOptionDouble(&lexlsi_parameters.variable_regularization_factor, 
-                            options_struct, 
+            getOptionDouble(&lexlsi_parameters.variable_regularization_factor,
+                            options_struct,
                             "variable_regularization_factor");
 
-            getOptionString(lexlsi_parameters.output_file_name, 
-                            options_struct, 
+            getOptionString(lexlsi_parameters.output_file_name,
+                            options_struct,
                             "output_file_name",
                             20);
-            
+
             // ================================================
             // check provided options
 
             /// @todo This check should probably go to the solver interface
-            if ( 
+            if (
                     ((lexlsi_parameters.regularization_type == LexLS::REGULARIZATION_NONE) && (is_regularization_set)) ||
                     ((lexlsi_parameters.regularization_type != LexLS::REGULARIZATION_NONE) && (!is_regularization_set))
                )
@@ -441,20 +447,20 @@ void mexFunction( int num_output, mxArray *output[],
         if (is_simple_bounds_handling_enabled)
         {
             lexlsi.setData(
-                    0, 
-                    simple_bounds_indicies.data(), 
+                    0,
+                    simple_bounds_indicies.data(),
                     Eigen::Map<LexLS::dMatrixType>(
-                        mxGetPr(constraints[0]), 
-                        num_constr[0], 
+                        mxGetPr(constraints[0]),
+                        num_constr[0],
                         2));
         }
         for (unsigned int i = first_normal_obj_index; i < num_obj; ++i)
         {
             lexlsi.setData(
-                    i, 
+                    i,
                     Eigen::Map<LexLS::dMatrixType>(
-                        mxGetPr(constraints[i]), 
-                        num_constr[i], 
+                        mxGetPr(constraints[i]),
+                        num_constr[i],
                         num_var + 2));
         }
 
@@ -563,6 +569,7 @@ void mexFunction( int num_output, mxArray *output[],
         LexLS::Index num_deactivations;
         LexLS::Index num_factorizations;
         LexLS::Index cycling_counter;
+        LexLS::Index rank;
         std::vector<LexLS::ConstraintIdentifier> working_set_log;
 
         try
@@ -571,17 +578,19 @@ void mexFunction( int num_output, mxArray *output[],
             num_deactivations = lexlsi.getDeactivationsCount();
             num_factorizations = lexlsi.getFactorizationsCount();
             cycling_counter = lexlsi.getCyclingCounter();
+            rank = lexlsi.getTotalRank();
             working_set_log = lexlsi.getWorkingSetLog();
         }
         catch (std::exception &e)
         {
             mexErrMsgTxt(e.what());
         }
-        output[1] = formInfoStructure(  status, 
-                                        num_activations, 
-                                        num_deactivations, 
-                                        num_factorizations, 
+        output[1] = formInfoStructure(  status,
+                                        num_activations,
+                                        num_deactivations,
+                                        num_factorizations,
                                         cycling_counter,
+                                        rank,
                                         working_set_log);
     }
 
@@ -602,7 +611,7 @@ void mexFunction( int num_output, mxArray *output[],
                 {
                     mxGetPr(wi)[j] = w(j);
                 }
-            
+
                 mxSetCell(output[2], i, wi);
             }
             catch (std::exception &e)

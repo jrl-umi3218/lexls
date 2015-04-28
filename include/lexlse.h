@@ -74,13 +74,13 @@ namespace LexLS
 
                 LOD.resize(maxObjDimSum,nVar+1); // store the RHS as well, thus the "+1"
 
-                null_space.resize(nVar,nVar+1);
-                array.resize(nVar,nVar+1);
-
                 Index dim = std::max(maxObjDimSum,nVar);
                 dWorkspace.resize(2*dim + nVar + 1);
 
                 column_permutations.resize(nVar);
+
+                null_space.resize(nVar,nVar+1);
+                array.resize(nVar,nVar+1);
 
                 // no need to initialize them (used in cg_tikhonov(...))
                 rqsp_work.resize(2*nVar,4);
@@ -99,7 +99,7 @@ namespace LexLS
             void factorize()
             {
                 RealScalar maxColNormValue, tau, PivotValue;
-                Index RemainingRows, ObjRank, ObjDim, TotalRank, maxColNormIndex;
+                Index RemainingRows, ObjRank, ObjDim, maxColNormIndex;
 
                 Index RowIndex;                   // Current constraint
                 Index FirstRowIndex;              // The same as obj_info[k].first_row_index (already available)
@@ -280,98 +280,98 @@ namespace LexLS
 
                     if (ObjRank > 0)
                     {
-                        switch(parameters.regularization_type){
+                        switch(parameters.regularization_type)
+                        {
+                            case REGULARIZATION_TIKHONOV:
 
-                        case REGULARIZATION_TIKHONOV:
-
-                            if ( !isEqual(aRegularizationFactor,0.0) )
-                            {
-                                if (FirstColIndex + ObjRank <= RemainingColumns)
+                                if ( !isEqual(aRegularizationFactor,0.0) )
                                 {
-                                    regularize_tikhonov_2(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
+                                    if (FirstColIndex + ObjRank <= RemainingColumns)
+                                    {
+                                        regularize_tikhonov_2(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
+                                    }
+                                    else
+                                    {
+                                        regularize_tikhonov_1(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
+                                    }
                                 }
-                                else
+                                accumulate_nullspace_basis(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
+
+                                break;
+
+                            case REGULARIZATION_TIKHONOV_CG:
+
+                                if ( !isEqual(aRegularizationFactor,0.0) )
+                                {
+                                    regularize_tikhonov_CG(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
+                                    //regularize_tikhonov_CG_x0(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
+                                }
+                                accumulate_nullspace_basis(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
+                                break;
+
+                            case REGULARIZATION_R:
+
+                                if ( !isEqual(aRegularizationFactor,0.0) )
+                                {
+                                    regularize_R(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
+                                }
+                                accumulate_nullspace_basis(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
+                                break;
+
+                            case REGULARIZATION_R_NO_Z:
+
+                                if ( !isEqual(aRegularizationFactor,0.0) )
+                                {
+                                    regularize_R_NO_Z(FirstRowIndex, FirstColIndex, ObjRank);
+                                }
+                                break;
+
+                            case REGULARIZATION_RT_NO_Z:
+
+                                if ( !isEqual(aRegularizationFactor,0.0) )
+                                {
+                                    regularize_RT_NO_Z(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
+                                }
+                                break;
+
+                            case REGULARIZATION_RT_NO_Z_CG:
+
+                                if ( !isEqual(aRegularizationFactor,0.0) )
+                                {
+                                    regularize_RT_NO_Z_CG(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
+                                }
+                                break;
+
+                            case REGULARIZATION_TIKHONOV_1:
+
+                                if ( !isEqual(aRegularizationFactor,0.0) )
                                 {
                                     regularize_tikhonov_1(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
                                 }
-                            }
-                            accumulate_nullspace_basis(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
+                                accumulate_nullspace_basis(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
+                                break;
 
-                            break;
+                            case REGULARIZATION_TIKHONOV_2:
 
-                        case REGULARIZATION_TIKHONOV_CG:
+                                if ( !isEqual(aRegularizationFactor,0.0) )
+                                {
+                                    regularize_tikhonov_2(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
+                                }
+                                accumulate_nullspace_basis(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
+                                break;
 
-                            if ( !isEqual(aRegularizationFactor,0.0) )
-                            {
-                                regularize_tikhonov_CG(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
-                                //regularize_tikhonov_CG_x0(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
-                            }
-                            accumulate_nullspace_basis(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
-                            break;
+                            case REGULARIZATION_TEST:
 
-                        case REGULARIZATION_R:
+                                if ( !isEqual(aRegularizationFactor,0.0) )
+                                {
+                                    regularize_test(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
+                                }
+                                break;
 
-                            if ( !isEqual(aRegularizationFactor,0.0) )
-                            {
-                                regularize_R(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
-                            }
-                            accumulate_nullspace_basis(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
-                            break;
+                            case REGULARIZATION_NONE:
 
-                        case REGULARIZATION_R_NO_Z:
-
-                            if ( !isEqual(aRegularizationFactor,0.0) )
-                            {
-                                regularize_R_NO_Z(FirstRowIndex, FirstColIndex, ObjRank);
-                            }
-                            break;
-
-                        case REGULARIZATION_RT_NO_Z:
-
-                            if ( !isEqual(aRegularizationFactor,0.0) )
-                            {
-                                regularize_RT_NO_Z(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
-                            }
-                            break;
-
-                        case REGULARIZATION_RT_NO_Z_CG:
-
-                            if ( !isEqual(aRegularizationFactor,0.0) )
-                            {
-                                regularize_RT_NO_Z_CG(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
-                            }
-                            break;
-
-                        case REGULARIZATION_TIKHONOV_1:
-
-                            if ( !isEqual(aRegularizationFactor,0.0) )
-                            {
-                                regularize_tikhonov_1(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
-                            }
-                            accumulate_nullspace_basis(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
-                            break;
-
-                        case REGULARIZATION_TIKHONOV_2:
-
-                            if ( !isEqual(aRegularizationFactor,0.0) )
-                            {
-                                regularize_tikhonov_2(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
-                            }
-                            accumulate_nullspace_basis(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
-                            break;
-
-                        case REGULARIZATION_TEST:
-
-                            if ( !isEqual(aRegularizationFactor,0.0) )
-                            {
-                                regularize_test(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
-                            }
-                            break;
-
-                        case REGULARIZATION_NONE:
-
-                            // do nothing
-                            break;
+                                // do nothing
+                                break;
                         }
                     }
 
@@ -1260,6 +1260,14 @@ namespace LexLS
             }
 
             /**
+               \brief Return #TotalRank (should be called after factorizing)
+            */
+            Index getTotalRank()
+            {
+                return TotalRank;
+            }
+
+            /**
                 \brief set a random problem [A,RHS]
             */
             void setProblem(const dMatrixType& data)
@@ -1404,6 +1412,7 @@ namespace LexLS
             void initialize()
             {
                 nVarFixedInit = 0;
+                TotalRank     = 0;
 
                 for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
                 {
@@ -1977,6 +1986,11 @@ namespace LexLS
                include the constraints used to fix variables)
             */
             Index nCtr;
+
+            /**
+               \brief Rank of the hierarchy
+            */
+            Index TotalRank;
 
             /**
                 \brief Regularization factor used at the current level

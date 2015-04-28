@@ -14,6 +14,12 @@ namespace LexLS
 
             \todo When we solve a sequence of LexLSI problems we could specify the maximum size of the
             envisioned objectives so that we don't have to allocate memory online.
+
+            \todo Bug in cycling detection
+
+            \todo default initialization with set_min_init_ctr_violation = true
+
+            \todo create a debug output for matlab/octave interface (put "rank", "working_set_log")
         */
         class LexLSI
         {
@@ -516,6 +522,14 @@ namespace LexLS
             std::vector<ConstraintIdentifier>& getWorkingSetLog()
             {
                 return working_set_log;
+            }
+
+            /**
+               \brief Return the TotalRank of a lexlse problem
+            */
+            Index getTotalRank()
+            {
+                return lexlse.getTotalRank();
             }
 
         private:
