@@ -273,10 +273,10 @@ namespace LexLS
             modify_x_guess_enabled         = false;
             modify_type_active_enabled     = false;
             modify_type_inactive_enabled   = false;
-            set_min_init_ctr_violation     = false;
+            set_min_init_ctr_violation     = true;
 
             use_phase1_v0                  = false;
-            log_working_set_enabled            = false;
+            log_working_set_enabled        = false;
         }
     };
 

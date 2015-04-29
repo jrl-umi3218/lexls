@@ -13,13 +13,13 @@
 \usepackage{amssymb}
 \usepackage{amsfonts}
 \usepackage{epsfig}
-\usepackage[sans]{dsfont} 
-\usepackage{bbm} 
+\usepackage[sans]{dsfont}
+\usepackage{bbm}
 \usepackage{amsmath,bm}
-\usepackage{verbatim}  
-\usepackage{color}     
-\usepackage{subfigure} 
-\usepackage{hyperref}  
+\usepackage{verbatim}
+\usepackage{color}
+\usepackage{subfigure}
+\usepackage{hyperref}
 \usepackage{scalefnt}
 \usepackage{mathtools}
 
@@ -76,22 +76,22 @@ algorithm (they need not be the same).
 \item {\color{blue}$\{\mathcal{W}^{\mathit{guess}}\}$}
 
   $\mathcal{W}^{(0)} \leftarrow \mathcal{W}^{\mathit{guess}}$. Equality constraints are detected
-  internally and included in $\mathcal{W}^{(0)}$. 
+  internally and included in $\mathcal{W}^{(0)}$.
 
 \item {\color{blue}$\{\mathcal{W}^{\mathit{guess}}, x^{\mathit{guess}}\}$} + flags (or when
   $\mathcal{W}^{\mathit{guess}} = \{\}$, one could simply use {\color{blue}$\{x^{\mathit{guess}}\}$})
 
   \begin{itemize}
   \item[\ding{237}] {\bf IF}
-    
+
     \begin{itemize}
     \item \UseVerb{modify_x_guess_enabled} = \UseVerb{false}
-    \item \UseVerb{modify_type_inactive_enabled} = \UseVerb{false} 
+    \item \UseVerb{modify_type_inactive_enabled} = \UseVerb{false}
     \item \UseVerb{modify_type_active_enabled} = \UseVerb{false}
     \end{itemize}
     %
     $\mathcal{W}^{(0)} \leftarrow \mathcal{W}^{\mathit{guess}}$. Equality constraints are detected
-    internally and included in $\mathcal{W}^{(0)}$. 
+    internally and included in $\mathcal{W}^{(0)}$.
 
   \item[\ding{237}] {\bf ELSE IF}
 
@@ -100,7 +100,7 @@ algorithm (they need not be the same).
     \item {\color{blue}\UseVerb{modify_type_inactive_enabled} = \UseVerb{true}}
     \item \UseVerb{modify_type_active_enabled} = \UseVerb{false}
     \end{itemize}
-    % 
+    %
     $\mathcal{W}^{(0)} \leftarrow \mathcal{W}^{\mathit{guess}}$. Additional inequality constraints
     might be activated as well. Equality constraints are detected internally and included in
     $\mathcal{W}^{(0)}$.
@@ -109,10 +109,10 @@ algorithm (they need not be the same).
 
     \begin{itemize}
     \item \UseVerb{modify_x_guess_enabled} = \UseVerb{false}
-    \item \UseVerb{modify_type_inactive_enabled} = \UseVerb{false} 
+    \item \UseVerb{modify_type_inactive_enabled} = \UseVerb{false}
     \item {\color{blue}\UseVerb{modify_type_active_enabled} = \UseVerb{true}}
     \end{itemize}
-    % 
+    %
     $\mathcal{W}^{(0)} \leftarrow \mathcal{W}^{\mathit{guess}}$. Some inequality constraints
     might be dropped. Equality constraints are detected internally and included in
     $\mathcal{W}^{(0)}$.
@@ -121,7 +121,7 @@ algorithm (they need not be the same).
 
     \begin{itemize}
     \item {\color{blue}\UseVerb{modify_x_guess_enabled} = \UseVerb{true}}
-    \item \UseVerb{modify_type_inactive_enabled} = \UseVerb{false} 
+    \item \UseVerb{modify_type_inactive_enabled} = \UseVerb{false}
     \item \UseVerb{modify_type_active_enabled} = \UseVerb{false}
     \end{itemize}
     %
@@ -169,7 +169,7 @@ algorithm (they need not be the same).
 \item \UseVerb{CTR_INACTIVE}
 
   \begin{itemize}
-  \item ({\bf as solver output}) The $i$-th constraint is inactive at the solution. 
+  \item ({\bf as solver output}) The $i$-th constraint is inactive at the solution.
   \item ({\bf as user input}) Specifies that the $i$-th constraint should not be included in
     the initial working set, unless
     %
@@ -247,7 +247,7 @@ to specifying the initial guess.
   \item[\ding{237}] \UseVerb{false} ({\bf default}): $x^{\mathit{guess}}$ cannot be modified by the solver.
   \item[\ding{237}] \UseVerb{true}: enables the solver to modify $x^{\mathit{guess}}$ only for satisfying simple
     bounds in the objective with highest priority (see Algorithm~\ref{alg.x_guess}).
-  \end{itemize} 
+  \end{itemize}
 
 \item \UseVerb{x_guess_is_specified}
 
@@ -256,7 +256,7 @@ to specifying the initial guess.
 
   \item[\ding{237}] \UseVerb{true}: $x^{\mathit{guess}}$ is specified (by the user).
 
-  \end{itemize} 
+  \end{itemize}
 
   \noindent When $x^{\mathit{guess}}$ has not been specified, a user input \UseVerb{CTR_INACTIVE},
   \UseVerb{CTR_ACTIVE_LB} or \UseVerb{CTR_ACTIVE_UB} is not modified in the solver (provided that
@@ -266,10 +266,11 @@ to specifying the initial guess.
 \item \UseVerb{set_min_init_ctr_violation}
 
   \begin{itemize}
-  \item[\ding{237}] \UseVerb{false} ({\bf default}) (see Sections~\ref{sec.v0_inactive}).
+  \item[\ding{237}] \UseVerb{true} ({\bf default}): set the smallest possible initial constraint violation (for inactive constraints).
 
-  \item[\ding{237}] \UseVerb{true}: set the smallest possible initial constraint violation (for inactive constraints).
-  \end{itemize} 
+  \item[\ding{237}] \UseVerb{false}: (see Sections~\ref{sec.v0_inactive}). Using \UseVerb{false} in
+    combination with very large upper or lower bounds is discouraged.
+  \end{itemize}
 
 \item \UseVerb{use_phase1_v0}
 
@@ -277,8 +278,8 @@ to specifying the initial guess.
   \item[\ding{237}] \UseVerb{false} ({\bf default}) during the initialization use function \UseVerb{phase1} (see Sections~\ref{sec.phase1}).
 
   \item[\ding{237}] \UseVerb{true}: during the initialization use function \UseVerb{phase1_v0} (see Sections~\ref{sec.phase1_v0}).
-  \end{itemize} 
-  
+  \end{itemize}
+
 \end{itemize}
 
 \clearpage
@@ -297,7 +298,7 @@ $i\not\in \mathcal{W}^{(k)}$, $v_i^{\star(k)} = 0$.
 \item Determine $x^{(0)}$
   %
     \begin{align*}
-      x^{(0)} \leftarrow \left\{ 
+      x^{(0)} \leftarrow \left\{
       \begin{array}{l l}
         x^{\mathit{guess}} & \quad \text{if} \,\,\,\, \UseVerb{x_guess_is_specified} \\
         x^{\star(0)} & \quad \text{otherwise}.
@@ -307,7 +308,7 @@ $i\not\in \mathcal{W}^{(k)}$, $v_i^{\star(k)} = 0$.
 \item Determine $v_i^{(0)}$
 %
     \begin{align*}
-      v_i^{(0)} \leftarrow \left\{ 
+      v_i^{(0)} \leftarrow \left\{
       \begin{array}{l l}
         \eqref{eq.v0_active} & \quad \text{if} \,\,\,\, i\in\mathcal{W}^{(0)} \\
         \eqref{eq.v0_inactive} & \quad \text{if} \,\,\,\, i\not\in\mathcal{W}^{(0)}.
@@ -320,15 +321,15 @@ $i\not\in \mathcal{W}^{(k)}$, $v_i^{\star(k)} = 0$.
 \item Determine $(\Delta x^{(0)}, \Delta v^{(0)})$
 %
   \begin{align*}
-    \begin{bmatrix} \Delta x^{(0)} \\ \Delta v^{(0)} \end{bmatrix} \leftarrow 
-    \begin{bmatrix} x^{\star(0)} \\ v^{\star(0)} \end{bmatrix}  - 
+    \begin{bmatrix} \Delta x^{(0)} \\ \Delta v^{(0)} \end{bmatrix} \leftarrow
+    \begin{bmatrix} x^{\star(0)} \\ v^{\star(0)} \end{bmatrix}  -
     \begin{bmatrix} x^{(0)} \\ v^{(0)} \end{bmatrix}.
   \end{align*}
   %
   In particular for $\Delta v^{(0)}$ we have
   %
   \begin{align*}
-    \Delta v_i^{(0)} \leftarrow \left\{ 
+    \Delta v_i^{(0)} \leftarrow \left\{
     \begin{array}{l l}
       v_i^{\star(0)} - v_i^{(0)} = (a_i^Tx^{\star(0)} - b_i) - (a_i^Tx^{(0)} - b_i) = a_i^T\Delta x & \quad \text{if} \,\,\,\, i\in\mathcal{W}^{(0)} \\
       v_i^{\star(0)} - v_i^{(0)} = -v_i^{(0)} & \quad \text{if} \,\,\,\, i\not\in\mathcal{W}^{(0)}
@@ -343,7 +344,7 @@ $i\not\in \mathcal{W}^{(k)}$, $v_i^{\star(k)} = 0$.
 \subsection{Initialize $v_i^{(0)}, i\in\mathcal{W}^{(0)}$}
 
 \begin{align} \label{eq.v0_active}
-  v_i^{(0)} \leftarrow \left\{ 
+  v_i^{(0)} \leftarrow \left\{
   \begin{array}{l l}
     a_i^Tx^{(0)} - \bar{b}_i & \quad \UseVerb{CTR_ACTIVE_UB} \,\,\,\, \text{\bf or} \,\,\,\, \UseVerb{CTR_ACTIVE_EQ} \\
     a_i^Tx^{(0)} - \ubar{b}_i & \quad \UseVerb{CTR_ACTIVE_LB}
@@ -355,7 +356,7 @@ $i\not\in \mathcal{W}^{(k)}$, $v_i^{\star(k)} = 0$.
 If $a_i^Tx^{(0)} \in [\ubar{b}_i,\bar{b}_i]$, $v_i^{(0)} \leftarrow 0$. Otherwise
 %
 \begin{align} \label{eq.v0_inactive}
-  v_i^{(0)} \leftarrow \left\{ 
+  v_i^{(0)} \leftarrow \left\{
   \begin{array}{l l}
     a^T_ix^{(0)} - b_{\mathit{closest}} & \quad \UseVerb{set_min_init_ctr_violation} = \UseVerb{true} \\
     a^T_ix^{(0)} - \frac{1}{2}(\ubar{b}_i + \bar{b}_i) & \quad \UseVerb{set_min_init_ctr_violation} = \UseVerb{false}
@@ -386,7 +387,7 @@ iteration) a \UseVerb{lexlse} problem must solved. Of course, if a full step can
 \item Set
   %
   \begin{align*}
-    \Delta v_i^{(0)} \leftarrow \left\{ 
+    \Delta v_i^{(0)} \leftarrow \left\{
     \begin{array}{l l}
       0 & \quad \text{if} \,\,\,\, i\in\mathcal{W}^{(0)} \\
       -v_i^{(0)} & \quad \text{if} \,\,\,\, i\not\in\mathcal{W}^{(0)}
@@ -415,7 +416,7 @@ are performed:
 \item Update $v^{(0)}$, \emph{i.e.,} take a step
   %
   \begin{align*}
-    \begin{bmatrix} x^{(0)} \\ v^{(0)} \end{bmatrix} \leftarrow 
+    \begin{bmatrix} x^{(0)} \\ v^{(0)} \end{bmatrix} \leftarrow
     \begin{bmatrix} x^{(0)} \\ v^{(0)} \end{bmatrix} +
     \alpha\begin{bmatrix} 0 \\ \Delta v^{(0)} \end{bmatrix}.
   \end{align*}
@@ -440,7 +441,7 @@ The active-set method starts with the next call of \UseVerb{verifyWorkingSet}.
     \hspace{1.4cm}\UseVerb{modify_type_active_enabled}
   }
   \KwOut{\UseVerb{type}}
-  
+
   \vspace{0.2cm}
 
   \If{$\ubar{b}_i = \bar{b}_i$}{\KwRet{\upshape\color{blue}\UseVerb{CTR_ACTIVE_EQ}}}
@@ -449,7 +450,7 @@ The active-set method starts with the next call of \UseVerb{verifyWorkingSet}.
 
   \If{\upshape\UseVerb{type} = \UseVerb{CTR_ACTIVE_EQ}}
       {
-        \UseVerb{type} $\leftarrow$ \UseVerb{CTR_INACTIVE} \tcc{(possibly) report an error} 
+        \UseVerb{type} $\leftarrow$ \UseVerb{CTR_INACTIVE} \tcc{(possibly) report an error}
       }
 
   \vspace{0.2cm}
@@ -457,14 +458,14 @@ The active-set method starts with the next call of \UseVerb{verifyWorkingSet}.
   \If{\upshape\color{blue}\UseVerb{x_guess_is_specified}}
       {
         \vspace{0.2cm}
-        
+
         \If{\upshape{\color{blue}\UseVerb{type} = \UseVerb{CTR_INACTIVE}} {\bf and} \color{blue}\UseVerb{modify_type_inactive_enabled}}{
           \If{\upshape$a_i^Tx^{\mathit{guess}} \leq \ubar{b}_i$}{\KwRet \UseVerb{CTR_ACTIVE_LB}}
           \If{\upshape$a_i^Tx^{\mathit{guess}} \geq \bar{b}_i$}{\KwRet \UseVerb{CTR_ACTIVE_UB}}
         }
-        
+
         \vspace{0.2cm}
-        
+
         \If{\upshape{\color{blue}\UseVerb{type} = \UseVerb{CTR_ACTIVE_LB}} {\bf and} \color{blue}\UseVerb{modify_type_active_enabled}}
            {
              \If{\upshape$a_i^Tx^{\mathit{guess}} > \ubar{b}_i$}
@@ -472,9 +473,9 @@ The active-set method starts with the next call of \UseVerb{verifyWorkingSet}.
                   \eIf{\upshape$a_i^Tx^{\mathit{guess}} < \bar{b}_i$}{\KwRet\UseVerb{CTR_INACTIVE}}{\KwRet\UseVerb{CTR_ACTIVE_UB}}
                 }
            }
-        
+
         \vspace{0.2cm}
-        
+
         \If{\upshape{\color{blue}\UseVerb{type} = \UseVerb{CTR_ACTIVE_UB}} {\bf and} \color{blue}\UseVerb{modify_type_active_enabled}}
            {
              \If{\upshape$a_i^Tx^{\mathit{guess}} < \bar{b}_i$}
@@ -498,7 +499,7 @@ The active-set method starts with the next call of \UseVerb{verifyWorkingSet}.
     \hspace{1.4cm}(note: {\color{blue}\UseVerb{type} is the the output of Algorithm~\ref{alg.type}}), \\
     \hspace{1.2cm} \UseVerb{modify_x_guess_enabled}}
   \KwOut{(possibly) modified $x^{\mathit{guess}}$}
-  
+
   \vspace{0.2cm}
 
   \eIf{\upshape\color{blue}\UseVerb{modify_x_guess_enabled} = \UseVerb{false}}{\KwRet $x^{\mathit{guess}}$}
@@ -508,21 +509,21 @@ The active-set method starts with the next call of \UseVerb{verifyWorkingSet}.
         \For{$i \in \{$all constraints in first objective$\}$}
             {
               \vspace{0.2cm}
-              
+
               $k \leftarrow $ index of element of $x$ participating in the $i$-th simple bound
 
               \vspace{0.2cm}
 
               \If{\upshape{\color{blue}\UseVerb{type} = \UseVerb{CTR_ACTIVE_LB}}}
                  {$x_k^{\mathit{guess}} \leftarrow \ubar{b}_i$}
-           
+
               \vspace{0.2cm}
-           
+
               \If{\upshape{\color{blue}\UseVerb{type} = \UseVerb{CTR_ACTIVE_UB}} {\bf or} {\color{blue}\UseVerb{type} = \UseVerb{CTR_ACTIVE_EQ}}}
                  {$x_k^{\mathit{guess}} \leftarrow \bar{b}_i$}
-              
+
               \vspace{0.2cm}
-              
+
               \If{\upshape{\color{blue}\UseVerb{type} = \UseVerb{CTR_INACTIVE}}}
                  {$x_k^{\mathit{guess}} \leftarrow \frac{1}{2}(\ubar{b}_i + \bar{b}_i)$ \tcc{other choices are possible (skip for now)}}
             }
@@ -534,33 +535,33 @@ The active-set method starts with the next call of \UseVerb{verifyWorkingSet}.
 \begin{algorithm} \label{alg.W0}
   \caption{form $W^{(0)}$}
   \KwData{\UseVerb{x_guess_is_specified}, \UseVerb{modify_x_guess_enabled}}
-  
+
   \vspace{0.2cm}
 
-  \eIf{\upshape{\color{blue}\UseVerb{x_guess_is_specified}} {\bf and} \\ 
-               \hspace{0.45cm}{\color{blue}\UseVerb{modify_x_guess_enabled}} {\bf and} \\ 
+  \eIf{\upshape{\color{blue}\UseVerb{x_guess_is_specified}} {\bf and} \\
+               \hspace{0.45cm}{\color{blue}\UseVerb{modify_x_guess_enabled}} {\bf and} \\
                \hspace{0.45cm}{\color{blue}\UseVerb{SIMPLE_BOUNDS_OBJECTIVE}}}
       {
         \For{$i \in \{$all constraints in first objective$\}$}
             {
-              \UseVerb{type}($i$) $\leftarrow$ \UseVerb{determine_ctr_type}($i$) 
+              \UseVerb{type}($i$) $\leftarrow$ \UseVerb{determine_ctr_type}($i$)
             }
 
         \vspace{0.2cm}
 
         {\color{blue}\UseVerb{update_x_guess}($x^{\mathit{guess}}$)}
-        
+
         \vspace{0.2cm}
-        
+
         \For{$i \in \{$all constraints in remaining objectives$\}$}
             {
-              \UseVerb{type}($i$) $\leftarrow$ \UseVerb{determine_ctr_type}($i$) 
+              \UseVerb{type}($i$) $\leftarrow$ \UseVerb{determine_ctr_type}($i$)
             }
       }
       {
         \For{$i \in \{$all constraints$\}$}
             {
-              \UseVerb{type}($i$) $\leftarrow$ \UseVerb{determine_ctr_type}($i$) 
+              \UseVerb{type}($i$) $\leftarrow$ \UseVerb{determine_ctr_type}($i$)
             }
       }
 \end{algorithm}
@@ -570,7 +571,7 @@ The active-set method starts with the next call of \UseVerb{verifyWorkingSet}.
 \section{Advanced initialization} \label{sec.advanced_initialization}
 
 The user can initialize directly $\{\mathcal{W}^{(0)}, x^{(0)}, v^{(0)}\}$. This can be achieved by
-specifying $v^{(0)}$ in addition to $\mathcal{W}^{\mathit{guess}}$ and $x^{\mathit{guess}}$. The bahevior of the solver then is 
+specifying $v^{(0)}$ in addition to $\mathcal{W}^{\mathit{guess}}$ and $x^{\mathit{guess}}$. The bahevior of the solver then is
 %
 \begin{enumerate}
 \item Set $\mathcal{W}^{(0)} \leftarrow \mathcal{W}^{\mathit{guess}}$.
@@ -589,21 +590,21 @@ Several important notes:
 \end{document}
 
                 // --------------------------------------------------------
-                // reduce constraint violation 
+                // reduce constraint violation
                 // --------------------------------------------------------
                 // We have two options:
                 //
                 // 1. Reduce constraint violation and aim at the (x_star,v_star).
-                //    Hence, we need to solve a lexlse problem. 
+                //    Hence, we need to solve a lexlse problem.
                 //
-                // 2. Reduce constraint violation and simply add blocking 
-                //    constraint (if such exists). Hence, we might be able to  
+                // 2. Reduce constraint violation and simply add blocking
+                //    constraint (if such exists). Hence, we might be able to
                 //    make one step without solving a lexlse problem. Of course,
                 //    it is not clear whether this is a step we want to make
                 //    (todo: compare on some interesting problem)
-                //   
-                //    In order to implement the second option, maybe we can 
-                //    add a call to checkBlockingConstraints(...) folowed by 
+                //
+                //    In order to implement the second option, maybe we can
+                //    add a call to checkBlockingConstraints(...) folowed by
                 //    a call to api_activate(...)
                 //
 
