@@ -17,9 +17,13 @@ namespace LexLS
 
             \todo Bug in cycling detection
 
-            \todo default initialization with set_min_init_ctr_violation = true
+            \todo When the first objective is of type SIMPLE_BOUNDS_OBJECTIVE, the user has to
+            specify the indexes of the variables and their corresponding bounds. To monitor whether
+            the bounds for the i-th variables have already been specified and if the user sets them
+            again to give an error message.
 
-            \todo create a debug output for matlab/octave interface (put "rank", "working_set_log")
+            \todo When solving a sequence of inequality constrained problem we could reuse some of
+            the memory.
         */
         class LexLSI
         {
@@ -405,34 +409,48 @@ namespace LexLS
             }
 
             /**
-                \brief Outputs the Lagrange multipliers associated to the constraintes involved in all objectives
+                \brief Outputs the Lagrange multipliers associated to all constraintes involved in all objectives
 
-                \note The column corresponding to SIMPLE_BOUNDS_OBJECTIVE is stored
-
-                \note The order of the constraints in the active set is preserved.
-
-                \attention Note that L is returned by value.
+                \note The order of constraints is like the one provided by the user (in the problem definition)
             */
-            dMatrixType getLambda()
+            void getLambda(dMatrixType & L)
             {
-                Index nActiveCtr = 0;
+                Index nActiveCtr = 0; // number of active constraints
+                Index nAllCtr    = 0; // number of all constraints
                 for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
                 {
                     nActiveCtr += lexlse.getDim(ObjIndex);
+                    nAllCtr    += getObjDim(ObjIndex);
                 }
 
-                dMatrixType L = dMatrixType::Zero(nActiveCtr,nObj);
-
+                // "L_active" contains only the Lagrange multipliers associated to the active
+                // constraints in the working set (the order in the working set is preserved).
+                dMatrixType L_active = dMatrixType::Zero(nActiveCtr,nObj);
                 Index nMeaningful = lexlse.getFixedVariablesCount();
                 for (Index ObjIndex=0; ObjIndex<nObj-nObjOffset; ObjIndex++) // Objectives of LexLSE
                 {
                     lexlse.ObjectiveSensitivity(ObjIndex);
 
                     nMeaningful += lexlse.getDim(ObjIndex);
-                    L.col(nObjOffset + ObjIndex).head(nMeaningful) = lexlse.getWorkspace().head(nMeaningful);
+                    L_active.col(nObjOffset + ObjIndex).head(nMeaningful) = lexlse.getWorkspace().head(nMeaningful);
                 }
 
-                return L;
+                L.setZero(nAllCtr,nObj);
+
+                Index ind;
+                Index accumulate_ctr        = 0;
+                Index accumulate_active_ctr = 0;
+
+                for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++) // Objectives of LexLSI
+                {
+                    for (Index k=0; k<objectives[ObjIndex].getActiveCtrCount(); k++)
+                    {
+                        ind = objectives[ObjIndex].getActiveCtrIndex(k);
+                        L.row(accumulate_ctr+ind) = L_active.row(accumulate_active_ctr+k);
+                    }
+                    accumulate_ctr        += getObjDim(ObjIndex);
+                    accumulate_active_ctr += objectives[ObjIndex].getActiveCtrCount();
+                }
             }
 
             /**

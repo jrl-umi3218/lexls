@@ -14,6 +14,9 @@ namespace LexLS
 
             \todo Should I resize fixed_var_type.resize(nVar) and fixed_var_index.resize(nVar) only once (in
             active-set iterations)?
+
+            \todo Now I initialize memory for many additional matrices related to the
+            regularization. This could be improved.
         */
         class LexLSE
         {
