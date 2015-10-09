@@ -537,7 +537,7 @@ namespace LexLS
             /**
                 \brief Returns working_set_log
             */
-            std::vector<ConstraintIdentifier>& getWorkingSetLog()
+            std::vector<WorkingSetLogEntry>& getWorkingSetLog()
             {
                 return working_set_log;
             }
@@ -624,6 +624,8 @@ namespace LexLS
                     formLexLSE();
                     lexlse.factorize();
                     lexlse.solve(); // solve lexlse based on initial working set
+                    lexlse_rank = getTotalRank();
+
                     x = lexlse.get_x();
                 }
 
@@ -649,6 +651,7 @@ namespace LexLS
                     formLexLSE();
                     lexlse.factorize();
                     lexlse.solve(); // solve lexlse based on initial working set
+                    lexlse_rank = getTotalRank();
 
                     dx = lexlse.get_x() - x; // take a step towards x_star
                 }
@@ -756,6 +759,7 @@ namespace LexLS
                 nActivations    = 0;
                 nDeactivations  = 0;
                 nFactorizations = 0;
+                lexlse_rank     = 0;
 
                 step_length = 0;
 
@@ -886,6 +890,7 @@ namespace LexLS
 
                     lexlse.factorize();
                     lexlse.solve();
+                    lexlse_rank = getTotalRank();
 
                     formStep();
 
@@ -908,12 +913,13 @@ namespace LexLS
 
                     if (parameters.log_working_set_enabled)
                     {
-                        ConstraintIdentifier ci(ObjIndex2Manipulate,
+                        WorkingSetLogEntry wlog(ObjIndex2Manipulate,
                                                 CtrIndex2Manipulate,
                                                 CtrType2Manipulate,
-                                                alpha);
+                                                alpha,
+                                                lexlse_rank);
 
-                        working_set_log.push_back(ci);
+                        working_set_log.push_back(wlog);
                     }
 
                     operation = OPERATION_ADD;
@@ -935,12 +941,13 @@ namespace LexLS
 
                             if (parameters.log_working_set_enabled)
                             {
-                                ConstraintIdentifier ci(ObjIndex2Manipulate,
+                                WorkingSetLogEntry wlog(ObjIndex2Manipulate,
                                                         objectives[ObjIndex2Manipulate].getActiveCtrIndex(CtrIndex2Manipulate),
                                                         CTR_INACTIVE,
-                                                        lambda_wrong_sign);
+                                                        lambda_wrong_sign,
+                                                        lexlse_rank);
 
-                                working_set_log.push_back(ci);
+                                working_set_log.push_back(wlog);
                             }
 
                             operation = OPERATION_REMOVE;
@@ -1150,6 +1157,11 @@ namespace LexLS
             */
             Index nIterations;
 
+            /*
+              \brief Stores the rank of the constraints in the last solved lexlse problem
+            */
+            Index lexlse_rank;
+
             /**
                 \brief If x_guess_is_specified == true, the function set_x0(dVectorType &x0) has been
                 called and x0 has been initialized.
@@ -1211,7 +1223,7 @@ namespace LexLS
             /**
                 \brief Vector containing activation/deactivation info for each iteration
             */
-            std::vector<ConstraintIdentifier> working_set_log;
+            std::vector<WorkingSetLogEntry> working_set_log;
 
             /**
                 \brief Handle cycling

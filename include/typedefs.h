@@ -301,9 +301,68 @@ namespace LexLS
         std::string ExceptionMessage;
     };
 
+    /**
+        \brief A class used to store information related to the working set.
+    */
+    class WorkingSetLogEntry
+    {
+    public:
+
+        WorkingSetLogEntry(){}
+
+        WorkingSetLogEntry(Index obj_index_, Index ctr_index_, ConstraintActivationType ctr_type_,
+                           RealScalar alpha_or_lambda_, Index rank_):
+            obj_index(obj_index_),
+            ctr_index(ctr_index_),
+            ctr_type(ctr_type_),
+            alpha_or_lambda(alpha_or_lambda_),
+            rank(rank_),
+            cycling_detected(false){}
+
+        /**
+            \brief Index of objective
+        */
+        Index obj_index;
+
+        /**
+            \brief Index of constraint
+
+            \note This index could mean different things (depending on how an instance of this class
+            is used): (i) if a constraint is to be included in the active set ctr_index is the index
+            within objective obj_index; (ii) if a constraint is to be removed from the working set,
+            ctr_index indicates the index within the set of active constraints.
+        */
+        Index ctr_index;
+
+        /**
+            \brief Type of constraint
+        */
+        ConstraintActivationType ctr_type;
+
+        /**
+           \brief Used to store the step length when constraint is added and largest (in
+           absolute value) worng lambda when constraint is removed
+
+           \note: not used when comparing
+        */
+        RealScalar alpha_or_lambda;
+
+        /**
+           \brief Rank of active constraints
+        */
+        Index rank;
+
+        /**
+           \brief it true, cycling has been detected
+        */
+        bool cycling_detected;
+    };
+
 
     /**
         \brief A class used to identify a constraint.
+
+        \todo Remove stuff not used in this class (alpha_or_lambda, cycling_detected)
     */
     class ConstraintIdentifier
     {
@@ -395,7 +454,6 @@ namespace LexLS
         */
         bool cycling_detected;
     };
-
 
 
     // ----------------------------------------------------------------------------------------------------------
