@@ -413,14 +413,14 @@ namespace LexLS
 
                 \note The order of constraints is like the one provided by the user (in the problem definition)
             */
-            void getLambda(dMatrixType & L)
+            void getLambda(std::vector<dMatrixType> & vec_lambda)
             {
                 Index nActiveCtr = 0; // number of active constraints
-                Index nAllCtr    = 0; // number of all constraints
+                vec_lambda.resize(nObj);
                 for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
                 {
                     nActiveCtr += lexlse.getDim(ObjIndex);
-                    nAllCtr    += getObjDim(ObjIndex);
+                    vec_lambda[ObjIndex].setZero(getObjDim(ObjIndex),nObj);
                 }
 
                 // "L_active" contains only the Lagrange multipliers associated to the active
@@ -435,10 +435,7 @@ namespace LexLS
                     L_active.col(nObjOffset + ObjIndex).head(nMeaningful) = lexlse.getWorkspace().head(nMeaningful);
                 }
 
-                L.setZero(nAllCtr,nObj);
-
                 Index ind;
-                Index accumulate_ctr        = 0;
                 Index accumulate_active_ctr = 0;
 
                 for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++) // Objectives of LexLSI
@@ -446,9 +443,8 @@ namespace LexLS
                     for (Index k=0; k<objectives[ObjIndex].getActiveCtrCount(); k++)
                     {
                         ind = objectives[ObjIndex].getActiveCtrIndex(k);
-                        L.row(accumulate_ctr+ind) = L_active.row(accumulate_active_ctr+k);
+                        vec_lambda[ObjIndex].row(ind) = L_active.row(accumulate_active_ctr+k);
                     }
-                    accumulate_ctr        += getObjDim(ObjIndex);
                     accumulate_active_ctr += objectives[ObjIndex].getActiveCtrCount();
                 }
             }
