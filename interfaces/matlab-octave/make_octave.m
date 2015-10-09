@@ -17,7 +17,7 @@ FILE{2}       = 'lexlsi.cpp';
 %setenv('CXXFLAGS', ' -g -pedantic -Wall -std=c++98 -O0 -fno-strict-aliasing  -D_THREAD_SAFE -pthread ')
 %setenv('DL_LDFLAGS', ' -g -shared -Wl,-x ');
 %setenv('CXXFLAGS', cstrcat(octave_config_info.CXXFLAGS, ' -pedantic -Wall -O3 -DNDEBUG '))
-setenv('CXXFLAGS', '-march=native -fstack-protector -fno-strict-aliasing  -D_THREAD_SAFE -pthread -pedantic -Wall -O3 -DNDEBUG ')
+setenv('CXXFLAGS', '-march=native -fstack-protector -fno-strict-aliasing -D_THREAD_SAFE -pthread -pedantic -Wall -O3 -DNDEBUG ')
 % ------------------------------------------------------------
 % compilation 
 % ------------------------------------------------------------

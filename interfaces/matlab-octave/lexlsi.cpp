@@ -14,7 +14,7 @@
 const int MIN_INPUTS = 1;
 const int MAX_INPUTS = 5;
 const int MIN_OUTPUTS = 1;
-const int MAX_OUTPUTS = 4;
+const int MAX_OUTPUTS = 5;
 const int MIN_NUMBER_OF_FIELDS_IN_OBJ = 3;
 
 
@@ -24,21 +24,17 @@ mxArray * formInfoStructure (
         const int num_activations,
         const int num_deactivations,
         const int num_factorizations,
-        const int cycling_counter,
-        const int rank,
-        const std::vector<LexLS::ConstraintIdentifier> &working_set_log)
+        const int cycling_counter)
 {
     mxArray * info_struct;
 
-    int num_info_fields = 7;
+    int num_info_fields = 5;
     const char *info_field_names[] = {
         "status",
         "number_of_activations",
         "number_of_deactivations",
         "number_of_factorizations",
         "cycling_counter",
-        "working_set_log",
-        "rank"
     };
 
 
@@ -61,6 +57,7 @@ mxArray * formInfoStructure (
             status = STATUS_UNKNOWN_FAILURE;
             break;
     }
+
     mxArray *info_status = mxCreateNumericMatrix(1, 1, mxINT64_CLASS, mxREAL);
     ((INT64_T *) mxGetData (info_status))[0] = status;
     mxSetField (info_struct, 0, "status", info_status);
@@ -81,20 +78,37 @@ mxArray * formInfoStructure (
     ((INT64_T *) mxGetData (info_cycling))[0] = cycling_counter;
     mxSetField (info_struct, 0, "cycling_counter", info_cycling);
 
-    mxArray *info_rank = mxCreateNumericMatrix(1, 1, mxINT64_CLASS, mxREAL);
-    ((INT64_T *) mxGetData (info_rank))[0] = rank;
-    mxSetField (info_struct, 0, "rank", info_rank);
+
+    return (info_struct);
+}
+
+
+mxArray * formDebugStructure (
+        const std::vector<LexLS::WorkingSetLogEntry> &working_set_log,
+        const std::vector<LexLS::dMatrixType> &lambda)
+{
+    mxArray * info_struct;
+
+    int num_info_fields = 2;
+    const char *info_field_names[] = {
+        "working_set_log",
+        "lambda",
+    };
+
+
+    info_struct = mxCreateStructMatrix(1, 1, num_info_fields, info_field_names);
 
 
     mxArray * ws_info_struct;
 
-    int num_ws_info_fields = 5;
+    int num_ws_info_fields = 6;
     const char *ws_info_field_names[] = {
         "obj_index",
         "ctr_index",
         "ctr_type",
         "alpha_or_lambda",
-        "cycling_detected"
+        "cycling_detected",
+        "rank"
     };
 
     ws_info_struct = mxCreateStructMatrix(working_set_log.size(), 1, num_ws_info_fields, ws_info_field_names);
@@ -107,24 +121,55 @@ mxArray * formInfoStructure (
         mxArray *ctr_type           = mxCreateNumericMatrix(1, 1, mxINT64_CLASS, mxREAL);
         mxArray *alpha_or_lambda    = mxCreateNumericMatrix(1, 1, mxDOUBLE_CLASS, mxREAL);
         mxArray *cycling_detected   = mxCreateNumericMatrix(1, 1, mxINT64_CLASS, mxREAL);
+        mxArray *rank               = mxCreateNumericMatrix(1, 1, mxINT64_CLASS, mxREAL);
+
+
 
         ((INT64_T *) mxGetData (obj_index       ))[0] = working_set_log[i].obj_index;
         ((INT64_T *) mxGetData (ctr_index       ))[0] = working_set_log[i].ctr_index;
         ((INT64_T *) mxGetData (ctr_type        ))[0] = working_set_log[i].ctr_type;
         ((double *)  mxGetData (alpha_or_lambda ))[0] = working_set_log[i].alpha_or_lambda;
         ((INT64_T *) mxGetData (cycling_detected))[0] = working_set_log[i].cycling_detected;
+        ((INT64_T *) mxGetData (rank            ))[0] = working_set_log[i].rank;
 
         mxSetField (ws_info_struct, i, "obj_index", obj_index);
         mxSetField (ws_info_struct, i, "ctr_index", ctr_index);
         mxSetField (ws_info_struct, i, "ctr_type", ctr_type);
         mxSetField (ws_info_struct, i, "alpha_or_lambda", alpha_or_lambda );
         mxSetField (ws_info_struct, i, "cycling_detected", cycling_detected);
+        mxSetField (ws_info_struct, i, "rank", rank);
     }
 
     mxSetField (info_struct, 0, "working_set_log", ws_info_struct);
 
+
+    mxArray * lambda_cell = mxCreateCellMatrix(lambda.size(), 1);
+
+    for (unsigned int i = 0; i < lambda.size(); ++i)
+    {
+        unsigned int num_rows = lambda[i].rows();
+        unsigned int num_cols = lambda[i].cols();
+
+
+        mxArray * lambda_i = mxCreateDoubleMatrix(num_rows, num_cols, mxREAL);
+
+
+        for (unsigned int k = 0; k < num_cols; ++k)
+        {
+            for (unsigned int j = 0; j < num_rows; ++j)
+            {
+                mxGetPr(lambda_i)[j + k * num_cols] = lambda[i](j,k);
+            }
+        }
+
+        mxSetCell(lambda_cell, i, lambda_i);
+    }
+
+    mxSetField (info_struct, 0, "lambda", lambda_cell);
+
     return (info_struct);
 }
+
 
 
 /**
@@ -569,8 +614,6 @@ void mexFunction( int num_output, mxArray *output[],
         LexLS::Index num_deactivations;
         LexLS::Index num_factorizations;
         LexLS::Index cycling_counter;
-        LexLS::Index rank;
-        std::vector<LexLS::ConstraintIdentifier> working_set_log;
 
         try
         {
@@ -578,8 +621,6 @@ void mexFunction( int num_output, mxArray *output[],
             num_deactivations = lexlsi.getDeactivationsCount();
             num_factorizations = lexlsi.getFactorizationsCount();
             cycling_counter = lexlsi.getCyclingCounter();
-            rank = lexlsi.getTotalRank();
-            working_set_log = lexlsi.getWorkingSetLog();
         }
         catch (std::exception &e)
         {
@@ -589,44 +630,16 @@ void mexFunction( int num_output, mxArray *output[],
                                         num_activations,
                                         num_deactivations,
                                         num_factorizations,
-                                        cycling_counter,
-                                        rank,
-                                        working_set_log);
+                                        cycling_counter);
     }
 
-// output residual
-    if (num_output >= 3)
-    {
-        output[2] = mxCreateCellMatrix(num_obj, 1);
-        for (unsigned int i = 0; i < num_obj; ++i)
-        {
-
-            try
-            {
-                //LexLS::dVectorType& w = lexlsi.get_v(i);
-                LexLS::dVectorType w;
-                lexlsi.getConstraintViolation(i,w);
-                mxArray * wi = mxCreateDoubleMatrix(num_constr[i], 1, mxREAL);
-                for (LexLS::Index j = 0; j < num_constr[i]; ++j)
-                {
-                    mxGetPr(wi)[j] = w(j);
-                }
-
-                mxSetCell(output[2], i, wi);
-            }
-            catch (std::exception &e)
-            {
-                mexErrMsgTxt(e.what());
-            }
-        }
-    }
 
 // output active set
-    if (num_output >= 4)
+    if (num_output >= 3)
     {
         std::vector<LexLS::ConstraintActivationType> lexlsi_active_constraints;
 
-        output[3] = mxCreateCellMatrix(num_obj, 1);
+        output[2] = mxCreateCellMatrix(num_obj, 1);
 
         for (unsigned int i = 0; i < num_obj; ++i)
         {
@@ -659,7 +672,55 @@ void mexFunction( int num_output, mxArray *output[],
                         break;
                 }
             }
-            mxSetCell(output[3], i, active_constraints);
+            mxSetCell(output[2], i, active_constraints);
         }
+    }
+
+
+// output residual
+    if (num_output >= 4)
+    {
+        output[3] = mxCreateCellMatrix(num_obj, 1);
+        for (unsigned int i = 0; i < num_obj; ++i)
+        {
+
+            try
+            {
+                //LexLS::dVectorType& w = lexlsi.get_v(i);
+                LexLS::dVectorType w;
+                lexlsi.getConstraintViolation(i,w);
+                mxArray * wi = mxCreateDoubleMatrix(num_constr[i], 1, mxREAL);
+                for (LexLS::Index j = 0; j < num_constr[i]; ++j)
+                {
+                    mxGetPr(wi)[j] = w(j);
+                }
+
+                mxSetCell(output[3], i, wi);
+            }
+            catch (std::exception &e)
+            {
+                mexErrMsgTxt(e.what());
+            }
+        }
+    }
+
+
+// output debug information
+    if (num_output >= 5)
+    {
+        std::vector<LexLS::WorkingSetLogEntry> working_set_log;
+        std::vector<LexLS::dMatrixType> lambda;
+
+        try
+        {
+            working_set_log = lexlsi.getWorkingSetLog();
+            lexlsi.getLambda(lambda);
+        }
+        catch (std::exception &e)
+        {
+            mexErrMsgTxt(e.what());
+        }
+        output[4] = formDebugStructure( working_set_log, 
+                                        lambda);
     }
 }
