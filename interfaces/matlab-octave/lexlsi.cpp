@@ -158,7 +158,7 @@ mxArray * formDebugStructure (
         {
             for (unsigned int j = 0; j < num_rows; ++j)
             {
-                mxGetPr(lambda_i)[j + k * num_cols] = lambda[i](j,k);
+                mxGetPr(lambda_i)[j + k * num_rows] = lambda[i](j,k);
             }
         }
 
@@ -720,7 +720,7 @@ void mexFunction( int num_output, mxArray *output[],
         {
             mexErrMsgTxt(e.what());
         }
-        output[4] = formDebugStructure( working_set_log, 
+        output[4] = formDebugStructure( working_set_log,
                                         lambda);
     }
 }

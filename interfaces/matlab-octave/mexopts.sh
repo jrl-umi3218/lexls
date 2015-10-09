@@ -27,7 +27,7 @@
     MFLAGS=''
     if [ "$ENTRYPOINT" = "mexLibrary" ]; then
         MLIBS="-L$TMW_ROOT/bin/$Arch -lmx -lmex -lmat -lmwservices -lut"
-    else  
+    else
         MLIBS="-L$TMW_ROOT/bin/$Arch -lmx -lmex -lmat"
     fi
     case "$Arch" in
@@ -53,19 +53,19 @@
             CFLAGS='-ansi -D_GNU_SOURCE'
             CFLAGS="$CFLAGS -fPIC -pthread -m32"
             CFLAGS="$CFLAGS  -fexceptions"
-            CFLAGS="$CFLAGS -D_FILE_OFFSET_BITS=64" 
+            CFLAGS="$CFLAGS -D_FILE_OFFSET_BITS=64"
             CLIBS="$RPATH $MLIBS -lm"
             COPTIMFLAGS='-O -DNDEBUG'
             CDEBUGFLAGS='-g'
             CLIBS="$CLIBS -lstdc++"
-#           
+#
             # C++keyName: GNU C++
             # C++keyManufacturer: GNU
             # C++keyLanguage: C++
-            # C++keyVersion: 
+            # C++keyVersion:
             CXX='g++'
             CXXFLAGS='-ansi -D_GNU_SOURCE'
-            CXXFLAGS="$CXXFLAGS -D_FILE_OFFSET_BITS=64" 
+            CXXFLAGS="$CXXFLAGS -D_FILE_OFFSET_BITS=64"
             CXXFLAGS="$CXXFLAGS -fPIC -pthread"
             CXXLIBS="$RPATH $MLIBS -lm"
             CXXOPTIMFLAGS='-O -DNDEBUG'
@@ -75,7 +75,7 @@
             # FortrankeyName: gfortran
             # FortrankeyManufacturer: GNU
             # FortrankeyLanguage: Fortran
-            # FortrankeyVersion: 
+            # FortrankeyVersion:
             FC='gfortran'
             FFLAGS='-fexceptions -fbackslash'
             FFLAGS="$FFLAGS -fPIC"
@@ -112,7 +112,7 @@
             # C++keyName: GNU C++
             # C++keyManufacturer: GNU
             # C++keyLanguage: C++
-            # C++keyVersion: 
+            # C++keyVersion:
             CXX='g++'
             CXXFLAGS='-ansi -D_GNU_SOURCE'
             CXXFLAGS="$CXXFLAGS -fPIC -fno-omit-frame-pointer -pthread"
@@ -123,7 +123,7 @@
             # FortrankeyName: gfortran
             # FortrankeyManufacturer: GNU
             # FortrankeyLanguage: Fortran
-            # FortrankeyVersion: 
+            # FortrankeyVersion:
 #
             FC='gfortran'
             FFLAGS='-fexceptions -fbackslash'
@@ -164,7 +164,7 @@ echo "Error: Did not imbed 'options.sh' code"; exit 1 #imbed options.sh maci 12
             # CkeyLanguage: C
             # CkeyVersion:
             CC='llvm-gcc'
-            SDKROOT='/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.9.sdk'
+            SDKROOT='/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk'
             MACOSX_DEPLOYMENT_TARGET='10.7'
             ARCHS='x86_64'
             CFLAGS="-fno-common -no-cpp-precomp -arch $ARCHS -isysroot $SDKROOT -mmacosx-version-min=$MACOSX_DEPLOYMENT_TARGET"
@@ -178,7 +178,7 @@ echo "Error: Did not imbed 'options.sh' code"; exit 1 #imbed options.sh maci 12
             # C++keyName: GNU C++
             # C++keyManufacturer: GNU
             # C++keyLanguage: C++
-            # C++keyVersion: 
+            # C++keyVersion:
             CXX=llvm-g++
             CXXFLAGS="-fno-common -no-cpp-precomp -fexceptions -arch $ARCHS -isysroot $SDKROOT -mmacosx-version-min=$MACOSX_DEPLOYMENT_TARGET"
             CXXLIBS="$MLIBS -lstdc++"
@@ -189,7 +189,7 @@ echo "Error: Did not imbed 'options.sh' code"; exit 1 #imbed options.sh maci 12
             # FortrankeyName: GNU Fortran
             # FortrankeyManufacturer: GNU
             # FortrankeyLanguage: Fortran
-            # FortrankeyVersion: 
+            # FortrankeyVersion:
             FC='gfortran'
             FFLAGS='-fexceptions -m64 -fbackslash'
             FC_LIBDIR=`$FC -print-file-name=libgfortran.dylib 2>&1 | sed -n '1s/\/*libgfortran\.dylib//p'`

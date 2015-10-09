@@ -419,7 +419,7 @@ namespace LexLS
                 vec_lambda.resize(nObj);
                 for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
                 {
-                    nActiveCtr += lexlse.getDim(ObjIndex);
+                    nActiveCtr += objectives[ObjIndex].getActiveCtrCount();
                     vec_lambda[ObjIndex].setZero(getObjDim(ObjIndex),nObj);
                 }
 
