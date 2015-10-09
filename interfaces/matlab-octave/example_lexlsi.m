@@ -9,7 +9,7 @@ lexobj(2).A = rand(4,5);
 lexobj(2).ub = rand(4,1);
 lexobj(2).lb = lexobj(2).ub - rand(4,1);
 
-[x, info, as, w] = lexlsi(lexobj)
+[x, info, w] = lexlsi(lexobj)
 
 % test 2
 fprintf('=======================================\n     test 02\n')
@@ -23,7 +23,7 @@ lexobj(2).A = rand(4,6);
 lexobj(2).ub = rand(4,1);
 lexobj(2).lb = lexobj(2).ub - rand(4,1);
 
-[x, info, as, w] = lexlsi(lexobj, options)
+[x, info, w] = lexlsi(lexobj, options)
 
 
 % test 3
@@ -42,7 +42,7 @@ active_set{1} = [];
 active_set{2} = [0; 1; 2; 0];
 
 
-[x, info, as, w] = lexlsi(lexobj, [], active_set)
+[x, info, w] = lexlsi(lexobj, [], active_set)
 
 
 
@@ -62,7 +62,7 @@ active_set_guess = {};
 active_set_guess{1} = [0; 1; 2];
 active_set_guess{2} = [];
 
-[x, info, active_set, w] = lexlsi(lexobj, options, active_set_guess)
+[x, info, w, active_set] = lexlsi(lexobj, options, active_set_guess)
 
 
 
@@ -84,7 +84,7 @@ active_set_guess{2} = [];
 
 x0 = zeros(6,1);
 
-[x, info, active_set, w] = lexlsi(lexobj, options, active_set_guess, x0)
+[x, info, w, active_set] = lexlsi(lexobj, options, active_set_guess, x0)
 
 
 
@@ -102,7 +102,7 @@ lexobj(2).lb = lexobj(2).ub - rand(4,1);
 
 x0 = zeros(6,1);
 
-[x, info, active_set, w] = lexlsi(lexobj, options, [], x0)
+[x, info, w, active_set] = lexlsi(lexobj, options, [], x0)
 
 
 
@@ -124,7 +124,7 @@ lexobj(2).lb = lexobj(2).ub - rand(4,1);
 
 x0 = zeros(6,1);
 
-[x, info, active_set, w] = lexlsi(lexobj, options, [], x0)
+[x, info, w, active_set] = lexlsi(lexobj, options, [], x0)
 
 
 
@@ -148,7 +148,7 @@ x0 = zeros(6,1);
 
 w = active_set_guess;
 
-[x, info, active_set, w] = lexlsi(lexobj, options, active_set_guess, x0, w)
+[x, info, w, active_set] = lexlsi(lexobj, options, active_set_guess, x0, w)
 
 
 
@@ -176,4 +176,4 @@ x0 = zeros(6,1);
 
 w = active_set_guess;
 
-[x, info, active_set, w, debug] = lexlsi(lexobj, options, active_set_guess, x0, w)
+[x, info, w, active_set, debug_info] = lexlsi(lexobj, options, active_set_guess, x0, w)

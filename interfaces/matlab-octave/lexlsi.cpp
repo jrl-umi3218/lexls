@@ -634,12 +634,39 @@ void mexFunction( int num_output, mxArray *output[],
     }
 
 
-// output active set
+// output residual
     if (num_output >= 3)
+    {
+        output[2] = mxCreateCellMatrix(num_obj, 1);
+        for (unsigned int i = 0; i < num_obj; ++i)
+        {
+
+            try
+            {
+                //LexLS::dVectorType& w = lexlsi.get_v(i);
+                LexLS::dVectorType w;
+                lexlsi.getConstraintViolation(i,w);
+                mxArray * wi = mxCreateDoubleMatrix(num_constr[i], 1, mxREAL);
+                for (LexLS::Index j = 0; j < num_constr[i]; ++j)
+                {
+                    mxGetPr(wi)[j] = w(j);
+                }
+
+                mxSetCell(output[2], i, wi);
+            }
+            catch (std::exception &e)
+            {
+                mexErrMsgTxt(e.what());
+            }
+        }
+    }
+
+// output active set
+    if (num_output >= 4)
     {
         std::vector<LexLS::ConstraintActivationType> lexlsi_active_constraints;
 
-        output[2] = mxCreateCellMatrix(num_obj, 1);
+        output[3] = mxCreateCellMatrix(num_obj, 1);
 
         for (unsigned int i = 0; i < num_obj; ++i)
         {
@@ -672,35 +699,7 @@ void mexFunction( int num_output, mxArray *output[],
                         break;
                 }
             }
-            mxSetCell(output[2], i, active_constraints);
-        }
-    }
-
-
-// output residual
-    if (num_output >= 4)
-    {
-        output[3] = mxCreateCellMatrix(num_obj, 1);
-        for (unsigned int i = 0; i < num_obj; ++i)
-        {
-
-            try
-            {
-                //LexLS::dVectorType& w = lexlsi.get_v(i);
-                LexLS::dVectorType w;
-                lexlsi.getConstraintViolation(i,w);
-                mxArray * wi = mxCreateDoubleMatrix(num_constr[i], 1, mxREAL);
-                for (LexLS::Index j = 0; j < num_constr[i]; ++j)
-                {
-                    mxGetPr(wi)[j] = w(j);
-                }
-
-                mxSetCell(output[3], i, wi);
-            }
-            catch (std::exception &e)
-            {
-                mexErrMsgTxt(e.what());
-            }
+            mxSetCell(output[3], i, active_constraints);
         }
     }
 
