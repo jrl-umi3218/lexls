@@ -17,6 +17,12 @@ namespace LexLS
 
             \todo Now I initialize memory for many additional matrices related to the
             regularization. This could be improved.
+
+            \todo The way we detect singularity now is not good: (maxColNormValue <
+            parameters.tol_linear_dependence). We should use at least the way it is done in
+            Eigen. It is easy to directly take it, but I had some problem with this in the past. We
+            should have many test problem on which to evaluate various singularity detection
+            approaches (and only then to start changing things like this).
         */
         class LexLSE
         {
