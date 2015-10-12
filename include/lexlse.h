@@ -650,7 +650,7 @@ namespace LexLS
                         Lambda.segment(FirstRowIndex, ObjDim);
 
                     //for (int k=ObjIndex-1; k>=0; k--)
-                    for (Index k=ObjIndex; k--; ) //ObjIndex-1, ..., 0.
+                    for (Index k=ObjIndex; k--; ) //ObjIndex-1, ..., 0 (i.e., for all objectives before ObjIndex)
                     {
                         FirstRowIndex = obj_info[k].first_row_index;
                         FirstColIndex = obj_info[k].first_col_index;
@@ -1394,6 +1394,11 @@ namespace LexLS
             dVectorType& getWorkspace()
             {
                 return dWorkspace;
+            }
+
+            dMatrixType get_lexqr()
+            {
+                return LOD;
             }
 
             /**

@@ -3,6 +3,9 @@
 
 #include <typedefs.h>
 
+/*
+  Not in class definition, so define as inline (otherwise error if .h is included multiple times)
+*/
 namespace LexLS
 {
     /**

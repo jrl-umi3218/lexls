@@ -85,14 +85,16 @@ mxArray * formInfoStructure (
 
 mxArray * formDebugStructure (
         const std::vector<LexLS::WorkingSetLogEntry> &working_set_log,
-        const std::vector<LexLS::dMatrixType> &lambda)
+        const std::vector<LexLS::dMatrixType> &lambda,
+        const LexLS::dMatrixType &lexqr)
 {
     mxArray * info_struct;
 
-    int num_info_fields = 2;
+    int num_info_fields = 3;
     const char *info_field_names[] = {
         "working_set_log",
         "lambda",
+        "lexqr",
     };
 
 
@@ -166,6 +168,23 @@ mxArray * formDebugStructure (
     }
 
     mxSetField (info_struct, 0, "lambda", lambda_cell);
+
+    // ----------------------------------------------------------------
+
+    unsigned int num_rows = lexqr.rows();
+    unsigned int num_cols = lexqr.cols();
+
+    mxArray * lexqr_ = mxCreateDoubleMatrix(num_rows, num_cols, mxREAL);
+
+    for (unsigned int k = 0; k < num_cols; ++k)
+    {
+        for (unsigned int j = 0; j < num_rows; ++j)
+        {
+            mxGetPr(lexqr_)[j + k * num_rows] = lexqr(j,k);
+        }
+    }
+
+    mxSetField (info_struct, 0, "lexqr", lexqr_);
 
     return (info_struct);
 }
@@ -709,17 +728,20 @@ void mexFunction( int num_output, mxArray *output[],
     {
         std::vector<LexLS::WorkingSetLogEntry> working_set_log;
         std::vector<LexLS::dMatrixType> lambda;
+        LexLS::dMatrixType lexqr;
 
         try
         {
             working_set_log = lexlsi.getWorkingSetLog();
             lexlsi.getLambda(lambda);
+            lexqr = lexlsi.get_lexqr();
         }
         catch (std::exception &e)
         {
             mexErrMsgTxt(e.what());
         }
         output[4] = formDebugStructure( working_set_log,
-                                        lambda);
+                                        lambda,
+                                        lexqr);
     }
 }

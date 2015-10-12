@@ -24,6 +24,11 @@ namespace LexLS
 
             \todo When solving a sequence of inequality constrained problem we could reuse some of
             the memory.
+
+            \todo When we solve an equality constrained problem with lexlsi, the working_set_log is of size 0x1. This
+            is because we don't push_back in it (which is normal since there are neither blocking constraints,
+            nor Lagrange multipliers to drop). But what if I am interested only in the rank field! Maybe we
+            should separate rank?
         */
         class LexLSI
         {
@@ -447,6 +452,11 @@ namespace LexLS
                     }
                     accumulate_active_ctr += objectives[ObjIndex].getActiveCtrCount();
                 }
+            }
+
+            dMatrixType get_lexqr()
+            {
+                return lexlse.get_lexqr();
             }
 
             /**
