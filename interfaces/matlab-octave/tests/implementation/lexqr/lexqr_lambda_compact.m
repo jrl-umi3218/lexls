@@ -12,7 +12,7 @@ function L = lexqr_lambda_compact(lexqr_struct)
     %% -------------------------------------
     lexqr = lexqr_struct.lexqr;
     nObj  = lexqr_struct.nObj;
-    nCtr     = lexqr_struct.nCtr;
+    nCtr  = lexqr_struct.nCtr;
     r0    = [lexqr_struct.obj_info(:).rank];
     m0    = [lexqr_struct.obj_info(:).dim];
     Qr    = lexqr_struct.Qr;

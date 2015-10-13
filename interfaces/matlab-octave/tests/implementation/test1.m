@@ -53,7 +53,7 @@ for i=1:100
 	L0 = [L0;d.lambda{k}];
     end
     e_name{4} = 'lambda';
-    e(i,4) = norm(L-lexqr_struct.lambda);
+    e(i,4) = norm(L0-lexqr_struct.lambda);
 
     fprintf('i = %4d (',i)
     fprintf(' %e ', e(i,:))

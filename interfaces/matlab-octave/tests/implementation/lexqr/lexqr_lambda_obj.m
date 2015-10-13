@@ -1,4 +1,4 @@
-function Lambda = lexqr_lambda_obj(lexqr_struct, ObjIndex)
+function Lambda = lexqr_lambda_obj(lexqr_struct, ObjIndex, rhs_all)
 %%%
 %
 % find the Lagrange multipliers through the factorization: corresponds to lexlse.ObjectiveSensitivity
@@ -23,7 +23,7 @@ function Lambda = lexqr_lambda_obj(lexqr_struct, ObjIndex)
     nLambda = nLambda + obj_info(ObjIndex).dim;
 
     Lambda = zeros(nLambda,1);
-    rhs    = zeros(nRank,1);
+    rhs    = rhs_all(1:nRank);
 
     %% -------------------------------------
 
@@ -54,7 +54,8 @@ function Lambda = lexqr_lambda_obj(lexqr_struct, ObjIndex)
 	tmp2 = segment(Lambda, FirstRowIndex, ObjDim);
 
 	%%keyboard
-	rhs = head_assign(-tmp1'*tmp2, rhs, ColDim);
+	%%rhs = head_assign(-tmp1'*tmp2, rhs, ColDim);
+	rhs = head_accumulate(-tmp1'*tmp2, rhs, ColDim);
 
 	for k=ObjIndex-1:-1:1 % for all objectives before ObjIndex
 
