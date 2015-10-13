@@ -1,0 +1,221 @@
+\documentclass[12pt]{article}
+\usepackage{fullpage,amsmath,amsfonts,verbatim,balance}
+\usepackage[small,bf]{caption}
+
+\usepackage{mathtools}
+\usepackage{subfigure}
+
+\usepackage{graphicx,color,psfrag}
+\usepackage{epsfig}
+\usepackage{hyperref}
+\usepackage{color}
+
+\usepackage{accents}
+\newcommand{\ubar}[1]{\underaccent{\bar}{#1}}
+
+\usepackage{bbm}
+
+\input defs.tex
+
+\title{Dual approach to solving a hierarchy} \author{Dimitar Dimitrov}
+
+% \date{} % to remove the date
+
+\begin{document}
+\maketitle
+
+\section{The dual approach}
+
+For $k=1,\dots,P$ compute a pair $(x_k^{\star},\lambda_{k}^{\star})$ using
+%
+\begin{align}
+\lambda_k^{\star} \in \argmin{\lambda_{k}} & \norm{B_k\lambda_{k} - b_k}^2, \quad
+x_k^{\star} = -\frac{1}{\mu_k^2}\sum_{i=1}^{k}A_i^T\lambda_{ki}^{\star},
+\end{align}
+%
+where
+%
+\begin{align*}
+B_k = \begin{bmatrix}A_1^T & \dots & A_k^T \\ 0 & \dots & \mu_kI \end{bmatrix}, \quad
+b_k = -\mu_k\begin{bmatrix} \mu_k x_{k-1}^{\star} \\ y_k - A_kx_{k-1}^{\star} \end{bmatrix}, \quad
+\lambda_{k} = \begin{bmatrix} \lambda_{k1} \\ \vdots \\ \lambda_{kk} \end{bmatrix} \in \mathbb{R}^{d_k}, \quad
+d_k = \sum_{i=1}^{k}m_i.
+\end{align*}
+%
+The recursion in initialized with $x_0^{\star} = 0$. After performing the $P$ steps from above, one
+obtains a solution pair $(x^{\star}, \Lambda^{\star})$ with
+%
+\begin{align}
+x^{\star} = x_P^{\star}, \quad
+\Lambda^{\star} =
+\begin{bmatrix}
+  \lambda_{11}^{\star} & \lambda_{21}^{\star} & \dots  &\lambda_{P1}^{\star} \\
+                       & \lambda_{22}^{\star} & \dots  &\lambda_{P2}^{\star} \\
+                       &                      & \ddots & \vdots \\
+                       &                      &        &\lambda_{PP}^{\star} \\
+\end{bmatrix}.
+\end{align}
+
+\section{A note on our current approach}
+
+We don't compute all the $x_k^{\star}$'s (even though we could) but directly $x^{\star}$. In this
+case we can use the condition
+%
+\[
+x^{\star} = -\frac{1}{\mu_k^2}\sum_{i=1}^{k}A_i^T\lambda_{ki}^{\star}
+\]
+%
+for computing $\lambda_{k}^{\star}$.
+
+\newpage
+
+\section{Derivation (of the dual approach)}
+
+\subsection{First objective}
+
+\begin{itemize}
+
+\item The primal problem
+  %
+  \begin{align}
+    \begin{split}
+      \minimize{x, \, r_1} & f_1(r_1) = \frac{1}{2}\norm{r_1}^2 + \frac{\mu_1^2}{2}\norm{x}^2\\
+      \st & r_1 = A_1x - y_1.
+    \end{split}
+  \end{align}
+
+\item The Lagrangian
+  %
+  \[
+  L_1(x,r_1,\lambda_{11}) = \frac{1}{2}r_1^Tr_1 + \frac{\mu_1^2}{2} x^Tx + \lambda_{11}^T(A_1x - y_1 - r_1).
+  \]
+
+\item The dual function
+%
+\[
+g_1(\lambda_{11}) = \inf_{x,r_1} \underbrace{\frac{1}{2}r_1^Tr_1 - \lambda_{11}^Tr_1} +
+\underbrace{\frac{\mu_1^2}{2}x^Tx + \lambda_{11}^TA_1x} - \lambda_{11}^Ty_1.
+\]
+
+Minimizing w.r.t. $x$ and then $r_1$ gives
+%
+\begin{align} \label{eq.x_r}
+x^{\star} = -\frac{1}{\mu_1^2}A_1^T\lambda_{11}, \quad r_1^{\star} = \lambda_{11}.
+\end{align}
+%
+Substituting back leads to
+%
+\begin{align}
+\frac{1}{2}r_1^Tr_1 - \lambda_{11}^Tr_1 &= -\frac{1}{2}\lambda_{11}^T\lambda_{11} \\
+\frac{\mu_1^2}{2} x^Tx + \lambda_{11}^TA_1x &= -\frac{1}{2\mu_1^2} \lambda_{11}^T A_1A_1^T \lambda_{11}.
+\end{align}
+%
+Hence,
+%
+\begin{align}
+g_1(\lambda_{11}) = -\frac{1}{2\mu_1^2}\lambda_{11}^T\left(\mu_1^2I+A_1A_1^T\right)\lambda_{11} - \lambda_{11}^Ty_1.
+\end{align}
+%
+Note that due to the regularization, the dual function cannot take infinite values and hence there
+is no need to have constraints.
+
+\item The dual problem
+%
+\begin{align}
+  \minimize{\lambda_{11}} -g_1(\lambda_{11}) = \frac{1}{2\mu_1^2}\lambda_{11}^T\left(\mu_1^2 I+A_1A_1^T\right)\lambda_{11} + \lambda_{11}^Ty_1,
+\end{align}
+%
+or equivalently
+%
+\begin{align}
+  \minimize{\lambda_{11}} \lambda_{11}^T\left(\mu_1^2 I+A_1A_1^T\right)\lambda_{11} + 2\mu_1^2\lambda_{11}^Ty_1.
+\end{align}
+%
+This can be formulated as the following least-squares problem
+%
+\begin{align}
+\minimize{\lambda_{11}} & \norm{\begin{bmatrix}A_1^T \\ \mu_1I \end{bmatrix}\lambda_{11} - \begin{bmatrix} 0 \\ \mu_1y_1 \end{bmatrix}}^2.
+\end{align}
+
+\end{itemize}
+
+\newpage
+
+\subsection{Second objective}
+
+
+\begin{itemize}
+
+\item The primal problem
+  %
+  \begin{align}
+    \begin{split}
+      \minimize{x, \, r_2} & f_2(r_2) = \frac{1}{2}\norm{r_2}^2 + \frac{\mu_2^2}{2}\norm{x}^2\\
+      \st & r_2 = A_2x - y_2 \\
+      & r_1^{\star} = A_1x - y_1.
+    \end{split}
+  \end{align}
+
+\item The Lagrangian
+  %
+  \[
+  L_1(x,r_2,\lambda_{21},\lambda_{22}) = \frac{1}{2}r_2^Tr_2 + \frac{\mu_2^2}{2} x^Tx + \lambda_{21}^T(A_1x - y_1 - r_1^{\star}) + \lambda_{22}^T(A_2x - y_2 - r_2).
+  \]
+
+\item The dual function
+%
+\[
+g_1(\lambda_{21}, \lambda_{22}) = \inf_{x,r_2} \underbrace{\frac{1}{2}r_2^Tr_2 - \lambda_{22}^Tr_2} + \underbrace{\frac{\mu_2^2}{2}x^Tx + \lambda_{21}^TA_1x + \lambda_{22}^TA_2x} -
+\begin{bmatrix} \lambda_{21} \\ \lambda_{22} \end{bmatrix}^T \begin{bmatrix} y_1+r_1^{\star} \\ y_2 \end{bmatrix}.
+\]
+
+Minimizing w.r.t. $x$ and then $r_2$ gives
+%
+\begin{align} \label{eq.x_r}
+x^{\star} = -\frac{1}{\mu_2^2}\sum_{i=1}^{2}A_i^T\lambda_{2i}, \quad r_2^{\star} = \lambda_{22}.
+\end{align}
+%
+Substituting back leads to
+%
+\begin{align}
+\frac{1}{2}r_2^Tr_2 - \lambda_{22}^Tr_2 &= -\frac{1}{2}\lambda_{22}^T\lambda_{22} \\
+\frac{\mu_2^2}{2} x^Tx + \lambda_{21}^TA_1x + \lambda_{22}^TA_2x
+&= -\frac{1}{2\mu_2^2} \begin{bmatrix} \lambda_{21} \\ \lambda_{22} \end{bmatrix}^T
+\begin{bmatrix} A_1A_1^T & A_1A_2^T \\ A_2A_1^T & A_2A_2^T \end{bmatrix}
+\begin{bmatrix} \lambda_{21} \\ \lambda_{22} \end{bmatrix}.
+\end{align}
+%
+Hence,
+%
+\begin{align}
+g_2(\lambda_{21},\lambda_{22}) =
+-\frac{1}{2\mu_2^2} \begin{bmatrix} \lambda_{21} \\ \lambda_{22} \end{bmatrix}^T
+\begin{bmatrix} A_1A_1^T & A_1A_2^T \\ A_2A_1^T & \mu_2^2 I+A_2A_2^T \end{bmatrix}
+\begin{bmatrix} \lambda_{21} \\ \lambda_{22} \end{bmatrix} -
+\begin{bmatrix} \lambda_{21} \\ \lambda_{22} \end{bmatrix}^T \begin{bmatrix} y_1+r_1^{\star} \\ y_2 \end{bmatrix}.
+\end{align}
+
+\item The dual problem
+%
+\begin{align}
+\minimize{\lambda_{2}} &
+\begin{bmatrix} \lambda_{21} \\ \lambda_{22} \end{bmatrix}^T
+\begin{bmatrix} A_1A_1^T & A_1A_2^T \\ A_2A_1^T & \mu_2 I+A_2A_2^T \end{bmatrix}
+\begin{bmatrix} \lambda_{21} \\ \lambda_{22} \end{bmatrix} +
+2\mu_2^2
+\begin{bmatrix} \lambda_{21} \\ \lambda_{22} \end{bmatrix}^T \begin{bmatrix} y_1+r_1^{\star} \\ y_2 \end{bmatrix}.
+\end{align}
+%
+This can be formulated as the following least-squares problem
+%
+\begin{align}
+  \minimize{\lambda_{21},\ \lambda_{22}} & \norm{\begin{bmatrix}A_1^T & A_2^T \\ 0 & \mu_2I \end{bmatrix}
+    \begin{bmatrix} \lambda_{21} \\ \lambda_{22} \end{bmatrix} -
+    \mu_2\begin{bmatrix} -\mu_2 x_1^{\star} \\ -\left(y_2 - A_2x_1^{\star}\right) \end{bmatrix}}^2.
+\end{align}
+
+\end{itemize}
+
+\end{document}
+
+% ---------------------------------------------------------------------------

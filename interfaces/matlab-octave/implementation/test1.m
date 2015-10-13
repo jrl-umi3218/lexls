@@ -5,6 +5,7 @@
 
 addpath('/Users/drdv/Work/Git/bip/soft/lexls/interfaces/matlab-octave')
 addpath(genpath('lexqr'))
+addpath('./utility')
 
 clear;clc
 

@@ -36,37 +36,37 @@ if flag_basic
     if nObj == 1 % in order to get a basic solution at the end
         obj(1).A = [A{1}];
         obj(1).b = [A{1}*x];
-        
+
         x = lexlse(obj);
     end
 end
 
 for k = 2:nObj
-  
+
   C = []; c = [];
   for i = 1:k-1
     C = [C;A{i}];
     c = [c;A{i}*x];
   end
-  
+
   obj(1).A = C;
   obj(1).b = c;
   obj(2).A = [A{k};mu(k)*I];
   obj(2).b = [b{k};z];
-    
+
   x = lexlse(obj);
-  
+
   if flag_basic
       if k == nObj % in order to get a basic solution at the end
           obj(1).A = C;
           obj(1).b = c;
           obj(2).A = [A{k}];
           obj(2).b = [A{k}*x];
-          
+
           x = lexlse(obj);
       end
   end
-  
+
 end
 
 %%%EOF
