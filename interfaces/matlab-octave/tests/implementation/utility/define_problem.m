@@ -61,10 +61,7 @@ function lexqr_struct = define_problem(n, m, r, fixed_variables)
     %% ----------------------------------------------
     %% lexqr related output
     %% ----------------------------------------------
-    options.tol_linear_dependence = 1e-12;
-
-    lexqr_struct.obj     = obj;
-    lexqr_struct.options = options;
+    lexqr_struct.obj = obj;
     %% ----------------------------------------------
 
 %%%EOF

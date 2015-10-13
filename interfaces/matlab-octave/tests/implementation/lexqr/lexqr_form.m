@@ -6,12 +6,8 @@ function lexqr_struct = lexqr_form(lexqr_struct)
 
     [lexqr, m] = obj2array(lexqr_struct.obj);
 
-    %% todo: need a function to handle options in general
-    if isfield(lexqr_struct,'options')
-	tol_linear_dependence = lexqr_struct.options.tol_linear_dependence;
-    else
-	tol_linear_dependence = 1e-12;
-    end
+    lexqr_struct = options_handler(lexqr_struct);
+    tol_linear_dependence = lexqr_struct.options.tol_linear_dependence;
 
     %% --------------------------------------------------------
     %% initializations

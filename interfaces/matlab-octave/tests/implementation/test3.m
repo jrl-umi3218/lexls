@@ -11,17 +11,19 @@ clear;clc
 
 %% -----------------------------------------------------------------------
 
-n = 15;
-m = 5*ones(4,1);
+nObj = 4;
+nVar = 15;
+m = 5*ones(nObj,1);
 r = m-2;
 
+options.regularization_type    = 1;
+options.regularization_factors = 0.5*ones(nObj,1);
+
 %% ===================================================================
 
-lexqr_struct = define_problem(n,m,r);
+lexqr_struct = define_problem(nVar,m,r);
 
-%% ===================================================================
-
-[x,info,v,as,d] = lexlsi(lexqr_struct.obj, lexqr_struct.options);
+lexqr_struct.options = options;
 
 %% ===================================================================
 
@@ -31,15 +33,31 @@ lexqr_struct = lexqr_residual(lexqr_struct);
 lexqr_struct = lexqr_explicit(lexqr_struct);
 lexqr_struct = lexqr_compact(lexqr_struct);
 
+[x_mu,info,v,as,d] = lexlsi(lexqr_struct.obj, options);
+[~,~,~,~,d1] = lexlsi(lexqr_struct.obj);
+
+%% When I use regularization in lexlse, the computation of Lambda changes. This is because the
+%% residuals change. But I might be doing something wrong with the singular part of the RHS vector -
+%% to check.
+
+%lexqr_struct.x_mu = x_mu;
+
+lexqr_struct = lexqr_lambda(lexqr_struct);
+
 %% ===================================================================
 
-b = randn(16,1);
+L0 = [];
+for k=1:lexqr_struct.nObj
+    L0 = [L0;d.lambda{k}];
+end
 
-RT = lexqr_struct.Rr(:,1:end-1)';
-QT = lexqr_struct.Qr';
-P  = lexqr_struct.P;
-c  = inv(RT'*RT)*RT'*P'*lexqr_struct.x;
+L1 = [];
+for k=1:lexqr_struct.nObj
+    L1 = [L1;d1.lambda{k}];
+end
 
-%Qr*l(k) = mu(k)*c;
+%lexqr_struct.lambda - L0
+
+L1 - L0
 
 %%%EOF
