@@ -3,7 +3,8 @@
 %
 %
 
-addpath('./lexqr')
+addpath('/Users/drdv/Work/Git/bip/soft/lexls/interfaces/matlab-octave')
+addpath(genpath('lexqr'))
 addpath('./utility')
 addpath('./lexlse_dual')
 
@@ -41,11 +42,13 @@ end
 
 muXd = [];
 for i=1:nObj
-    muXd = [muXd, mu(i)*Xd(:,i)];
+    muXd = [muXd, mu(i)^2*Xd(:,i)];
 end
 
 A'*Ld + muXd
 
 [x0,xd,x0-xd]
+
+%% ---------------------------------------------------------
 
 %%%EOF

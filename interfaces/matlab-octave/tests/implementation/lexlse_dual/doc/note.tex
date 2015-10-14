@@ -17,14 +17,68 @@
 
 \input defs.tex
 
-\title{Dual approach to solving a hierarchy} \author{Dimitar Dimitrov}
+\title{Some notes on Lagrange multipliers} \author{Dimitar Dimitrov}
 
-% \date{} % to remove the date
+%\date{} % to remove the date
 
 \begin{document}
 \maketitle
 
-\section{The dual approach}
+\section{Problem statement}
+
+Consider the following sequence of problems
+%
+\begin{align}
+  \begin{split}
+    \minimize{x_k, \, v_k} & \frac{1}{2}\norm{v_k}^2 + \frac{\mu_k^2}{2}\norm{x_k}^2\\
+    \st & b \leq Cx_k - v \leq u \\
+    & v_j = v_j^{\star}, \quad j=1,\dots,k-1.
+  \end{split}
+\end{align}
+%
+for $k=1,\dots,P$. The pair $(v_k^{\star},x_k^{\star})$ is the unique solution to the $k$-th
+problem. We want to find $(v_P^{\star},x_P^{\star})$ by repeatedly solving
+%
+\begin{align}
+  \begin{split} \label{eq.lexlse}
+    \minimize{x_k, \, r_k} & \frac{1}{2}\norm{r_k}^2 + \frac{\mu_k^2}{2}\norm{x_k}^2\\
+    \st & r = Ax_k - y \\
+    & r_j = r_j^{\star}, \quad j=1,\dots,k-1,
+  \end{split}
+\end{align}
+%
+for a given guess of the active constraints defined in terms of $(A,y)$.
+
+\section{A note related to our current approach}
+
+For the $k$-th problem in~\eqref{eq.lexlse} we have to compute $x_k^{\star}$ and use
+%
+\[
+A^T\lambda_{k}^{\star} = -\mu_k^2x^{\star}_k
+\]
+%
+for computing $\lambda_{k}^{\star}$. Using the compact $\ell$-QR decomposition, we have
+%
+\[
+\mathnormal{\Pi}\begin{bmatrix}R_{\ell}^T \\ T_{\ell}^T\end{bmatrix}Q_{\ell}^{'T}\lambda_{k}^{\star} = -\mu_k^2x^{\star}_k.
+\]
+%
+Note that $R_{\ell}^T$ is full column rank, while $Q_{\ell}^{'T}$ is full row rank, and
+$\mathnormal{\Pi}$ is a permutation matrix. Let $L$ denote the Cholesky decomposition of
+%
+\begin{align*}
+G = \begin{bmatrix}R_{\ell} & T_{\ell}\end{bmatrix}\begin{bmatrix}R_{\ell}^T \\ T_{\ell}^T\end{bmatrix}.
+\end{align*}
+%
+We have to solve
+%
+\begin{align*}
+  L^TLz = -\mu_k^2G^T\mathnormal{\Pi}^Tx^{\star}_k.
+\end{align*}
+%
+to find $z$ and then $Q_{\ell}^{'T}\lambda_{k}^{\star} = z$ to find $\lambda_{k}^{\star}$.
+
+\section{A dual approach}
 
 For $k=1,\dots,P$ compute a pair $(x_k^{\star},\lambda_{k}^{\star})$ using
 %
@@ -55,17 +109,6 @@ x^{\star} = x_P^{\star}, \quad
                        &                      &        &\lambda_{PP}^{\star} \\
 \end{bmatrix}.
 \end{align}
-
-\section{A note on our current approach}
-
-We don't compute all the $x_k^{\star}$'s (even though we could) but directly $x^{\star}$. In this
-case we can use the condition
-%
-\[
-x^{\star} = -\frac{1}{\mu_k^2}\sum_{i=1}^{k}A_i^T\lambda_{ki}^{\star}
-\]
-%
-for computing $\lambda_{k}^{\star}$.
 
 \newpage
 
@@ -143,7 +186,6 @@ This can be formulated as the following least-squares problem
 
 \subsection{Second objective}
 
-
 \begin{itemize}
 
 \item The primal problem
@@ -200,7 +242,7 @@ g_2(\lambda_{21},\lambda_{22}) =
 \begin{align}
 \minimize{\lambda_{2}} &
 \begin{bmatrix} \lambda_{21} \\ \lambda_{22} \end{bmatrix}^T
-\begin{bmatrix} A_1A_1^T & A_1A_2^T \\ A_2A_1^T & \mu_2 I+A_2A_2^T \end{bmatrix}
+\begin{bmatrix} A_1A_1^T & A_1A_2^T \\ A_2A_1^T & \mu_2^2 I+A_2A_2^T \end{bmatrix}
 \begin{bmatrix} \lambda_{21} \\ \lambda_{22} \end{bmatrix} +
 2\mu_2^2
 \begin{bmatrix} \lambda_{21} \\ \lambda_{22} \end{bmatrix}^T \begin{bmatrix} y_1+r_1^{\star} \\ y_2 \end{bmatrix}.
