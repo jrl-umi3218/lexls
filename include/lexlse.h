@@ -1454,29 +1454,58 @@ namespace LexLS
                 // -------------------------------------------------------------------------
                 // create blocks
                 // -------------------------------------------------------------------------
-                dBlockType Rk(       LOD, FirstRowIndex,         FirstColIndex,                  ObjRank,                  ObjRank);
-                dBlockType Tk(       LOD, FirstRowIndex, FirstColIndex+ObjRank,                  ObjRank,         RemainingColumns);
-                dBlockType up(null_space,             0,         FirstColIndex,  FirstColIndex-nVarFixed, RemainingColumns+ObjRank);
-                dBlockType  D(     array,             0,                     0, RemainingColumns+ObjRank, RemainingColumns+ObjRank);
+                dBlockType Rk(LOD,
+                              FirstRowIndex, FirstColIndex,
+                              ObjRank, ObjRank);
 
-                dBlockType2Vector d(array, 0, nVar, RemainingColumns+ObjRank, 1);
+                dBlockType Tk(LOD,
+                              FirstRowIndex, FirstColIndex+ObjRank,
+                              ObjRank, RemainingColumns);
+
+                dBlockType up(null_space,
+                              0, FirstColIndex,
+                              FirstColIndex-nVarFixed, RemainingColumns+ObjRank);
+
+                dBlockType  D(array,
+                              0, 0,
+                              RemainingColumns+ObjRank, RemainingColumns+ObjRank);
+
+                dBlockType2Vector d(array,
+                                    0, nVar,
+                                    RemainingColumns+ObjRank, 1);
 
                 // -------------------------------------------------------------------------
 
-                D.block(0,0,ObjRank,ObjRank).triangularView<Eigen::Lower>() = (Rk.transpose()*Rk.triangularView<Eigen::Upper>()).eval();
-                D.block(ObjRank,ObjRank,RemainingColumns,RemainingColumns).triangularView<Eigen::Lower>() = Tk.transpose()*Tk;
+                // Rk'*Rk
+                D.block(0,0,ObjRank,ObjRank)
+                    .triangularView<Eigen::Lower>() = (Rk.transpose()*Rk.triangularView<Eigen::Upper>()).eval();
+
+                // Tk'*Tk
+                D.block(ObjRank,ObjRank,RemainingColumns,RemainingColumns)
+                    .triangularView<Eigen::Lower>() = Tk.transpose()*Tk;
+
+                // Tk'*Rk
                 D.block(ObjRank,0,RemainingColumns,ObjRank).noalias() = Tk.transpose()*Rk.triangularView<Eigen::Upper>();
+
+                // [Rk, Tk]'*[Rk, Tk] + S_{k-1}'*S_{k-1}
                 D.triangularView<Eigen::Lower>() += mu*up.transpose()*up;
 
+                // ... + mu*I
                 for (Index i=0; i<RemainingColumns+ObjRank; i++)
                 {
                     D.coeffRef(i,i) += mu;
                 }
 
                 // ==============================================================================================
-                d.head(ObjRank).noalias() = Rk.triangularView<Eigen::Upper>().transpose()*LOD.col(nVar).segment(FirstRowIndex,ObjRank);
-                d.tail(RemainingColumns).noalias() = Tk.transpose()*LOD.col(nVar).segment(FirstRowIndex,ObjRank);
+                // Rk'*xk_star
+                d.head(ObjRank).noalias() = Rk.triangularView<Eigen::Upper>().transpose() * \
+                    LOD.col(nVar).segment(FirstRowIndex,ObjRank);
 
+                // Tk'*xk_star
+                d.tail(RemainingColumns).noalias() = Tk.transpose() *\
+                    LOD.col(nVar).segment(FirstRowIndex,ObjRank);
+
+                // S_{k-1}'*s_{k-1}
                 d.noalias() += mu * up.transpose() * null_space.col(nVar).head(FirstColIndex-nVarFixed);
 
                 // ==============================================================================================

@@ -17,7 +17,7 @@
 
 \input defs.tex
 
-\title{Some notes on Tikhonov regularization and Lagrange multipliers} \author{Dimitar Dimitrov}
+\title{Tikhonov regularization and Lagrange multipliers} \author{Dimitar Dimitrov}
 
 %\date{} % to remove the date
 
@@ -45,15 +45,14 @@ Factorizing $A_1 = Q_1^{'}D_1$, with $D_1 = \begin{bmatrix} R_1 & T_1\end{bmatri
 %
 \begin{align} \label{eq.LS1}
   \minimize {x} \norm{\begin{bmatrix} D_1 \\ \mu_1I \end{bmatrix}x -
-    \begin{bmatrix} d_1 \\ 0 \end{bmatrix}}^2,
+    \begin{bmatrix} x_1^{\star} \\ 0 \end{bmatrix}}^2,
 \end{align}
 %
-where\footnote{Note that in the $\ell$-QR factorization we use $x_1^{\star}$ instead of $d_1$, but
-  we would have to redefine $x_1^{\star}$, so I prefer to introduce $d_1$.} $d_1 = Q_1^{'T}y_1$. The
-solution of~\eqref{eq.LS1}, $x^{(1)}$, can be found using the Normal equations
+where $x_1^{\star} = Q_1^{'T}y_1 \in \reals^{p_1}$. The solution of~\eqref{eq.LS1}, $x^{(1)}$, can
+be found using the Normal equations
 %
 \begin{align*}
-  x^{(1)} = (D_1^TD_1 + \mu_1^2I)^{-1}D_1^Td_1.
+  x^{(1)} = (D_1^TD_1 + \mu_1^2I)^{-1}D_1^Tx_1^{\star}.
 \end{align*}
 %
 This solution leads to the residual $r_1^{\star} = A_1x^{(1)} - y_1$, which should the achieved
@@ -91,9 +90,72 @@ Note that
 \[
 x = B_1\begin{bmatrix} x_1^{\star} \\ \bar{x}_1 \end{bmatrix}.
 \]
+%
+Equivalently, we have
+%
+\begin{align*}
+  \minimize{\bar{x}_1} \norm{\begin{bmatrix}A_2Z_1 \\ \mu_2Z_1\end{bmatrix}\bar{x}_1 -
+      \begin{bmatrix} (y_2 - A_2Y_1x_1^{\star}) \\ -\mu_2Y_1x_1^{\star}\end{bmatrix} }^2.
+\end{align*}
+%
+Factorizing $A_2Z_1 = Q_2^{'}D_2$, with $D_2 = \begin{bmatrix} R_2 & T_2\end{bmatrix}$ leads to
+%
+\begin{align} \label{eq.LS2}
+  \minimize {\bar{x}_1} \norm{\begin{bmatrix} D_2 \\ \mu_2Z_1 \end{bmatrix}\bar{x}_1 -
+    \begin{bmatrix} x_2^{\star} \\ -\mu_2Y_1x_1^{\star} \end{bmatrix}}^2,
+\end{align}
+%
+where $x_2^{\star} = y_2 - A_2Y_1x_1^{\star} \in \reals^{p_2}$. Note that $A_2Y_1 = L_{21}$ (from the $\ell$-QR
+factorization), and $x_2^{\star}$ is directly obtained during the elimination step. Let us
+rewrite~\eqref{eq.LS2} as
+%
+\begin{align} \label{eq.LS2_other}
+  \minimize {\bar{x}_1} \norm{\begin{bmatrix} D_2 \\ S_1 \\ \mu_2I \end{bmatrix}\bar{x}_1 -
+    \begin{bmatrix} x_2^{\star} \\ s_1 \\ 0 \end{bmatrix}}^2,
+\end{align}
+%
+where $s_1 = -\mu_2R_1^{-1}x_1^{\star}$ and $S_1 = -\mu_2R_1^{-1}T_1$. The solution
+of~\eqref{eq.LS2_other}, $\bar{x}_1^{\star}$, can be found using the Normal equations.
+%
+\begin{align*}
+  \bar{x}_1^{\star} = (D_2^TD_2 + S_1^TS_1 + \mu_2^2I)^{-1} (D_2^Tx_2^{\star} + S_1^Ts_1).
+\end{align*}
+%
+Note that only the lower triangular part of the matrix is needed in order to find its Cholesky
+decomposition (see {\color{blue}\verb|regularize_tikhonov_1|}). The function
+{\color{blue}\verb|regularize_tikhonov_2|} uses a different approach ({\color{red}to describe}).
 
+For the computation of the Lagrange multipliers, we would need to compute $x^{(2)}$. This requires a
+backward substitution ({\color{red}to code}).
 
 \newpage
+
+\subsection{$k$-th objective}
+
+For the $k$-th objective we have to solve
+%
+\begin{align*}
+  \minimize {\bar{x}_{k-1}} \norm{\begin{bmatrix} D_k \\ S_{k-1} \\ \mu_kI \end{bmatrix}\bar{x}_{k-1} -
+    \begin{bmatrix} x_{k}^{\star} \\ s_{k-1} \\ 0 \end{bmatrix}}^2,
+\end{align*}
+%
+with $D_k = \begin{bmatrix} R_k & T_k\end{bmatrix} = Q_k^{'T}A_kZ_1,\dots,Z_{k-1}$. As $k$
+  increases, the column dimension of $S_{k}$ shrinks but its row dimension increases. In the code,
+  the matrices $S_k$ can be formed using the function
+  {\color{blue}\verb|accumulate_nullspace_basis|} or
+  {\color{blue}\verb|accumulate_nullspace_basis_1|}. As an example, consider the product
+  %
+  \begin{align*}
+    \underbrace{\begin{bmatrix} A & B \\ \multicolumn{2}{c}{I} \end{bmatrix}}_{Z_1}
+    \underbrace{\begin{bmatrix} C \\ I \end{bmatrix}}_{Z_2} =
+    \underbrace{\begin{bmatrix} AC + B \\ C \\ I \end{bmatrix}}_{Z_1Z_2} =
+    \begin{bmatrix} S_2 \\ I \end{bmatrix},
+  \end{align*}
+  %
+  where $S_1 = -R_1^{-1}T_1$ is split in $\begin{bmatrix} A & B \end{bmatrix}$ such that the number of
+  columns of $A$ is the same as the number of rows of $C$.
+
+  \newpage
 
 \section{Problem statement}
 
