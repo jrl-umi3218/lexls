@@ -17,12 +17,83 @@
 
 \input defs.tex
 
-\title{Some notes on Lagrange multipliers} \author{Dimitar Dimitrov}
+\title{Some notes on Tikhonov regularization and Lagrange multipliers} \author{Dimitar Dimitrov}
 
 %\date{} % to remove the date
 
 \begin{document}
 \maketitle
+
+\section{Tikhonov regularization}
+
+\subsection{First objective}
+
+We want to
+%
+\begin{align*}
+\minimize{x} \norm{A_1x - y_1}^2 + \mu_1^2\norm{x}^2,
+\end{align*}
+%
+or equivalently
+%
+\begin{align*}
+\minimize {x} \norm{\begin{bmatrix} A_1 \\ \mu_1I \end{bmatrix}x - \begin{bmatrix} y_1 \\ 0 \end{bmatrix}}^2.
+\end{align*}
+%
+Factorizing $A_1 = Q_1^{'}D_1$, with $D_1 = \begin{bmatrix} R_1 & T_1\end{bmatrix}$ (no permutations
+  for simplicity) leads to
+%
+\begin{align} \label{eq.LS1}
+  \minimize {x} \norm{\begin{bmatrix} D_1 \\ \mu_1I \end{bmatrix}x -
+    \begin{bmatrix} d_1 \\ 0 \end{bmatrix}}^2,
+\end{align}
+%
+where\footnote{Note that in the $\ell$-QR factorization we use $x_1^{\star}$ instead of $d_1$, but
+  we would have to redefine $x_1^{\star}$, so I prefer to introduce $d_1$.} $d_1 = Q_1^{'T}y_1$. The
+solution of~\eqref{eq.LS1}, $x^{(1)}$, can be found using the Normal equations
+%
+\begin{align*}
+  x^{(1)} = (D_1^TD_1 + \mu_1^2I)^{-1}D_1^Td_1.
+\end{align*}
+%
+This solution leads to the residual $r_1^{\star} = A_1x^{(1)} - y_1$, which should the achieved
+using our basic solution $Y_1x_1^{\star}$ (for this level). That is
+%
+\[
+\underbrace{Q_1^{'}\begin{bmatrix} R_1 & T_1\end{bmatrix}}_{A_1}
+  \underbrace{\begin{bmatrix} R_1^{-1} \\ 0\end{bmatrix}}_{Y_1}x_1^{\star} - y_1 = r_1^{\star}.
+\]
+%
+Hence, we should modify $x_1^{\star} = Q_1^{'T}y_1$ to $ x_1^{\star} = Q_1^{'T}(y_1 + r_1^{\star}) =
+D_1x^{(1)}$ (before we proceed with the elimination step).
+%
+
+\newpage
+
+\subsection{Second objective}
+
+Using the basis
+%
+\begin{align*}
+B_1 = \begin{bmatrix} Y_1 & Z_1 \end{bmatrix} =
+\begin{bmatrix} R_1^{-1} & -R_1^{-1}T_1 \\ 0 & I \end{bmatrix},
+\end{align*}
+%
+we want to
+%
+\begin{align*}
+  \minimize{\bar{x}_1} \norm{A_2B_1\begin{bmatrix} x_1^{\star} \\ \bar{x}_1 \end{bmatrix} - y_2}^2 +
+  \mu_2^2\norm{B_1\begin{bmatrix} x_1^{\star} \\ \bar{x}_1 \end{bmatrix}}^2.
+\end{align*}
+%
+Note that
+%
+\[
+x = B_1\begin{bmatrix} x_1^{\star} \\ \bar{x}_1 \end{bmatrix}.
+\]
+
+
+\newpage
 
 \section{Problem statement}
 
