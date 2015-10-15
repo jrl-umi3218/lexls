@@ -1938,14 +1938,58 @@ namespace LexLS
             }
 
             /**
-                \brief Accumulate nullspace basis
+               \brief Accumulate nullspace basis.
+
+               \note This implementation is counterintuitive.
+
+               \verbatim
+               For example, consider the first two null space bases
+               Z1 = [-inv(R1)*T1; I] = [A,B;I], where A has as many columns as R2
+               Z2 = [-inv(R2)*T2; I]
+
+               So, essentially we have to perform Z1*Z2 = [-A*inv(R2)*T2 + B; Z2]
+
+               We do this as follows:
+
+               1. The "null_space" array before the multiplication has the form ("I" is not stored)
+
+               [A, B; 0, 0]
+
+               2. Initialize the lower left block
+
+               [A, B; I, 0]
+
+               3. Perform one triangular solve [A;I]*inv(R2) (note that inv(R2) is not negated)
+
+               [A*inv(R2), B; inv(R2), 0]
+
+               4. Multiply (note the sign)
+               [B;0] = [B;0] - [A*inv(R2);inv(R2)]*T2
+               \endverbatim
+
+               Note that we don't exploit the fact that R2, and hence inv(R2), is upper
+               triangular. In my tests, however this behaved faster than
+               accumulate_nullspace_basis_1
+
+               \todo the above observation is worth verifying again
             */
             void accumulate_nullspace_basis(Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
             {
-                dBlockType            Rk(       LOD, FirstRowIndex,           FirstColIndex,                         ObjRank,            ObjRank);
-                dBlockType       UpBlock(       LOD, FirstRowIndex, FirstColIndex + ObjRank,                         ObjRank, RemainingColumns+1);
-                dBlockType     LeftBlock(null_space,             0,           FirstColIndex, FirstColIndex-nVarFixed+ObjRank,            ObjRank);
-                dBlockType TrailingBlock(null_space,             0, FirstColIndex + ObjRank, FirstColIndex-nVarFixed+ObjRank, RemainingColumns+1);
+                dBlockType Rk(LOD,
+                              FirstRowIndex, FirstColIndex,
+                              ObjRank, ObjRank);
+
+                dBlockType UpBlock(LOD,
+                                   FirstRowIndex, FirstColIndex + ObjRank,
+                                   ObjRank, RemainingColumns+1);
+
+                dBlockType LeftBlock(null_space,
+                                     0, FirstColIndex,
+                                     FirstColIndex-nVarFixed+ObjRank, ObjRank);
+
+                dBlockType TrailingBlock(null_space,
+                                         0, FirstColIndex + ObjRank,
+                                         FirstColIndex-nVarFixed+ObjRank, RemainingColumns+1);
 
                 LeftBlock.block(FirstColIndex-nVarFixed,0,ObjRank,ObjRank).setIdentity();
 
@@ -1965,6 +2009,80 @@ namespace LexLS
                 else if ((ObjRank == 2) || (ObjRank > 8))
                 {
                     TrailingBlock.noalias() -= LeftBlock * UpBlock;
+                }
+            }
+
+            /**
+               \brief Accumulate nullspace basis.
+
+               \verbatim
+               For example, consider the first two null space bases
+               Z1 = [-inv(R1)*T1; I] = [A,B;I], where A has as many columns as R2
+               Z2 = [-inv(R2)*T2; I]
+
+               So, essentially we have to perform Z1*Z2 = [-A*inv(R2)*T2 + B; Z2]
+
+               We do this as follows:
+
+               1. The "null_space" array before the multiplication has the form ("I" is not stored)
+               [A, B; 0, 0]
+
+               2. Initialize the lower right block
+               [A, B; 0, T2]
+
+               3. Perform one triangular solve C = -inv(R2)*T2
+               [A, B; 0, C]
+
+               4. Update block B
+               B = B + A*C
+               \endverbatim
+
+               \note This function has not been tested properly (with simple bounds)
+            */
+            void accumulate_nullspace_basis_1(Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
+            {
+                dBlockType Rk(LOD,
+                              FirstRowIndex, FirstColIndex,
+                              ObjRank, ObjRank);
+
+                dBlockType Tk(LOD,
+                              FirstRowIndex, FirstColIndex + ObjRank,
+                              ObjRank, RemainingColumns+1);
+
+                // A
+                dBlockType LeftPrevious(null_space,
+                                        0, FirstColIndex,
+                                        FirstColIndex-nVarFixed, ObjRank);
+
+                // B
+                dBlockType RightPrevious(null_space,
+                                         0, FirstColIndex + ObjRank,
+                                         FirstColIndex-nVarFixed, RemainingColumns+1);
+
+                // C
+                dBlockType iRkTk(null_space,
+                                 FirstColIndex-nVarFixed, FirstColIndex + ObjRank,
+                                 ObjRank, RemainingColumns+1);
+
+                // C = -inv(R2)*T2
+                iRkTk = -Tk;
+                Rk.triangularView<Eigen::Upper>().solveInPlace<Eigen::OnTheLeft>(iRkTk);
+
+                // B = B + A*C
+                if (ObjRank == 1)
+                {
+                    RightPrevious.noalias() += LeftPrevious.col(0) * iRkTk.row(0);
+                }
+                else if (ObjRank > 2 && ObjRank <= 8)
+                {
+                    for (Index k=0; k<RemainingColumns+1; k++)
+                    {
+                        RightPrevious.col(k).noalias() += LeftPrevious * iRkTk.col(k);
+                    }
+                }
+                else if ((ObjRank == 2) || (ObjRank > 8))
+                {
+                    RightPrevious.noalias() += LeftPrevious * iRkTk;
                 }
             }
 
