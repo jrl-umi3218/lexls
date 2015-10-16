@@ -12,7 +12,7 @@ clear;clc
 
 %% -----------------------------------------------------------------------
 
-nVar = 10;
+nVar = 9;
 m    = [3,3,3];
 r    = m;
 
@@ -36,7 +36,9 @@ options.regularization_factors = ones(nObj,1);
 
 [x,info,v0,as,d] = lexlsi(obj, options);
 
-xd = lexlse_dual(obj, options.regularization_factors);
+[xd,~,Xd] = lexlse_dual(obj, options.regularization_factors);
+
+Xd
 
 for i = 1:nObj
     v{i}  = obj(i).A*x  - obj(i).b;
@@ -54,6 +56,5 @@ fprintf(' %e ', e0)
 fprintf('\n')
 
 fprintf('norm(x-xd)       = %e\n',norm(x-xd))
-
 
 %%%EOF

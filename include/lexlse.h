@@ -91,6 +91,8 @@ namespace LexLS
                 null_space.resize(nVar,nVar+1);
                 array.resize(nVar,nVar+1);
 
+                X.resize(nVar,nObj);
+
                 // no need to initialize them (used in cg_tikhonov(...))
                 rqsp_work.resize(2*nVar,4);
             }
@@ -355,7 +357,8 @@ namespace LexLS
 
                                 if ( !isEqual(aRegularizationFactor,0.0) )
                                 {
-                                    regularize_tikhonov_1(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
+                                    //regularize_tikhonov_1(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
+                                    regularize_tikhonov_1_test(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns, ObjIndex);
                                 }
                                 accumulate_nullspace_basis(FirstRowIndex, FirstColIndex, ObjRank, RemainingColumns);
                                 break;
@@ -1437,6 +1440,7 @@ namespace LexLS
 
                 null_space.setZero();
                 array.setZero();
+                X.setZero();
 
                 P.setIdentity();
                 x.tail(nVar-nVarFixed).setZero(); // x.head(nVarFixed) has already been initialized in fixVariable(...)
@@ -1462,6 +1466,7 @@ namespace LexLS
                               FirstRowIndex, FirstColIndex+ObjRank,
                               ObjRank, RemainingColumns);
 
+                // Matrix S_{k-1} (maybe change the name "up")
                 dBlockType up(null_space,
                               0, FirstColIndex,
                               FirstColIndex-nVarFixed, RemainingColumns+ObjRank);
@@ -1514,6 +1519,142 @@ namespace LexLS
                 chol.solveInPlace(d);
                 LOD.col(nVar).segment(FirstRowIndex,ObjRank).noalias()  = Rk.triangularView<Eigen::Upper>() * d.head(ObjRank);
                 LOD.col(nVar).segment(FirstRowIndex,ObjRank).noalias() += Tk * d.tail(RemainingColumns);
+            }
+
+
+            /**
+                \brief like regularize_tikhonov_1 but for testing stuff
+            */
+            void regularize_tikhonov_1_test(Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns, Index ObjIndex)
+            {
+                RealScalar mu = aRegularizationFactor*aRegularizationFactor;
+
+                // -------------------------------------------------------------------------
+                // create blocks
+                // -------------------------------------------------------------------------
+                dBlockType Rk(LOD,
+                              FirstRowIndex, FirstColIndex,
+                              ObjRank, ObjRank);
+
+                dBlockType Tk(LOD,
+                              FirstRowIndex, FirstColIndex+ObjRank,
+                              ObjRank, RemainingColumns);
+
+                // Matrix S_{k-1} (maybe change the name "up")
+                dBlockType up(null_space,
+                              0, FirstColIndex,
+                              FirstColIndex-nVarFixed, RemainingColumns+ObjRank);
+
+                dBlockType  D(array,
+                              0, 0,
+                              RemainingColumns+ObjRank, RemainingColumns+ObjRank);
+
+                dBlockType2Vector d(array,
+                                    0, nVar,
+                                    RemainingColumns+ObjRank, 1);
+
+                // -------------------------------------------------------------------------
+
+                // Rk'*Rk
+                D.block(0,0,ObjRank,ObjRank)
+                    .triangularView<Eigen::Lower>() = (Rk.transpose()*Rk.triangularView<Eigen::Upper>()).eval();
+
+                // Tk'*Tk
+                D.block(ObjRank,ObjRank,RemainingColumns,RemainingColumns)
+                    .triangularView<Eigen::Lower>() = Tk.transpose()*Tk;
+
+                // Tk'*Rk
+                D.block(ObjRank,0,RemainingColumns,ObjRank).noalias() = Tk.transpose()*Rk.triangularView<Eigen::Upper>();
+
+                // [Rk, Tk]'*[Rk, Tk] + S_{k-1}'*S_{k-1}
+                D.triangularView<Eigen::Lower>() += mu*up.transpose()*up;
+
+                // ... + mu*I
+                for (Index i=0; i<RemainingColumns+ObjRank; i++)
+                {
+                    D.coeffRef(i,i) += mu;
+                }
+
+                // ==============================================================================================
+                // Rk'*xk_star
+                d.head(ObjRank).noalias() = Rk.triangularView<Eigen::Upper>().transpose() * \
+                    LOD.col(nVar).segment(FirstRowIndex,ObjRank);
+
+                // Tk'*xk_star
+                d.tail(RemainingColumns).noalias() = Tk.transpose() *\
+                    LOD.col(nVar).segment(FirstRowIndex,ObjRank);
+
+                // S_{k-1}'*s_{k-1}
+                d.noalias() += mu * up.transpose() * null_space.col(nVar).head(FirstColIndex-nVarFixed);
+
+                // ==============================================================================================
+
+                Eigen::LLT<dMatrixType> chol(D);
+                chol.solveInPlace(d);
+                LOD.col(nVar).segment(FirstRowIndex,ObjRank).noalias()  = Rk.triangularView<Eigen::Upper>() * d.head(ObjRank);
+                LOD.col(nVar).segment(FirstRowIndex,ObjRank).noalias() += Tk * d.tail(RemainingColumns);
+
+                // ==============================================================================================
+
+                X.col(ObjIndex).tail(RemainingColumns+ObjRank) = d;
+
+                /*
+                  \verbatim
+                  | A  A2  A3  A4| |x1|   |b1|
+                  | 0  B   B3  B4|*|x2| = |b2|
+                  | 0  0   C   C4| |x3|   |b3|
+                                   |x4|   |b4|
+
+                  At level 3, we compute [x3;x4] and form
+                  b1 = b1 - [A3,A4]*[x3;x4];
+                  b2 = b2 - [B3,B4]*[x3;x4];
+                  \endverbatim
+                */
+/*
+                if (ObjIndex > 0)
+                {
+                    for (Index i=0; i<ObjIndex; i++)
+                    {
+                        Index first_row_index = obj_info[i].first_row_index;
+                        Index obj_rank        = obj_info[i].rank;
+
+                        dBlockType RTi(LOD, 0, 0, obj_rank, nVar);
+
+                        X.col(ObjIndex).segment(first_row_index, obj_rank) =
+                            LOD.col(nVar).segment(first_row_index, obj_rank) - \
+                            RTi.rightCols(RemainingColumns+ObjRank) * X.col(ObjIndex).tail(RemainingColumns+ObjRank);
+                    }
+                }
+
+                Index obj_rank, first_col_index, first_row_index;
+                Index AccumulatedRanks = 0;
+                for (Index k=ObjIndex; k--; ) //ObjIndex-1, ..., 0.
+                {
+                    first_row_index = obj_info[k].first_row_index;
+                    first_col_index = obj_info[k].first_col_index;
+                    obj_rank        = obj_info[k].rank;
+                    if (obj_rank > 0)
+                    {
+                        dBlockType2Vector x_k(X,
+                                              first_col_index, ObjIndex,
+                                              obj_rank, 1);
+
+                        if (AccumulatedRanks > 0) // Do not enter here the first time ObjRank != 0
+                        {
+                            x_k.noalias() -= LOD.block(first_row_index,
+                                                       obj_info[k+1].first_col_index,
+                                                       obj_rank,
+                                                       AccumulatedRanks) * x.segment(obj_info[k+1].first_col_index, AccumulatedRanks);
+                        }
+
+                        LOD.block(first_row_index, first_col_index,
+                                  obj_rank, obj_rank).triangularView<Eigen::Upper>().solveInPlace(x_k);
+
+                        AccumulatedRanks += obj_rank;
+                    }
+                }
+*/
+
             }
 
             /**
@@ -2222,11 +2363,6 @@ namespace LexLS
             */
             dVectorType hh_scalars;
 
-            /**
-                \brief Used in implementation of conjugate gradients (CG)
-            */
-            dMatrixType rqsp_work;
-
             // ==================================================================
             // definition of matrices
             // ==================================================================
@@ -2257,6 +2393,17 @@ namespace LexLS
                 \brief Used for temporary storage when doing Tikhonov regularization (option: A'*inv(A*A'+I)*b)
             */
             dMatrixType array;
+
+            /**
+               \brief Used in implementation of conjugate gradients (CG)
+            */
+            dMatrixType rqsp_work;
+
+            /**
+               \brief Used to store the solutions of all problems in the sequence (necessary for
+               computing Lagrange multipliers when we regularize)
+            */
+            dMatrixType X;
 
             // ==================================================================
             // other
