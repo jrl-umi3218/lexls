@@ -117,16 +117,17 @@ rewrite~\eqref{eq.LS2} as
 where $s_1 = -\mu_2R_1^{-1}x_1^{\star}$ and $S_1 = -\mu_2R_1^{-1}T_1$. The solution
 of~\eqref{eq.LS2_other}, $\bar{x}_1^{\star}$, can be found using the Normal equations.
 %
-\begin{align*}
+\begin{align} \label{eq.Normal}
   \bar{x}_1^{\star} = (D_2^TD_2 + S_1^TS_1 + \mu_2^2I)^{-1} (D_2^Tx_2^{\star} + S_1^Ts_1).
-\end{align*}
+\end{align}
 %
-Note that only the lower triangular part of the matrix is needed in order to find its Cholesky
-decomposition (see {\color{blue}\verb|regularize_tikhonov_1|}). The function
-{\color{blue}\verb|regularize_tikhonov_2|} uses a different approach ({\color{red}to describe}).
+Given $\bar{x}_1^{\star}$, we have to modify $x_2^{\star} = D_2\bar{x}_1^{\star}$.
 
-For the computation of the Lagrange multipliers, we would need to compute $x^{(2)}$. This requires a
-backward substitution ({\color{red}to code}).
+Note that only the lower triangular part of the matrix in~\eqref{eq.Normal} is needed in order to
+find its Cholesky decomposition (see {\color{blue}\verb|regularize_tikhonov_1|}). The function
+{\color{blue}\verb|regularize_tikhonov_2|} uses a different approach ({\color{red}to describe}). For
+the computation of the Lagrange multipliers, we would also need to compute $x^{(2)}$. This requires
+a backward substitution ({\color{red}to code}).
 
 \newpage
 
