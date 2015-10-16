@@ -1524,8 +1524,15 @@ namespace LexLS
 
             /**
                 \brief like regularize_tikhonov_1 but for testing stuff
+
+                If we don't enter here at iteration i (because the i-th objective doesn't have a
+                single pivot), we have to set X.col(i) = X.col(i-1).
             */
-            void regularize_tikhonov_1_test(Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns, Index ObjIndex)
+            void regularize_tikhonov_1_test(Index FirstRowIndex,
+                                            Index FirstColIndex,
+                                            Index ObjRank,
+                                            Index RemainingColumns,
+                                            Index ObjIndex)
             {
                 RealScalar mu = aRegularizationFactor*aRegularizationFactor;
 
@@ -1597,6 +1604,22 @@ namespace LexLS
                 // ==============================================================================================
 
                 X.col(ObjIndex).tail(RemainingColumns+ObjRank) = d;
+                get_intermediate_x(ObjIndex, RemainingColumns+ObjRank);
+
+                //X.col(ObjIndex) = P*X.col(ObjIndex); // requires change in the way we accumulate P
+                // Put the code below in factorize() after ObjRank has been determined
+                //for (Index kk=FirstColIndex; kk<FirstColIndex+ObjRank; kk++)
+                //  P.applyTranspositionOnTheRight(kk, column_permutations.coeff(kk));
+
+                std::cout << X << "\n\n";
+            }
+
+            /*
+              \todo to document
+            */
+            void get_intermediate_x(Index ObjIndex, Index x_tail_size)
+            {
+                Index ObjRank, FirstColIndex, FirstRowIndex;
 
                 /*
                   \verbatim
@@ -1610,51 +1633,55 @@ namespace LexLS
                   b2 = b2 - [B3,B4]*[x3;x4];
                   \endverbatim
                 */
-/*
                 if (ObjIndex > 0)
                 {
                     for (Index i=0; i<ObjIndex; i++)
                     {
-                        Index first_row_index = obj_info[i].first_row_index;
-                        Index obj_rank        = obj_info[i].rank;
+                        Index FirstRowIndex = obj_info[i].first_row_index;
+                        Index FirstColIndex = obj_info[i].first_col_index;
+                        Index ObjRank       = obj_info[i].rank;
 
-                        dBlockType RTi(LOD, 0, 0, obj_rank, nVar);
+                        dBlockType RTi(LOD,
+                                       FirstRowIndex, 0,
+                                       ObjRank, nVar);
 
-                        X.col(ObjIndex).segment(first_row_index, obj_rank) =
-                            LOD.col(nVar).segment(first_row_index, obj_rank) - \
-                            RTi.rightCols(RemainingColumns+ObjRank) * X.col(ObjIndex).tail(RemainingColumns+ObjRank);
+                        X.col(ObjIndex).segment(FirstColIndex, ObjRank) =
+                            LOD.col(nVar).segment(FirstRowIndex, ObjRank) - \
+                            RTi.rightCols(x_tail_size) * X.col(ObjIndex).tail(x_tail_size);
                     }
                 }
 
-                Index obj_rank, first_col_index, first_row_index;
+                /*
+                  Similar to solve()
+                */
                 Index AccumulatedRanks = 0;
                 for (Index k=ObjIndex; k--; ) //ObjIndex-1, ..., 0.
                 {
-                    first_row_index = obj_info[k].first_row_index;
-                    first_col_index = obj_info[k].first_col_index;
-                    obj_rank        = obj_info[k].rank;
-                    if (obj_rank > 0)
+                    FirstRowIndex = obj_info[k].first_row_index;
+                    FirstColIndex = obj_info[k].first_col_index;
+                    ObjRank       = obj_info[k].rank;
+                    if (ObjRank > 0)
                     {
                         dBlockType2Vector x_k(X,
-                                              first_col_index, ObjIndex,
-                                              obj_rank, 1);
+                                              FirstColIndex, ObjIndex,
+                                              ObjRank, 1);
 
                         if (AccumulatedRanks > 0) // Do not enter here the first time ObjRank != 0
                         {
-                            x_k.noalias() -= LOD.block(first_row_index,
-                                                       obj_info[k+1].first_col_index,
-                                                       obj_rank,
-                                                       AccumulatedRanks) * x.segment(obj_info[k+1].first_col_index, AccumulatedRanks);
+                            dBlockType Rkj(LOD,
+                                           FirstRowIndex, obj_info[k+1].first_col_index,
+                                           ObjRank, AccumulatedRanks);
+
+                            x_k.noalias() -= Rkj * X.col(ObjIndex).segment(obj_info[k+1].first_col_index,
+                                                                           AccumulatedRanks);
                         }
 
-                        LOD.block(first_row_index, first_col_index,
-                                  obj_rank, obj_rank).triangularView<Eigen::Upper>().solveInPlace(x_k);
+                        LOD.block(FirstRowIndex, FirstColIndex,
+                                  ObjRank, ObjRank).triangularView<Eigen::Upper>().solveInPlace(x_k);
 
-                        AccumulatedRanks += obj_rank;
+                        AccumulatedRanks += ObjRank;
                     }
                 }
-*/
-
             }
 
             /**
