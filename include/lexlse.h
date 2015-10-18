@@ -1651,23 +1651,30 @@ namespace LexLS
                 get_intermediate_x(ObjIndex, RemainingColumns+ObjRank);
 
                 // ==============================================================================================
-                // temporary hack
+                // permute X_mu.col(ObjIndex)
                 // ==============================================================================================
-                Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> P_tmp;
-                P_tmp.setIdentity(nVar);
-
                 Index AccumulatedRanks = 0;
                 for (Index k=0; k<=ObjIndex; k++)
                 {
-                    AccumulatedRanks += ObjRank;
+                    AccumulatedRanks += obj_info[k].rank;
                 }
 
+                // equivalent to the code below with P_tmp
+                for (Index k=AccumulatedRanks; k--; )
+                {
+                    Index j = column_permutations.coeff(k);
+                    std::swap(X_mu.coeffRef(k,ObjIndex), X_mu.coeffRef(j,ObjIndex));
+                }
+
+                /*
+                Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> P_tmp;
+                P_tmp.setIdentity(nVar);
                 for (Index k=0; k<AccumulatedRanks; k++)
                 {
                     P_tmp.applyTranspositionOnTheRight(k, column_permutations.coeff(k));
                 }
-
                 X_mu.col(ObjIndex) = P_tmp * X_mu.col(ObjIndex);
+                */
                 // ==============================================================================================
             }
 

@@ -14,7 +14,7 @@ clear;clc
 
 nVar = 10;
 m    = [3,3,3];
-r    = m;
+r    = m-1;
 
 nObj = length(m);
 
@@ -23,7 +23,7 @@ lexqr_struct = define_problem(nVar,m,r);
 obj = lexqr_struct.obj;
 
 %% append a terminal objective
-if 0
+if 1
     obj(nObj+1).A  = eye(nVar);
     obj(nObj+1).b  = zeros(nVar,1);
     obj(nObj+1).lb = obj(nObj+1).b;

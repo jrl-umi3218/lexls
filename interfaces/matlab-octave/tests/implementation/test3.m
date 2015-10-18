@@ -15,9 +15,7 @@ clear;clc
 nObj = 4;
 nVar = 25;
 m = 5*ones(nObj,1);
-r = m-4;
-
-%% r = m-4; % PROBLEM - WHY??
+r = m-1;
 
 options.regularization_type    = 7;
 options.regularization_factors = 1*ones(nObj,1);
@@ -53,11 +51,11 @@ for i=1:nObj
     lexqr_struct.residual_mu{i} = d.residual_mu(ind);
 end
 
+[xd, Ld, Xd] = lexlse_dual(obj,mu); %% use ^2?
+
 lexqr_struct = lexqr_lambda(lexqr_struct);
 
 %% ===================================================================
-
-[xd, Ld, Xd] = lexlse_dual(obj,mu); %% use ^2?
 
 if 1
     muXd = [];

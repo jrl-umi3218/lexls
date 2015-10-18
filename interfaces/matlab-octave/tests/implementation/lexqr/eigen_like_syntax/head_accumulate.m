@@ -14,6 +14,8 @@ function vector = head_accumulate(v,vector,dim)
 	keyboard
     end
 
-    vector(1:dim) = vector(1:dim) + v;
+    if dim > 0
+	vector(1:dim) = vector(1:dim) + v;
+    end
 
 %%%EOF
