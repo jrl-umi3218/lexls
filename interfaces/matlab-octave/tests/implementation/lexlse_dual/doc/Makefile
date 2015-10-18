@@ -18,7 +18,7 @@ clean:
 	rm -rf $(fn).blg
 	rm -rf $(fn).toc
 	rm -rf $(fn).ps
-	rm -rf $(fn).pdf
+#	rm -rf $(fn).pdf
 
 # dummy targets
 .PHONY: clean

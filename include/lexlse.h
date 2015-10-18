@@ -23,6 +23,9 @@ namespace LexLS
             Eigen. It is easy to directly take it, but I had some problem with this in the past. We
             should have many test problem on which to evaluate various singularity detection
             approaches (and only then to start changing things like this).
+
+            \todo to have a custom implementation of applyOnTheLeft(householderSequence (no need to
+            realocate workspace every time)
         */
         class LexLSE
         {
@@ -91,7 +94,8 @@ namespace LexLS
                 null_space.resize(nVar,nVar+1);
                 array.resize(nVar,nVar+1);
 
-                X.resize(nVar,nObj);
+                X_mu.resize(nVar,nObj);
+                residual_mu.resize(maxObjDimSum); // initialized in factorize(...)
 
                 // no need to initialize them (used in cg_tikhonov(...))
                 rqsp_work.resize(2*nVar,4);
@@ -106,6 +110,8 @@ namespace LexLS
                 \attention When the rank of the constraints involved in a given objective is equal to 1,
                 many simplifications can be made. In the current implementation, this case is benefited
                 from only when forming the Schur complement (during the Gauss elimination).
+
+                \todo residual_mu and fixed variables (see WARNING below)
             */
             void factorize()
             {
@@ -176,6 +182,11 @@ namespace LexLS
                     FirstColIndex = obj_info[ObjIndex].first_col_index = ColIndex;
                     ObjDim        = obj_info[ObjIndex].dim;
 
+                    // residual_mu.segment(FirstRowIndex,ObjDim) has to be initialized before the
+                    // Householder transformations but after the elimination steps.
+                    // WARNING: how about fixed variables (no time to think about this now)
+                    residual_mu.segment(FirstRowIndex,ObjDim) = LOD.col(nVar).segment(FirstRowIndex,ObjDim);
+
                     for(Index k=ColIndex; k<nVar; k++) // initially compute the norms of the columns
                     {
                         ColNorms.coeffRef(k) = LOD.col(k).segment(FirstRowIndex,ObjDim).squaredNorm();
@@ -210,13 +221,16 @@ namespace LexLS
                             LOD.col(ColIndex).head(nCtr).swap(LOD.col(maxColNormIndex).head(nCtr));
                             std::swap(ColNorms.coeffRef(ColIndex), ColNorms.coeffRef(maxColNormIndex));
 
-                            null_space.col(ColIndex).head(FirstColIndex).swap(null_space.col(maxColNormIndex).head(FirstColIndex)); // FOR REGULARIZATION
+                            // FOR REGULARIZATION
+                            null_space.col(ColIndex)
+                                .head(FirstColIndex).swap(null_space.col(maxColNormIndex).head(FirstColIndex));
                         }
 
                         // --------------------------------------------------------------------------
                         // apply Householder transformations (on the RHS as well)
                         // --------------------------------------------------------------------------
-                        // when RemainingRows = 1, since sqrt(maxColNormValue) >= parameters.tol_linear_dependence, the Householder matrix is the identity (tau = 0)
+                        // when RemainingRows = 1, since sqrt(maxColNormValue) >= parameters.tol_linear_dependence,
+                        // the Householder matrix is the identity (tau = 0)
                         if (RemainingRows > 1)
                         {
                             LOD.col(ColIndex).segment(RowIndex,RemainingRows).makeHouseholderInPlace(tau,PivotValue);
@@ -1404,6 +1418,16 @@ namespace LexLS
                 return LOD;
             }
 
+            dMatrixType get_X_mu()
+            {
+                return X_mu;
+            }
+
+            dVectorType get_residual_mu()
+            {
+                return residual_mu;
+            }
+
             /**
                 \brief Reset the factorization (initialize A separately)
             */
@@ -1440,7 +1464,8 @@ namespace LexLS
 
                 null_space.setZero();
                 array.setZero();
-                X.setZero();
+                X_mu.setZero();
+                residual_mu.setZero();
 
                 P.setIdentity();
                 x.tail(nVar-nVarFixed).setZero(); // x.head(nVarFixed) has already been initialized in fixVariable(...)
@@ -1525,8 +1550,11 @@ namespace LexLS
             /**
                 \brief like regularize_tikhonov_1 but for testing stuff
 
-                If we don't enter here at iteration i (because the i-th objective doesn't have a
-                single pivot), we have to set X.col(i) = X.col(i-1).
+                \todo IMPORTANT: if we don't enter here at iteration i (because the i-th objective
+                doesn't have a single pivot), we have to set X_mu.col(i) = X_mu.col(i-1).
+
+                \todo If I endup passig ObjIndex as input argument, there is no need to pass
+                FirstRowIndex, FirstColIndex and ObjRank
             */
             void regularize_tikhonov_1_test(Index FirstRowIndex,
                                             Index FirstColIndex,
@@ -1534,6 +1562,8 @@ namespace LexLS
                                             Index RemainingColumns,
                                             Index ObjIndex)
             {
+                Index ObjDim = obj_info[ObjIndex].dim;
+
                 RealScalar mu = aRegularizationFactor*aRegularizationFactor;
 
                 // -------------------------------------------------------------------------
@@ -1560,6 +1590,12 @@ namespace LexLS
                                     0, nVar,
                                     RemainingColumns+ObjRank, 1);
 
+                dBlockType2Vector rhs(LOD, FirstRowIndex, nVar, ObjDim, 1);
+
+                // This block overlaps with the portion of dWorkspacededicated to hhWorkspace, but
+                // we can use it here
+                dVectorBlockType residual_workspace(dWorkspace, nVar, ObjDim);
+
                 // -------------------------------------------------------------------------
 
                 // Rk'*Rk
@@ -1584,12 +1620,10 @@ namespace LexLS
 
                 // ==============================================================================================
                 // Rk'*xk_star
-                d.head(ObjRank).noalias() = Rk.triangularView<Eigen::Upper>().transpose() * \
-                    LOD.col(nVar).segment(FirstRowIndex,ObjRank);
+                d.head(ObjRank).noalias() = Rk.triangularView<Eigen::Upper>().transpose() * rhs.head(ObjRank);
 
                 // Tk'*xk_star
-                d.tail(RemainingColumns).noalias() = Tk.transpose() *\
-                    LOD.col(nVar).segment(FirstRowIndex,ObjRank);
+                d.tail(RemainingColumns).noalias() = Tk.transpose() * rhs.head(ObjRank);
 
                 // S_{k-1}'*s_{k-1}
                 d.noalias() += mu * up.transpose() * null_space.col(nVar).head(FirstColIndex-nVarFixed);
@@ -1598,20 +1632,43 @@ namespace LexLS
 
                 Eigen::LLT<dMatrixType> chol(D);
                 chol.solveInPlace(d);
-                LOD.col(nVar).segment(FirstRowIndex,ObjRank).noalias()  = Rk.triangularView<Eigen::Upper>() * d.head(ObjRank);
-                LOD.col(nVar).segment(FirstRowIndex,ObjRank).noalias() += Tk * d.tail(RemainingColumns);
+                rhs.head(ObjRank).noalias()  = Rk.triangularView<Eigen::Upper>() * d.head(ObjRank);
+                rhs.head(ObjRank).noalias() += Tk * d.tail(RemainingColumns);
+
+                residual_workspace = rhs;
+                residual_workspace.tail(ObjDim-ObjRank).setZero(); // set y_hat = 0
+                residual_workspace.applyOnTheLeft(householderSequence(LOD.block(FirstRowIndex,
+                                                                                FirstColIndex,
+                                                                                ObjDim,
+                                                                                ObjRank),
+                                                                      hh_scalars.segment(FirstRowIndex,ObjDim)));
+
+                residual_mu.segment(FirstRowIndex,ObjDim) = residual_workspace - residual_mu.segment(FirstRowIndex,ObjDim);
 
                 // ==============================================================================================
 
-                X.col(ObjIndex).tail(RemainingColumns+ObjRank) = d;
+                X_mu.col(ObjIndex).tail(RemainingColumns+ObjRank) = d;
                 get_intermediate_x(ObjIndex, RemainingColumns+ObjRank);
 
-                //X.col(ObjIndex) = P*X.col(ObjIndex); // requires change in the way we accumulate P
-                // Put the code below in factorize() after ObjRank has been determined
-                //for (Index kk=FirstColIndex; kk<FirstColIndex+ObjRank; kk++)
-                //  P.applyTranspositionOnTheRight(kk, column_permutations.coeff(kk));
+                // ==============================================================================================
+                // temporary hack
+                // ==============================================================================================
+                Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> P_tmp;
+                P_tmp.setIdentity(nVar);
 
-                std::cout << X << "\n\n";
+                Index AccumulatedRanks = 0;
+                for (Index k=0; k<=ObjIndex; k++)
+                {
+                    AccumulatedRanks += ObjRank;
+                }
+
+                for (Index k=0; k<AccumulatedRanks; k++)
+                {
+                    P_tmp.applyTranspositionOnTheRight(k, column_permutations.coeff(k));
+                }
+
+                X_mu.col(ObjIndex) = P_tmp * X_mu.col(ObjIndex);
+                // ==============================================================================================
             }
 
             /*
@@ -1645,9 +1702,9 @@ namespace LexLS
                                        FirstRowIndex, 0,
                                        ObjRank, nVar);
 
-                        X.col(ObjIndex).segment(FirstColIndex, ObjRank) =
+                        X_mu.col(ObjIndex).segment(FirstColIndex, ObjRank) =
                             LOD.col(nVar).segment(FirstRowIndex, ObjRank) - \
-                            RTi.rightCols(x_tail_size) * X.col(ObjIndex).tail(x_tail_size);
+                            RTi.rightCols(x_tail_size) * X_mu.col(ObjIndex).tail(x_tail_size);
                     }
                 }
 
@@ -1662,7 +1719,7 @@ namespace LexLS
                     ObjRank       = obj_info[k].rank;
                     if (ObjRank > 0)
                     {
-                        dBlockType2Vector x_k(X,
+                        dBlockType2Vector x_k(X_mu,
                                               FirstColIndex, ObjIndex,
                                               ObjRank, 1);
 
@@ -1672,7 +1729,7 @@ namespace LexLS
                                            FirstRowIndex, obj_info[k+1].first_col_index,
                                            ObjRank, AccumulatedRanks);
 
-                            x_k.noalias() -= Rkj * X.col(ObjIndex).segment(obj_info[k+1].first_col_index,
+                            x_k.noalias() -= Rkj * X_mu.col(ObjIndex).segment(obj_info[k+1].first_col_index,
                                                                            AccumulatedRanks);
                         }
 
@@ -2384,11 +2441,19 @@ namespace LexLS
             dVectorType x;
 
             /*
-              \note Householder scalars associated with the QR factorization for a (LexLSE) objective.
+              \brief Householder scalars associated with the QR factorization for a (LexLSE) objective.
 
               \note computed during the factorization.
             */
             dVectorType hh_scalars;
+
+            /*
+              \brief Store the residuals when regularizing
+
+              \note To be initialized with the right-hand-side vector
+            */
+            dVectorType residual_mu;
+
 
             // ==================================================================
             // definition of matrices
@@ -2430,7 +2495,7 @@ namespace LexLS
                \brief Used to store the solutions of all problems in the sequence (necessary for
                computing Lagrange multipliers when we regularize)
             */
-            dMatrixType X;
+            dMatrixType X_mu;
 
             // ==================================================================
             // other

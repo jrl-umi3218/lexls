@@ -12,9 +12,9 @@ clear;clc
 
 %% -----------------------------------------------------------------------
 
-nVar = 30;
-m    = [5,5,5,5];
-r    = m-2;
+nVar = 10;
+m    = [3,3,3];
+r    = m;
 
 nObj = length(m);
 
@@ -23,11 +23,13 @@ lexqr_struct = define_problem(nVar,m,r);
 obj = lexqr_struct.obj;
 
 %% append a terminal objective
-obj(nObj+1).A = eye(nVar);
-obj(nObj+1).b = zeros(nVar,1);
-obj(nObj+1).lb = obj(nObj+1).b;
-obj(nObj+1).ub = obj(nObj+1).b;
-nObj = nObj + 1;
+if 0
+    obj(nObj+1).A  = eye(nVar);
+    obj(nObj+1).b  = zeros(nVar,1);
+    obj(nObj+1).lb = obj(nObj+1).b;
+    obj(nObj+1).ub = obj(nObj+1).b;
+    nObj = nObj + 1;
+end
 
 %% -----------------------------------------------------------------------
 
@@ -38,7 +40,7 @@ options.regularization_factors = ones(nObj,1);
 
 [xd,~,Xd] = lexlse_dual(obj, options.regularization_factors);
 
-Xd
+Xd - d.X_mu
 
 for i = 1:nObj
     v{i}  = obj(i).A*x  - obj(i).b;

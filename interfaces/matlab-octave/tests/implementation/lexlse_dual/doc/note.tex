@@ -17,6 +17,8 @@
 
 \input defs.tex
 
+% \todo I don't like the notation x^{(k)}. To use something different, e.g., \hat{x}_k^{\star}
+
 \title{Tikhonov regularization and Lagrange multipliers} \author{Dimitar Dimitrov}
 
 %\date{} % to remove the date
@@ -127,7 +129,7 @@ Note that only the lower triangular part of the matrix in~\eqref{eq.Normal} is n
 find its Cholesky decomposition (see {\color{blue}\verb|regularize_tikhonov_1|}). The function
 {\color{blue}\verb|regularize_tikhonov_2|} uses a different approach ({\color{red}to describe}). For
 the computation of the Lagrange multipliers, we would also need to compute $x^{(2)}$. This requires
-a backward substitution ({\color{red}to code}).
+a backward substitution.
 
 \newpage
 

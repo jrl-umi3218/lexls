@@ -6,22 +6,29 @@
 addpath('/Users/drdv/Work/Git/bip/soft/lexls/interfaces/matlab-octave')
 addpath(genpath('lexqr'))
 addpath('./utility')
+addpath('./lexlse_dual')
 
 clear;clc
 
 %% -----------------------------------------------------------------------
 
 nObj = 4;
-nVar = 15;
+nVar = 25;
 m = 5*ones(nObj,1);
-r = m-2;
+r = m-4;
 
-options.regularization_type    = 1;
-options.regularization_factors = 0.5*ones(nObj,1);
+%% r = m-4; % PROBLEM - WHY??
+
+options.regularization_type    = 7;
+options.regularization_factors = 1*ones(nObj,1);
 
 %% ===================================================================
 
 lexqr_struct = define_problem(nVar,m,r);
+obj = lexqr_struct.obj;
+mu  = options.regularization_factors;
+Ab  = obj2array(obj);
+A   = Ab(:,1:end-1);
 
 lexqr_struct.options = options;
 
@@ -34,30 +41,38 @@ lexqr_struct = lexqr_explicit(lexqr_struct);
 lexqr_struct = lexqr_compact(lexqr_struct);
 
 [x_mu,info,v,as,d] = lexlsi(lexqr_struct.obj, options);
-[~,~,~,~,d1] = lexlsi(lexqr_struct.obj);
 
 %% When I use regularization in lexlse, the computation of Lambda changes. This is because the
 %% residuals change. But I might be doing something wrong with the singular part of the RHS vector -
-%% to check.
+%% to check. HOW TO COMPUTE THE RESIDUAL?
 
-%lexqr_struct.x_mu = x_mu;
+lexqr_struct.X_mu = d.X_mu;
+csm = [0;cumsum(m(:))];
+for i=1:nObj
+    ind = csm(i)+1:csm(i+1);
+    lexqr_struct.residual_mu{i} = d.residual_mu(ind);
+end
 
 lexqr_struct = lexqr_lambda(lexqr_struct);
 
 %% ===================================================================
 
-L0 = [];
-for k=1:lexqr_struct.nObj
-    L0 = [L0;d.lambda{k}];
+[xd, Ld, Xd] = lexlse_dual(obj,mu); %% use ^2?
+
+if 1
+    muXd = [];
+    muLambda = [];
+    for i=1:nObj
+	muXd = [muXd, mu(i)^2*Xd(:,i)];
+	muLambda = [muLambda, mu(i)^2*lexqr_struct.lambda(:,i)];
+    end
+
+    fprintf('norm(A''*Ld + muXd)       = %e\n', norm(A'*Ld + muXd))
+    fprintf('norm(A''*muLambda + muXd) = %e\n', norm(A'*muLambda + muXd))
+    fprintf('norm(Xd - d.X_mu)        = %e\n', norm(Xd - d.X_mu))
+
 end
 
-L1 = [];
-for k=1:lexqr_struct.nObj
-    L1 = [L1;d1.lambda{k}];
-end
-
-%lexqr_struct.lambda - L0
-
-L1 - L0
+lexqr_struct.lambda - Ld %% could be different
 
 %%%EOF

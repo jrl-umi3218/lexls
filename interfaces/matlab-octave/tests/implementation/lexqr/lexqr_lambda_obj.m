@@ -1,9 +1,13 @@
-function Lambda = lexqr_lambda_obj(lexqr_struct, ObjIndex, rhs_all)
+function Lambda = lexqr_lambda_obj(lexqr_struct, ObjIndex, rhs_all, residual_flag)
 %%%
 %
 % find the Lagrange multipliers through the factorization: corresponds to lexlse.ObjectiveSensitivity
 % (for a single objective)
 %
+
+    if nargin < 4
+	residual_flag = 0;
+    end
 
     %% -------------------------------------
     %% input handling
@@ -33,18 +37,22 @@ function Lambda = lexqr_lambda_obj(lexqr_struct, ObjIndex, rhs_all)
     ObjRank       = obj_info(ObjIndex).rank;
     ColDim        = FirstColIndex-1; % ColDim will be used to indicate column dimension (I use it for clarity)
 
-    %% Lambda.segment(FirstRowIndex, ObjRank).setZero(); assumed
+    if residual_flag
+	Lambda = segment_assign(lexqr_struct.residual_mu{ObjIndex}, Lambda, FirstRowIndex, ObjDim);
+    else
+	%% Lambda.segment(FirstRowIndex, ObjRank).setZero(); assumed
 
-    %% copy only what is needed to compute the residual v = A*x-b (i.e., -y_hat)
-    tmp    = segment(lexqr(:,nVar+1), FirstRowIndex+ObjRank, ObjDim-ObjRank);
-    Lambda = segment_assign(-tmp, Lambda, FirstRowIndex+ObjRank, ObjDim-ObjRank);
+	%% copy only what is needed to compute the residual v = A*x-b (i.e., -y_hat)
+	tmp    = segment(lexqr(:,nVar+1), FirstRowIndex+ObjRank, ObjDim-ObjRank);
+	Lambda = segment_assign(-tmp, Lambda, FirstRowIndex+ObjRank, ObjDim-ObjRank);
 
-    %% compute the optimal residual associated with objective ObjIndex (apply Q_{ObjIndex} on the left)
-    tmp    = segment(Lambda, FirstRowIndex, ObjDim);
-    hh_seq = householderSequence(block(lexqr, FirstRowIndex, FirstColIndex, ObjDim, ObjRank), ...
+	%% compute the optimal residual associated with objective ObjIndex (apply Q_{ObjIndex} on the left)
+	tmp    = segment(Lambda, FirstRowIndex, ObjDim);
+	hh_seq = householderSequence(block(lexqr, FirstRowIndex, FirstColIndex, ObjDim, ObjRank), ...
 				     segment(hh_scalars, FirstRowIndex, ObjDim));
-    tmp    = applyOnTheLeft(hh_seq,tmp);
-    Lambda = segment_assign(tmp, Lambda, FirstRowIndex, ObjDim);
+	tmp    = applyOnTheLeft(hh_seq,tmp);
+	Lambda = segment_assign(tmp, Lambda, FirstRowIndex, ObjDim);
+    end
 
     if (ObjIndex>1) % the first objective has only Lagrange multipliers equal to the optimal residual
 

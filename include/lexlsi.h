@@ -459,6 +459,17 @@ namespace LexLS
                 return lexlse.get_lexqr();
             }
 
+            dMatrixType get_X_mu()
+            {
+                return lexlse.get_X_mu();
+            }
+
+            dVectorType get_residual_mu()
+            {
+                return lexlse.get_residual_mu();
+            }
+
+
             /**
                 \brief Get number of cycling relaxations
             */

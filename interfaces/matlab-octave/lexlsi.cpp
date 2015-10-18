@@ -86,15 +86,19 @@ mxArray * formInfoStructure (
 mxArray * formDebugStructure (
         const std::vector<LexLS::WorkingSetLogEntry> &working_set_log,
         const std::vector<LexLS::dMatrixType> &lambda,
-        const LexLS::dMatrixType &lexqr)
+        const LexLS::dMatrixType &lexqr,
+        const LexLS::dMatrixType &X_mu,
+        const LexLS::dVectorType &residual_mu)
 {
     mxArray * info_struct;
 
-    int num_info_fields = 3;
+    int num_info_fields = 5;
     const char *info_field_names[] = {
         "working_set_log",
         "lambda",
         "lexqr",
+        "X_mu",
+        "residual_mu"
     };
 
 
@@ -185,6 +189,37 @@ mxArray * formDebugStructure (
     }
 
     mxSetField (info_struct, 0, "lexqr", lexqr_);
+
+    // ----------------------------------------------------------------
+
+    num_rows = X_mu.rows();
+    num_cols = X_mu.cols();
+
+    mxArray * X_mu_ = mxCreateDoubleMatrix(num_rows, num_cols, mxREAL);
+
+    for (unsigned int k = 0; k < num_cols; ++k)
+    {
+        for (unsigned int j = 0; j < num_rows; ++j)
+        {
+            mxGetPr(X_mu_)[j + k * num_rows] = X_mu(j,k);
+        }
+    }
+
+    mxSetField (info_struct, 0, "X_mu", X_mu_);
+
+    // ----------------------------------------------------------------
+
+    num_rows = residual_mu.size();
+    num_cols = 1;
+
+    mxArray * residual_mu_ = mxCreateDoubleMatrix(num_rows, num_cols, mxREAL);
+
+    for (unsigned int k = 0; k < num_rows; ++k)
+    {
+        mxGetPr(residual_mu_)[k] = residual_mu(k);
+    }
+
+    mxSetField (info_struct, 0, "residual_mu", residual_mu_);
 
     return (info_struct);
 }
@@ -729,12 +764,16 @@ void mexFunction( int num_output, mxArray *output[],
         std::vector<LexLS::WorkingSetLogEntry> working_set_log;
         std::vector<LexLS::dMatrixType> lambda;
         LexLS::dMatrixType lexqr;
+        LexLS::dMatrixType X_mu;
+        LexLS::dVectorType residual_mu;
 
         try
         {
             working_set_log = lexlsi.getWorkingSetLog();
             lexlsi.getLambda(lambda);
             lexqr = lexlsi.get_lexqr();
+            X_mu = lexlsi.get_X_mu();
+            residual_mu = lexlsi.get_residual_mu();
         }
         catch (std::exception &e)
         {
@@ -742,6 +781,8 @@ void mexFunction( int num_output, mxArray *output[],
         }
         output[4] = formDebugStructure( working_set_log,
                                         lambda,
-                                        lexqr);
+                                        lexqr,
+                                        X_mu,
+                                        residual_mu);
     }
 }
