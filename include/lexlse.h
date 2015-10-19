@@ -1635,8 +1635,12 @@ namespace LexLS
                 rhs.head(ObjRank).noalias()  = Rk.triangularView<Eigen::Upper>() * d.head(ObjRank);
                 rhs.head(ObjRank).noalias() += Tk * d.tail(RemainingColumns);
 
-                residual_workspace = rhs;
-                residual_workspace.tail(ObjDim-ObjRank).setZero(); // set y_hat = 0
+                // ==============================================================================================
+                // compute residual Q1*[R T]*x - b
+                // ==============================================================================================
+
+                residual_workspace.head(ObjRank) = rhs.head(ObjRank);
+                residual_workspace.tail(ObjDim-ObjRank).setZero();    // set y_hat = 0
                 residual_workspace.applyOnTheLeft(householderSequence(LOD.block(FirstRowIndex,
                                                                                 FirstColIndex,
                                                                                 ObjDim,
@@ -1659,7 +1663,7 @@ namespace LexLS
                     AccumulatedRanks += obj_info[k].rank;
                 }
 
-                // equivalent to the code below with P_tmp
+                // equivalent to the code with P_tmp below
                 for (Index k=AccumulatedRanks; k--; )
                 {
                     Index j = column_permutations.coeff(k);
@@ -1679,6 +1683,9 @@ namespace LexLS
             }
 
             /*
+              \brief Compute the solution of the ObjIndex-th regularized problem (needed for
+              computing the Lagrange multipliers)
+
               \todo to document
             */
             void get_intermediate_x(Index ObjIndex, Index x_tail_size)

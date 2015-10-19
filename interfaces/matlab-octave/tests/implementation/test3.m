@@ -12,10 +12,17 @@ clear;clc
 
 %% -----------------------------------------------------------------------
 
-nObj = 4;
-nVar = 25;
-m = 5*ones(nObj,1);
-r = m-1;
+if 1
+    nObj = 4;
+    nVar = 25;
+    m = 5*ones(nObj,1);
+    r = m-2;
+else
+    nObj = 3;
+    nVar = 15;
+    m = [2,3,4];
+    r = m;
+end
 
 options.regularization_type    = 7;
 options.regularization_factors = 1*ones(nObj,1);

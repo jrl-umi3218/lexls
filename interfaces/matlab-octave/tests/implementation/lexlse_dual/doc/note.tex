@@ -17,7 +17,8 @@
 
 \input defs.tex
 
-% \todo I don't like the notation x^{(k)}. To use something different, e.g., \hat{x}_k^{\star}
+% \todo I don't like the notation x^{(k)}. To use something different. Maybe I should use
+% $\tilde{x}_k^{\star}$ instead of $x_{k}^{\star}$ (as we do i the paper).
 
 \title{Tikhonov regularization and Lagrange multipliers} \author{Dimitar Dimitrov}
 
@@ -196,23 +197,22 @@ A^T\lambda_{k}^{\star} = -\mu_k^2x^{\star}_k
 for computing $\lambda_{k}^{\star}$. Using the compact $\ell$-QR decomposition, we have
 %
 \[
-\mathnormal{\Pi}\begin{bmatrix}R_{\ell}^T \\ T_{\ell}^T\end{bmatrix}Q_{\ell}^{'T}\lambda_{k}^{\star} = -\mu_k^2x^{\star}_k.
+\mathnormal{\Pi}\begin{bmatrix}R_{\ell}^T \\ T_{\ell}^T\end{bmatrix}
+Q_{\ell}^{'T}\lambda_{k}^{\star} = -\mu_k^2x^{\star}_k.
 \]
 %
 Note that $R_{\ell}^T$ is full column rank, while $Q_{\ell}^{'T}$ is full row rank, and
-$\mathnormal{\Pi}$ is a permutation matrix. Let $L$ denote the Cholesky decomposition of
+$\mathnormal{\Pi}$ is a permutation matrix. Let $z_k = Q_{\ell}^{'T}\lambda_{k}^{\star}$ and $d_k =
+-\mu^2\mathnormal{\Pi}^Tx^{\star}_k$. Thus, we have to solve
 %
-\begin{align*}
-G = \begin{bmatrix}R_{\ell} & T_{\ell}\end{bmatrix}\begin{bmatrix}R_{\ell}^T \\ T_{\ell}^T\end{bmatrix}.
-\end{align*}
+\[
+\underbrace{\begin{bmatrix}R_{\ell}^T \\ T_{\ell}^T\end{bmatrix}}_{D_{\ell}}z_k = \underbrace{\begin{bmatrix} d_k^{'} \\ d_k^{''}\end{bmatrix}}_{d_k}.
+\]
 %
-We have to solve
-%
-\begin{align*}
-  L^TLz = -\mu_k^2G^T\mathnormal{\Pi}^Tx^{\star}_k.
-\end{align*}
-%
-to find $z$ and then $Q_{\ell}^{'T}\lambda_{k}^{\star} = z$ to find $\lambda_{k}^{\star}$.
+Note, however, that $y \in \mathcal{R}(D_{\ell})$, hence $z = R_{\ell}^{-T}d_k^{'}$ (which can be
+obtained using a backward substitution). Then we have to solve $Q_{\ell}^{'T}\lambda_{k}^{\star} =
+z$ to find $\lambda_{k}^{\star}$ (here we can reuse our current implementation for solving
+$Q_{\ell}^{'T}\lambda_{k}^{\star} = 0$).
 
 \section{A dual approach}
 

@@ -34,6 +34,12 @@ function lexqr_struct = lexqr_lambda(lexqr_struct)
 	    mu = lexqr_struct.options.regularization_factors(k);
 	    rhs_all = -mu^2*iRT*P'*lexqr_struct.X_mu(:,k);
 
+	    %{
+	    n = size(RT,2);
+	    y = (-mu^2*P'*lexqr_struct.X_mu(:,k));
+	    rr = RT(1:n,1:n)\y(1:n);
+	    %}
+
 	    L(ind,k) = lexqr_lambda_obj(lexqr_struct,k,rhs_all,1);
 	else
 	    L(ind,k) = lexqr_lambda_obj(lexqr_struct,k,rhs_all,0);
