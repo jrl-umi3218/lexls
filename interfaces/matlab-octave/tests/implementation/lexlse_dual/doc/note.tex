@@ -209,7 +209,7 @@ $\mathnormal{\Pi}$ is a permutation matrix. Let $z_k = Q_{\ell}^{'T}\lambda_{k}^
 \underbrace{\begin{bmatrix}R_{\ell}^T \\ T_{\ell}^T\end{bmatrix}}_{D_{\ell}}z_k = \underbrace{\begin{bmatrix} d_k^{'} \\ d_k^{''}\end{bmatrix}}_{d_k}.
 \]
 %
-Note, however, that $y \in \mathcal{R}(D_{\ell})$, hence $z = R_{\ell}^{-T}d_k^{'}$ (which can be
+Note, however, that $d_k \in \mathcal{R}(D_{\ell})$, hence $z = R_{\ell}^{-T}d_k^{'}$ (which can be
 obtained using a backward substitution). Then we have to solve $Q_{\ell}^{'T}\lambda_{k}^{\star} =
 z$ to find $\lambda_{k}^{\star}$ (here we can reuse our current implementation for solving
 $Q_{\ell}^{'T}\lambda_{k}^{\star} = 0$).

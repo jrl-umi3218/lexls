@@ -18,10 +18,10 @@ if 1
     m = 5*ones(nObj,1);
     r = m-2;
 else
-    nObj = 3;
-    nVar = 15;
-    m = [2,3,4];
-    r = m;
+    nObj = 4;
+    nVar = 20;
+    m = [2,3,4,5];
+    r = m-1;
 end
 
 options.regularization_type    = 7;
@@ -52,6 +52,7 @@ lexqr_struct = lexqr_compact(lexqr_struct);
 %% to check. HOW TO COMPUTE THE RESIDUAL?
 
 lexqr_struct.X_mu = d.X_mu;
+
 csm = [0;cumsum(m(:))];
 for i=1:nObj
     ind = csm(i)+1:csm(i+1);
@@ -60,16 +61,24 @@ end
 
 [xd, Ld, Xd] = lexlse_dual(obj,mu); %% use ^2?
 
+lexqr_struct.Xd = Xd;
+
 lexqr_struct = lexqr_lambda(lexqr_struct);
 
 %% ===================================================================
+
+L0 = [];
+for i=1:nObj
+    L0 = [L0;d.lambda{i}];
+end
 
 if 1
     muXd = [];
     muLambda = [];
     for i=1:nObj
 	muXd = [muXd, mu(i)^2*Xd(:,i)];
-	muLambda = [muLambda, mu(i)^2*lexqr_struct.lambda(:,i)];
+	%%muLambda = [muLambda, mu(i)^2*lexqr_struct.lambda(:,i)];
+	muLambda = [muLambda, mu(i)^2*L0(:,i)];
     end
 
     fprintf('norm(A''*Ld + muXd)       = %e\n', norm(A'*Ld + muXd))
@@ -78,6 +87,6 @@ if 1
 
 end
 
-lexqr_struct.lambda - Ld %% could be different
+lexqr_struct.lambda - L0
 
 %%%EOF

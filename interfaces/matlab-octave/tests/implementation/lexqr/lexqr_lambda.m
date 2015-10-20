@@ -32,12 +32,15 @@ function lexqr_struct = lexqr_lambda(lexqr_struct)
 
 	if isfield(lexqr_struct, 'X_mu')
 	    mu = lexqr_struct.options.regularization_factors(k);
-	    rhs_all = -mu^2*iRT*P'*lexqr_struct.X_mu(:,k);
+
+	    %%rhs_all = -mu^2*iRT*P'*lexqr_struct.Xd(:,k);
+	    rhs_all = lexqr_struct.X_mu(1:size(RT,2),k);
 
 	    %{
 	    n = size(RT,2);
-	    y = (-mu^2*P'*lexqr_struct.X_mu(:,k));
+	    y = -mu^2*P'*lexqr_struct.Xd(:,k);
 	    rr = RT(1:n,1:n)\y(1:n);
+	    keyboard
 	    %}
 
 	    L(ind,k) = lexqr_lambda_obj(lexqr_struct,k,rhs_all,1);
