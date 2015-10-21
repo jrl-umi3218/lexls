@@ -512,13 +512,18 @@ namespace LexLS
                 ObjDim        = obj_info[ObjIndex].dim;
                 ObjRank       = obj_info[ObjIndex].rank;
 
-                // Lambda.segment(FirstRowIndex, ObjRank).setZero(); assumed
-
                 bool compute_residual_from_factorization = true;
-                if (compute_residual_from_factorization) // used when there is no regularization
+                if (parameters.regularization_type == 7) // WARNING: TESTING
                 {
+                    compute_residual_from_factorization = false;
+                }
+
+                if (compute_residual_from_factorization)
+                {
+                    // Lambda.segment(FirstRowIndex, ObjRank).setZero(); assumed
+
                     // copy only what is needed to compute the residual v = A*x-b (i.e., -y_hat)
-                    Lambda.segment(FirstRowIndex+ObjRank, ObjDim-ObjRank) =     \
+                    Lambda.segment(FirstRowIndex+ObjRank, ObjDim-ObjRank) = \
                         -LOD.col(nVar).segment(FirstRowIndex+ObjRank, ObjDim-ObjRank);
 
                     // compute the optimal residual associated with objective ObjIndex (apply Q_{ObjIndex} on the left)
@@ -531,6 +536,7 @@ namespace LexLS
                 }
                 else
                 {
+                    initialize_rhs(ObjIndex,rhs);
                     Lambda.segment(FirstRowIndex, ObjDim) = residual_mu.segment(FirstRowIndex,ObjDim);
                 }
 
@@ -551,7 +557,7 @@ namespace LexLS
                 if (ObjIndex>0) // the first objective has only Lagrange multipliers equal to the optimal residual
                 {
                     // e.g., for the fourth objective, here we perform [L41, L42, L43]' * {optimal residual from above}
-                    rhs.head(ColDim).noalias() = -LOD.block(FirstRowIndex, 0, ObjDim, ColDim).transpose() * \
+                    rhs.head(ColDim).noalias() -= LOD.block(FirstRowIndex, 0, ObjDim, ColDim).transpose() * \
                         Lambda.segment(FirstRowIndex, ObjDim);
 
                     //for (int k=ObjIndex-1; k>=0; k--)
@@ -649,18 +655,21 @@ namespace LexLS
                 dVectorBlockType         rhs(dWorkspace, nLambda + nVarFixed, nRank+nVarFixed);
                 // ---------------------------------------------------------------------------------
 
-                initialize_rhs(ObjIndex,rhs);
-
                 FirstRowIndex = obj_info[ObjIndex].first_row_index;
                 FirstColIndex = obj_info[ObjIndex].first_col_index;
                 ObjDim        = obj_info[ObjIndex].dim;
                 ObjRank       = obj_info[ObjIndex].rank;
 
-                // Lambda.segment(FirstRowIndex, ObjRank).setZero(); assumed
-
-                bool compute_residual_from_factorization = false;
-                if (compute_residual_from_factorization) // used when there is no regularization
+                bool compute_residual_from_factorization = true;
+                if (parameters.regularization_type == 7) // WARNING: TESTING
                 {
+                    compute_residual_from_factorization = false;
+                }
+
+                if (compute_residual_from_factorization)
+                {
+                    // Lambda.segment(FirstRowIndex, ObjRank).setZero(); assumed
+
                     // copy only what is needed to compute the residual v = A*x-b (i.e., -y_hat)
                     Lambda.segment(FirstRowIndex+ObjRank, ObjDim-ObjRank) = \
                         -LOD.col(nVar).segment(FirstRowIndex+ObjRank, ObjDim-ObjRank);
@@ -675,8 +684,10 @@ namespace LexLS
                 }
                 else
                 {
+                    initialize_rhs(ObjIndex,rhs);
                     Lambda.segment(FirstRowIndex, ObjDim) = residual_mu.segment(FirstRowIndex,ObjDim);
                 }
+
 
                 if (ObjIndex>0) // the first objective has only Lagrange multipliers equal to the optimal residual
                 {
@@ -1560,6 +1571,7 @@ namespace LexLS
 
                 Eigen::LLT<dMatrixType> chol(D);
                 chol.solveInPlace(d);
+
                 LOD.col(nVar).segment(FirstRowIndex,ObjRank).noalias()  = Rk.triangularView<Eigen::Upper>() * d.head(ObjRank);
                 LOD.col(nVar).segment(FirstRowIndex,ObjRank).noalias() += Tk * d.tail(RemainingColumns);
             }
@@ -1656,7 +1668,6 @@ namespace LexLS
                 // ==============================================================================================
                 // compute residual Q1*[R T]*x - b
                 // ==============================================================================================
-
                 residual_workspace.head(ObjRank) = rhs.head(ObjRank);
                 residual_workspace.tail(ObjDim-ObjRank).setZero();    // set y_hat = 0
                 residual_workspace.applyOnTheLeft(householderSequence(LOD.block(FirstRowIndex,
@@ -1666,7 +1677,6 @@ namespace LexLS
                                                                       hh_scalars.segment(FirstRowIndex,ObjDim)));
 
                 residual_mu.segment(FirstRowIndex,ObjDim) = residual_workspace - residual_mu.segment(FirstRowIndex,ObjDim);
-
                 // ==============================================================================================
 
                 X_mu.col(ObjIndex).tail(RemainingColumns+ObjRank) = d;
@@ -1704,13 +1714,38 @@ namespace LexLS
             /*
               \brief Initialize right-hand-size in case of regularization
 
-              \todo to document
+              \verbatim
+              |R11'    0    0  | |x1|   |b1|
+              |R12'  R22'   0  |*|x2| = |b2|
+              |R13'  R23'  R33'| |x3|   |b3|
+
+              Note that |R12 R13| is continuous in memory but |R13' R23'| is not
+
+              ----------------------------
+              The basic flow is:
+              ----------------------------
+              k = 1
+              x1 = inv(R11')*b1
+
+              k = 2
+              |b2|   |b2|   |R12'|
+              |  | = |  | - |    |*x1
+              |b3|   |b3|   |R13'|
+              x2 = inv(R22')*b2
+
+              k3 = 3
+              b3 = b3 - R23'*x2
+              x3 = inv(R33')*b3
+              ----------------------------
+
+              Depending on ObjIndex, we might not need to update both (b2,b3) for k=2. This is
+              related to the fact that we are solving a very particular system (to explain in the
+              note).
+              \endverbatim
             */
             template <typename Derived>
             void initialize_rhs(Index ObjIndex, Eigen::MatrixBase<Derived> & rhs)
             {
-                Index FirstColIndex, FirstRowIndex, ObjRank;
-
                 aRegularizationFactor = obj_info[ObjIndex].regularization_factor;
                 X_mu.col(ObjIndex) = P.transpose()*X_mu.col(ObjIndex);              // permute elements
                 X_mu.col(ObjIndex) *= -aRegularizationFactor*aRegularizationFactor; // scale
@@ -2573,6 +2608,12 @@ namespace LexLS
             /**
                \brief Used to store the solutions of all problems in the sequence (necessary for
                computing Lagrange multipliers when we regularize)
+
+               \note First the solutions (mentioned above) are stored in X_mu, but then it is
+               modified for convenience of computations
+
+               \todo Maybe I can keep the actual solutions in X_mu (maybe someone would be
+               interested in this).
             */
             dMatrixType X_mu;
 

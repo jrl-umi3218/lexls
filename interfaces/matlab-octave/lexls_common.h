@@ -2,7 +2,7 @@
     @file
     @author  Alexander Sherikov
 
-    @brief 
+    @brief
 */
 
 #include <sstream>
@@ -48,7 +48,16 @@ void failIfTrue(const bool condition, const char * message)
     }
 }
 
-
+/**
+ * @brief Prints the message if the given condition is true.
+ */
+void warnIfTrue(const bool condition, const char * message)
+{
+    if (condition)
+    {
+        mexWarnMsgTxt(message);
+    }
+}
 
 // ======================================================================================
 // Input checks
@@ -62,6 +71,7 @@ void checkInputMatrix(const mxArray *M, const int objective_index, const char *n
 
     failIfTrue (M == NULL, (std::string("Matrix '") + name + "' is missing on level " + str_objective_index.str() + ".").c_str());
     failIfTrue (mxIsEmpty (M), (std::string("Matrix '") + name + "' is empty on level " + str_objective_index.str() + ".").c_str());
+    //warnIfTrue (mxIsEmpty (M), (std::string("Matrix '") + name + "' is empty on level " + str_objective_index.str() + ".").c_str()); // NOT PROPERLY TESTED
     failIfTrue (!mxIsDouble(M), (std::string("Matrix '") + name + "' must be of 'double' type on level " + str_objective_index.str() + ".").c_str());
 }
 
@@ -84,7 +94,7 @@ void checkInputMatrixSize(const mxArray *M, const unsigned int nrows, const unsi
 
 
 /**
- * @brief Checks correctness of the input / output parameters, prints a message 
+ * @brief Checks correctness of the input / output parameters, prints a message
  *  and terminates executione whenever an error is encountered
  */
 void checkInputOutput(  const int num_output, mxArray *output[],
@@ -115,7 +125,7 @@ void checkInputOutput(  const int num_output, mxArray *output[],
         }
     }
 
-    if (mxGetNumberOfFields (input[0]) < min_number_of_fields) 
+    if (mxGetNumberOfFields (input[0]) < min_number_of_fields)
     {
         mexErrMsgTxt("Wrong number of fields in the first input structure!");
     }
@@ -140,7 +150,7 @@ mxArray * getObjectiveMatrix(const mxArray * objectives, const int objective_ind
 
 
 // ======================================================================================
-// Parsing of options 
+// Parsing of options
 // ======================================================================================
 
 
@@ -151,7 +161,7 @@ bool getOptionDouble(double *option_value, const mxArray *option_struct, const c
 
     mxArray *option = mxGetField (option_struct, 0, option_id);
 
-    if (option != NULL) 
+    if (option != NULL)
     {
         // if there is such field
         failIfTrue (!mxIsDouble(option), (std::string("Option '") + option_id + "' must be of 'double' type.").c_str());
@@ -165,8 +175,8 @@ bool getOptionDouble(double *option_value, const mxArray *option_struct, const c
 
 
 
-bool getOptionString(   std::string &option_value, 
-                        const mxArray *option_struct, 
+bool getOptionString(   std::string &option_value,
+                        const mxArray *option_struct,
                         const char *option_id,
                         const mwSize strlen)
 {
@@ -203,7 +213,7 @@ bool getOptionBool(bool *option_value, const mxArray *option_struct, const char 
 
     mxArray * option = mxGetField (option_struct, 0, option_id);
 
-    if (option != NULL) 
+    if (option != NULL)
     {
         failIfTrue (!mxIsDouble(option), (std::string("Flag option '") + option_id + "' must be of 'double' type.").c_str());
         if (*mxGetPr(option) != 0)
@@ -240,9 +250,9 @@ bool getOptionUnsignedInteger(unsigned int *option_value, const mxArray *option_
 }
 
 
-bool getOptionArray(std::vector<double> &array, 
-                    const unsigned int number_of_elements, 
-                    const mxArray *option_struct, 
+bool getOptionArray(std::vector<double> &array,
+                    const unsigned int number_of_elements,
+                    const mxArray *option_struct,
                     const char *option_id)
 {
     bool is_parsing_successful = false;
@@ -250,7 +260,7 @@ bool getOptionArray(std::vector<double> &array,
 
     mxArray *option = mxGetField (option_struct, 0, option_id);
 
-    if (option != NULL) 
+    if (option != NULL)
     {
         // if there is such field
         failIfTrue (!mxIsDouble(option), (std::string("Option '") + option_id + "' must be of 'double' type.").c_str());
@@ -277,8 +287,8 @@ bool getOptionArray(std::vector<double> &array,
 // Operations on matrices
 // ======================================================================================
 
-mxArray * catenateMatrices( mxArray *matrix1, 
-                            mxArray *matrix2, 
+mxArray * catenateMatrices( mxArray *matrix1,
+                            mxArray *matrix2,
                             mxArray *matrix3 = NULL)
 {
     int number_of_matrices = 2;

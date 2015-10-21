@@ -249,7 +249,7 @@ namespace LexLS
             printf("modify_type_inactive_enabled   = %d \n", modify_type_inactive_enabled);
             printf("set_min_init_ctr_violation     = %d \n", set_min_init_ctr_violation);
             printf("use_phase1_v0                  = %d \n", use_phase1_v0);
-            printf("log_working_set_enabled            = %d \n", log_working_set_enabled);
+            printf("log_working_set_enabled        = %d \n", log_working_set_enabled);
             printf("\n");
         }
 

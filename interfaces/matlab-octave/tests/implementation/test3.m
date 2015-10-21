@@ -47,10 +47,6 @@ lexqr_struct = lexqr_compact(lexqr_struct);
 
 [x_mu,info,v,as,d] = lexlsi(lexqr_struct.obj, options);
 
-%% When I use regularization in lexlse, the computation of Lambda changes. This is because the
-%% residuals change. But I might be doing something wrong with the singular part of the RHS vector -
-%% to check. HOW TO COMPUTE THE RESIDUAL?
-
 lexqr_struct.X_mu = d.X_mu;
 
 csm = [0;cumsum(m(:))];

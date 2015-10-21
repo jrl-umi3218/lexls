@@ -29,6 +29,10 @@ namespace LexLS
             is because we don't push_back in it (which is normal since there are neither blocking constraints,
             nor Lagrange multipliers to drop). But what if I am interested only in the rank field! Maybe we
             should separate rank?
+
+            \todowrite a function to deactivate weakly active inequality constraints (when requested
+            by the user). Reason: hot starting, maybe we can write equate oc QPs by discriminating
+            equality and inequality constraints.
         */
         class LexLSI
         {
@@ -417,40 +421,53 @@ namespace LexLS
                 \brief Outputs the Lagrange multipliers associated to all constraintes involved in all objectives
 
                 \note The order of constraints is like the one provided by the user (in the problem definition)
+
+                \note When status = MAX_NUMBER_OF_FACTORIZATIONS_EXCEDED, an output Lambda = 0 is
+                generated because the active constraints in objective[.] are different from the ones
+                from the last lexlse problem (and it is a mess).
             */
             void getLambda(std::vector<dMatrixType> & vec_lambda)
             {
                 Index nActiveCtr = 0; // number of active constraints
                 vec_lambda.resize(nObj);
-                for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
+                for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++) // Objectives of LexLSI
                 {
                     nActiveCtr += objectives[ObjIndex].getActiveCtrCount();
                     vec_lambda[ObjIndex].setZero(getObjDim(ObjIndex),nObj);
                 }
 
-                // "L_active" contains only the Lagrange multipliers associated to the active
-                // constraints in the working set (the order in the working set is preserved).
-                dMatrixType L_active = dMatrixType::Zero(nActiveCtr,nObj);
-                Index nMeaningful = lexlse.getFixedVariablesCount();
-                for (Index ObjIndex=0; ObjIndex<nObj-nObjOffset; ObjIndex++) // Objectives of LexLSE
+                // maybe we could output Lambda when status = PROBLEM_SOLVED_CYCLING_HANDLING
+                if (status != PROBLEM_SOLVED)
                 {
-                    lexlse.ObjectiveSensitivity(ObjIndex);
-
-                    nMeaningful += lexlse.getDim(ObjIndex);
-                    L_active.col(nObjOffset + ObjIndex).head(nMeaningful) = lexlse.getWorkspace().head(nMeaningful);
+                    printf("Warning: Output of Lagrange multipliers suppressed (status = %d)\n", status);
                 }
-
-                Index ind;
-                Index accumulate_active_ctr = 0;
-
-                for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++) // Objectives of LexLSI
+                else
                 {
-                    for (Index k=0; k<objectives[ObjIndex].getActiveCtrCount(); k++)
+                    // "L_active" contains only the Lagrange multipliers associated to the active
+                    // constraints in the working set (the order in the working set is preserved).
+                    dMatrixType L_active = dMatrixType::Zero(nActiveCtr,nObj);
+                    Index nMeaningful = lexlse.getFixedVariablesCount();
+
+                    for (Index ObjIndex=0; ObjIndex<nObj-nObjOffset; ObjIndex++) // Objectives of LexLSE
                     {
-                        ind = objectives[ObjIndex].getActiveCtrIndex(k);
-                        vec_lambda[ObjIndex].row(ind) = L_active.row(accumulate_active_ctr+k);
+                        lexlse.ObjectiveSensitivity(ObjIndex);
+
+                        nMeaningful += lexlse.getDim(ObjIndex);
+                        L_active.col(nObjOffset + ObjIndex).head(nMeaningful) = lexlse.getWorkspace().head(nMeaningful);
                     }
-                    accumulate_active_ctr += objectives[ObjIndex].getActiveCtrCount();
+
+                    Index ind;
+                    Index accumulate_active_ctr = 0;
+
+                    for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++) // Objectives of LexLSI
+                    {
+                        for (Index k=0; k<objectives[ObjIndex].getActiveCtrCount(); k++)
+                        {
+                            ind = objectives[ObjIndex].getActiveCtrIndex(k);
+                            vec_lambda[ObjIndex].row(ind) = L_active.row(accumulate_active_ctr+k);
+                        }
+                        accumulate_active_ctr += objectives[ObjIndex].getActiveCtrCount();
+                    }
                 }
             }
 
