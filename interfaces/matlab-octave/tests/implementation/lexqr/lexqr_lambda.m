@@ -34,8 +34,7 @@ function lexqr_struct = lexqr_lambda(lexqr_struct)
 	    mu = lexqr_struct.options.regularization_factors(k);
 
 	    rhs_all = -mu^2*iRT*P'*lexqr_struct.Xd(:,k);
-
-	    %%rhs_all = lexqr_struct.X_mu(1:size(RT,2),k);
+	    %%rhs_all = -mu^2*iRT*P'*lexqr_struct.X_mu(:,k);
 
 	    %{
 	    n = size(RT,2);

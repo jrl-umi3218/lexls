@@ -1746,9 +1746,12 @@ namespace LexLS
             template <typename Derived>
             void initialize_rhs(Index ObjIndex, Eigen::MatrixBase<Derived> & rhs)
             {
+                dVectorBlockType X_mu_k(dWorkspace, nVar, nVar);
+                X_mu_k = X_mu.col(ObjIndex); // copy (I want to preserve X_mu)
+
                 aRegularizationFactor = obj_info[ObjIndex].regularization_factor;
-                X_mu.col(ObjIndex) = P.transpose()*X_mu.col(ObjIndex);              // permute elements
-                X_mu.col(ObjIndex) *= -aRegularizationFactor*aRegularizationFactor; // scale
+                X_mu_k = P.transpose()*X_mu_k;                          // permute elements
+                X_mu_k *= -aRegularizationFactor*aRegularizationFactor; // scale
 
                 // last index of interes for objective ObjIndex
                 Index last_col_index = obj_info[ObjIndex].first_col_index + obj_info[ObjIndex].rank - 1;
@@ -1758,10 +1761,6 @@ namespace LexLS
                 {
                     if (obj_info[k].rank > 0)
                     {
-                        dBlockType2Vector x_k(X_mu,
-                                              obj_info[k].first_col_index, ObjIndex,
-                                              obj_info[k].rank, 1);
-
                         if (k>0)
                         {
                             // number of remaining columns
@@ -1771,17 +1770,18 @@ namespace LexLS
                                            obj_info[k-1].first_row_index, obj_info[k].first_col_index,
                                            obj_info[k-1].rank, remain_col);
 
-                            X_mu.col(ObjIndex).segment(obj_info[k].first_col_index,remain_col).noalias() -= \
-                                Rkj.transpose() * X_mu.col(ObjIndex).segment(obj_info[k-1].first_col_index,
-                                                                             obj_info[k-1].rank);
+                            X_mu_k.segment(obj_info[k].first_col_index,remain_col).noalias() -= \
+                                Rkj.transpose() * X_mu_k.segment(obj_info[k-1].first_col_index,
+                                                                 obj_info[k-1].rank);
                         }
 
                         LOD.block(obj_info[k].first_row_index, obj_info[k].first_col_index,
-                                  obj_info[k].rank, obj_info[k].rank)
-                            .transpose().triangularView<Eigen::Lower>().solveInPlace(x_k);
+                                  obj_info[k].rank, obj_info[k].rank).transpose()
+                            .triangularView<Eigen::Lower>()
+                            .solveInPlace(X_mu_k.segment(obj_info[k].first_col_index,obj_info[k].rank));
                     }
                 }
-                rhs = X_mu.col(ObjIndex).head(rhs.size());
+                rhs = X_mu_k.head(rhs.size());
             }
 
             /*
@@ -2608,12 +2608,6 @@ namespace LexLS
             /**
                \brief Used to store the solutions of all problems in the sequence (necessary for
                computing Lagrange multipliers when we regularize)
-
-               \note First the solutions (mentioned above) are stored in X_mu, but then it is
-               modified for convenience of computations
-
-               \todo Maybe I can keep the actual solutions in X_mu (maybe someone would be
-               interested in this).
             */
             dMatrixType X_mu;
 
