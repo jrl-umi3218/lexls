@@ -12,20 +12,21 @@ clear;clc
 
 %% -----------------------------------------------------------------------
 
-if 1
+if 0
     nObj = 4;
     nVar = 25;
     m = 5*ones(nObj,1);
     r = m-2;
 else
-    nObj = 4;
-    nVar = 20;
-    m = [2,3,4,5];
-    r = m-1;
+    nVar = 9;
+    m = [4,2,3,5];
+    r = m-2;
+
+    nObj = length(m);
 end
 
 options.regularization_type    = 7;
-options.regularization_factors = 1*ones(nObj,1);
+options.regularization_factors = 0.5*ones(nObj,1);
 
 %% ===================================================================
 
@@ -55,7 +56,7 @@ for i=1:nObj
     lexqr_struct.residual_mu{i} = d.residual_mu(ind);
 end
 
-[xd, Ld, Xd] = lexlse_dual(obj,mu); %% use ^2?
+[xd, Ld, Xd] = lexlse_dual(obj,mu);
 
 lexqr_struct.Xd = Xd;
 
@@ -73,16 +74,12 @@ if 1
     muLambda = [];
     for i=1:nObj
 	muXd = [muXd, mu(i)^2*Xd(:,i)];
-	%%muLambda = [muLambda, mu(i)^2*lexqr_struct.lambda(:,i)];
-	muLambda = [muLambda, mu(i)^2*L0(:,i)];
     end
 
-    fprintf('norm(A''*Ld + muXd)       = %e\n', norm(A'*Ld + muXd))
-    fprintf('norm(A''*muLambda + muXd) = %e\n', norm(A'*muLambda + muXd))
-    fprintf('norm(Xd - d.X_mu)        = %e\n', norm(Xd - d.X_mu))
-
+    fprintf('norm(A''*Ld + muXd)             = %e\n', norm(A'*Ld + muXd))
+    fprintf('norm(A''*L0 + muXd)             = %e\n', norm(A'*L0 + muXd))
+    fprintf('norm(Xd - d.X_mu)              = %e\n', norm(Xd - d.X_mu))
+    fprintf('norm(lexqr_struct.lambda - L0) = %e\n', norm(lexqr_struct.lambda - L0))
 end
-
-lexqr_struct.lambda - L0
 
 %%%EOF

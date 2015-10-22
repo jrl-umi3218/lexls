@@ -14,7 +14,7 @@ clear;clc
 
 nVar = 10;
 m    = [3,3,3];
-r    = m-1;
+r    = m;
 
 nObj = length(m);
 

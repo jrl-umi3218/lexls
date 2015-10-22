@@ -425,6 +425,11 @@ namespace LexLS
                 \note When status = MAX_NUMBER_OF_FACTORIZATIONS_EXCEDED, an output Lambda = 0 is
                 generated because the active constraints in objective[.] are different from the ones
                 from the last lexlse problem (and it is a mess).
+
+                \todo I don't handle things well now. There should not be a discrepancy between
+                objectives[ObjIndex].getActiveCtrCount() and lexlse.getDim(ObjIndex) upon
+                termination. So in verifyWorkingSet() I should monitor whether we are at the last
+                iteration and not add or remove constraints (if we are).
             */
             void getLambda(std::vector<dMatrixType> & vec_lambda)
             {
@@ -448,9 +453,20 @@ namespace LexLS
                     dMatrixType L_active = dMatrixType::Zero(nActiveCtr,nObj);
                     Index nMeaningful = lexlse.getFixedVariablesCount();
 
+                    Index CtrIndex2Remove;
+                    int ObjIndex2Remove;
+                    RealScalar maxAbsValue;
                     for (Index ObjIndex=0; ObjIndex<nObj-nObjOffset; ObjIndex++) // Objectives of LexLSE
                     {
-                        lexlse.ObjectiveSensitivity(ObjIndex);
+
+                        //lexlse.ObjectiveSensitivity(ObjIndex);
+
+                        // test with the function that is actually used within the ative-set method
+                        lexlse.ObjectiveSensitivity(ObjIndex,
+                                                    CtrIndex2Remove, ObjIndex2Remove,
+                                                    parameters.tol_wrong_sign_lambda,
+                                                    parameters.tol_correct_sign_lambda,
+                                                    maxAbsValue);
 
                         nMeaningful += lexlse.getDim(ObjIndex);
                         L_active.col(nObjOffset + ObjIndex).head(nMeaningful) = lexlse.getWorkspace().head(nMeaningful);
@@ -479,6 +495,11 @@ namespace LexLS
             dMatrixType get_X_mu()
             {
                 return lexlse.get_X_mu();
+            }
+
+            dMatrixType get_X_mu_rhs()
+            {
+                return lexlse.get_X_mu_rhs();
             }
 
             dVectorType get_residual_mu()

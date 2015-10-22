@@ -1,4 +1,4 @@
-function lexqr_struct = lexqr_lambda(lexqr_struct)
+function [lexqr_struct] = lexqr_lambda(lexqr_struct)
 %%%
 %
 % calls lexqr_lambda_obj.m to form the matrix of Lagrange multipliers
@@ -34,7 +34,7 @@ function lexqr_struct = lexqr_lambda(lexqr_struct)
 	    mu = lexqr_struct.options.regularization_factors(k);
 
 	    rhs_all = -mu^2*iRT*P'*lexqr_struct.Xd(:,k);
-	    %%rhs_all = -mu^2*iRT*P'*lexqr_struct.X_mu(:,k);
+	    %%tmp = -mu^2*iRT*P'*lexqr_struct.X_mu(:,k);
 
 	    %{
 	    n = size(RT,2);

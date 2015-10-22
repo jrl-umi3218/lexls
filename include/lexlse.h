@@ -95,6 +95,8 @@ namespace LexLS
                 array.resize(nVar,nVar+1);
 
                 X_mu.resize(nVar,nObj);
+                X_mu_rhs.resize(nVar,nObj);
+
                 residual_mu.resize(maxObjDimSum); // initialized in factorize(...)
 
                 // no need to initialize them (used in cg_tikhonov(...))
@@ -303,7 +305,7 @@ namespace LexLS
                         }
                     }
 
-                    if (ObjRank > 0)
+                    if (true) //(ObjRank > 0)
                     {
                         switch(parameters.regularization_type)
                         {
@@ -400,6 +402,20 @@ namespace LexLS
                                 break;
                         }
                     }
+                    /*
+                    else
+                    {
+                        if (parameters.regularization_type == 7)
+                        {
+                            if (ObjIndex > 0)
+                            {
+                                X_mu.col(ObjIndex) = X_mu.col(ObjIndex-1);
+                                X_mu_rhs.col(ObjIndex) = X_mu_rhs.col(ObjIndex-1);
+                                residual_mu.segment(FirstRowIndex,ObjDim) = -LOD.col(nVar).segment(FirstRowIndex,ObjDim);
+                            }
+                        }
+                    }
+                    */
 
                     // -----------------------------------------------------------------------
                     // Gauss transformation
@@ -452,6 +468,11 @@ namespace LexLS
                         {
                             // of course, obj_info[>ObjIndex].rank = 0
                             obj_info[k].first_col_index = obj_info[k-1].first_col_index + obj_info[k-1].rank;
+
+                            X_mu.col(k) = X_mu.col(k-1);
+                            X_mu_rhs.col(k) = X_mu_rhs.col(k-1);
+                            residual_mu.segment(obj_info[k].first_row_index,obj_info[k].dim) = \
+                                - LOD.col(nVar).segment(obj_info[k].first_row_index,obj_info[k].dim);
                         }
 
                         break; // terminate the LOD
@@ -687,7 +708,6 @@ namespace LexLS
                     initialize_rhs(ObjIndex,rhs);
                     Lambda.segment(FirstRowIndex, ObjDim) = residual_mu.segment(FirstRowIndex,ObjDim);
                 }
-
 
                 if (ObjIndex>0) // the first objective has only Lagrange multipliers equal to the optimal residual
                 {
@@ -1452,6 +1472,11 @@ namespace LexLS
                 return X_mu;
             }
 
+            dMatrixType get_X_mu_rhs()
+            {
+                return X_mu_rhs;
+            }
+
             dVectorType get_residual_mu()
             {
                 return residual_mu;
@@ -1494,6 +1519,7 @@ namespace LexLS
                 null_space.setZero();
                 array.setZero();
                 X_mu.setZero();
+                X_mu_rhs.setZero();
                 residual_mu.setZero();
 
                 P.setIdentity();
@@ -1746,12 +1772,57 @@ namespace LexLS
             template <typename Derived>
             void initialize_rhs(Index ObjIndex, Eigen::MatrixBase<Derived> & rhs)
             {
+                X_mu_rhs.col(ObjIndex) = X_mu.col(ObjIndex); // copy (I want to preserve X_mu)
+
+                dBlockType2Vector X_mu_k(X_mu_rhs, 0, ObjIndex, nVar, 1);
+
+                aRegularizationFactor = obj_info[ObjIndex].regularization_factor;
+
+                // permute and scale elements (actually, later I don't use the whole vector X_mu_k
+                // when computing the Lagrange multipliers, but all this is very cheap ...)
+                X_mu_k = P.transpose()*X_mu_k;
+                X_mu_k *= -aRegularizationFactor*aRegularizationFactor;
+
+                // last index of interes for objective ObjIndex
+                Index last_col_index = obj_info[ObjIndex].first_col_index + obj_info[ObjIndex].rank - 1;
+                Index remain_col;
+
+                for (Index k=0; k<=ObjIndex; k++)
+                {
+                    if (k>0)
+                    {
+                        // number of remaining columns
+                        remain_col = last_col_index - obj_info[k].first_col_index + 1;
+
+                        dBlockType Rkj(LOD,
+                                       obj_info[k-1].first_row_index, obj_info[k].first_col_index,
+                                       obj_info[k-1].rank, remain_col);
+
+                        X_mu_k.segment(obj_info[k].first_col_index,remain_col).noalias() -= \
+                            Rkj.transpose() * X_mu_k.segment(obj_info[k-1].first_col_index,
+                                                             obj_info[k-1].rank);
+                    }
+
+                    LOD.block(obj_info[k].first_row_index, obj_info[k].first_col_index,
+                              obj_info[k].rank, obj_info[k].rank).transpose()
+                        .triangularView<Eigen::Lower>()
+                        .solveInPlace(X_mu_k.segment(obj_info[k].first_col_index,obj_info[k].rank));
+                }
+                rhs = X_mu_k.head(rhs.size());
+            }
+            /*
+            template <typename Derived>
+            void initialize_rhs(Index ObjIndex, Eigen::MatrixBase<Derived> & rhs)
+            {
                 dVectorBlockType X_mu_k(dWorkspace, nVar, nVar);
                 X_mu_k = X_mu.col(ObjIndex); // copy (I want to preserve X_mu)
 
                 aRegularizationFactor = obj_info[ObjIndex].regularization_factor;
-                X_mu_k = P.transpose()*X_mu_k;                          // permute elements
-                X_mu_k *= -aRegularizationFactor*aRegularizationFactor; // scale
+
+                // permute and scale elements (actually, later I don't use the whole vector X_mu_k
+                // when computing the Lagrange multipliers, but all this is very cheap ...)
+                X_mu_k = P.transpose()*X_mu_k;
+                X_mu_k *= -aRegularizationFactor*aRegularizationFactor;
 
                 // last index of interes for objective ObjIndex
                 Index last_col_index = obj_info[ObjIndex].first_col_index + obj_info[ObjIndex].rank - 1;
@@ -1783,6 +1854,7 @@ namespace LexLS
                 }
                 rhs = X_mu_k.head(rhs.size());
             }
+            */
 
             /*
               \brief Compute the solution of the ObjIndex-th regularized problem (needed for
@@ -2610,6 +2682,8 @@ namespace LexLS
                computing Lagrange multipliers when we regularize)
             */
             dMatrixType X_mu;
+
+            dMatrixType X_mu_rhs;
 
             // ==================================================================
             // other

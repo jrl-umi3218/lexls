@@ -3,7 +3,8 @@
 %
 %
 
-addpath('./lexqr')
+addpath('/Users/drdv/Work/Git/bip/soft/lexls/interfaces/matlab-octave')
+addpath(genpath('lexqr'))
 addpath('./utility')
 addpath('./lexlse_dual')
 
@@ -71,10 +72,29 @@ i=1; LL(1:sum(m(1:i)),i) = L11;
 i=2; LL(1:sum(m(1:i)),i) = [L21;L22];
 i=3; LL(1:sum(m(1:i)),i) = [L31;L32;L33];
 
-A'*LL + [mu(1)^2*x1,mu(2)^2*x2,mu(3)^2*x3]
+% -------------------------------------------------------
 
 [~, Ld, ~] = lexlse_dual(obj,mu);
-disp(' LL - Ld (could be different):')
-disp(LL - Ld)
+
+% -------------------------------------------------------
+
+options.regularization_type    = 7;
+options.regularization_factors = mu;
+[x_mu,info,v,as,d] = lexlsi(obj, options);
+
+L0 = [];
+for i=1:nObj
+    L0 = [L0;d.lambda{i}];
+end
+
+% -------------------------------------------------------
+
+muX_mu = [mu(1)^2*x1,mu(2)^2*x2,mu(3)^2*x3];
+
+A'*LL + muX_mu
+
+A'*Ld + muX_mu
+
+A'*L0 + muX_mu
 
 %%%EOF

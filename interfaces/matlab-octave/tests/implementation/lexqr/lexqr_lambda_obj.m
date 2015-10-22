@@ -57,12 +57,9 @@ function Lambda = lexqr_lambda_obj(lexqr_struct, ObjIndex, rhs_all, residual_fla
     if (ObjIndex>1) % the first objective has only Lagrange multipliers equal to the optimal residual
 
         %% e.g., for the fourth objective, here we perform [L41, L42, L43]' * {optimal residual from above}
-
 	tmp1 = block(lexqr, FirstRowIndex, 1, ObjDim, ColDim);
 	tmp2 = segment(Lambda, FirstRowIndex, ObjDim);
 
-	%%keyboard
-	%%rhs = head_assign(-tmp1'*tmp2, rhs, ColDim);
 	rhs = head_accumulate(-tmp1'*tmp2, rhs, ColDim);
 
 	for k=ObjIndex-1:-1:1 % for all objectives before ObjIndex
@@ -89,6 +86,7 @@ function Lambda = lexqr_lambda_obj(lexqr_struct, ObjIndex, rhs_all, residual_fla
 	    tmp2 = segment(Lambda, FirstRowIndex, ObjDim);
 
 	    rhs = head_accumulate(-tmp1'*tmp2, rhs, ColDim);
+
 	end
 
     end

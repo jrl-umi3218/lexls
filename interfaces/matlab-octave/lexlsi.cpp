@@ -88,16 +88,18 @@ mxArray * formDebugStructure (
         const std::vector<LexLS::dMatrixType> &lambda,
         const LexLS::dMatrixType &lexqr,
         const LexLS::dMatrixType &X_mu,
+        const LexLS::dMatrixType &X_mu_rhs,
         const LexLS::dVectorType &residual_mu)
 {
     mxArray * info_struct;
 
-    int num_info_fields = 5;
+    int num_info_fields = 6;
     const char *info_field_names[] = {
         "working_set_log",
         "lambda",
         "lexqr",
         "X_mu",
+        "X_mu_rhs",
         "residual_mu"
     };
 
@@ -206,6 +208,23 @@ mxArray * formDebugStructure (
     }
 
     mxSetField (info_struct, 0, "X_mu", X_mu_);
+
+    // ----------------------------------------------------------------
+
+    num_rows = X_mu_rhs.rows();
+    num_cols = X_mu_rhs.cols();
+
+    mxArray * X_mu_rhs_ = mxCreateDoubleMatrix(num_rows, num_cols, mxREAL);
+
+    for (unsigned int k = 0; k < num_cols; ++k)
+    {
+        for (unsigned int j = 0; j < num_rows; ++j)
+        {
+            mxGetPr(X_mu_rhs_)[j + k * num_rows] = X_mu_rhs(j,k);
+        }
+    }
+
+    mxSetField (info_struct, 0, "X_mu_rhs", X_mu_rhs_);
 
     // ----------------------------------------------------------------
 
@@ -765,6 +784,7 @@ void mexFunction( int num_output, mxArray *output[],
         std::vector<LexLS::dMatrixType> lambda;
         LexLS::dMatrixType lexqr;
         LexLS::dMatrixType X_mu;
+        LexLS::dMatrixType X_mu_rhs;
         LexLS::dVectorType residual_mu;
 
         try
@@ -773,6 +793,7 @@ void mexFunction( int num_output, mxArray *output[],
             lexlsi.getLambda(lambda);
             lexqr = lexlsi.get_lexqr();
             X_mu = lexlsi.get_X_mu();
+            X_mu_rhs = lexlsi.get_X_mu_rhs();
             residual_mu = lexlsi.get_residual_mu();
         }
         catch (std::exception &e)
@@ -783,6 +804,7 @@ void mexFunction( int num_output, mxArray *output[],
                                         lambda,
                                         lexqr,
                                         X_mu,
+                                        X_mu_rhs,
                                         residual_mu);
     }
 }
