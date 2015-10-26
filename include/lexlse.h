@@ -558,6 +558,27 @@ namespace LexLS
                 else
                 {
                     initialize_rhs(ObjIndex,rhs);
+
+                    /*
+                    // Set residual according to the constraint type. For example, if a'*x < ub
+                    // (when the upper bound "ub" is active), set residual to zero. JUST TESTING.
+                    RealScalar aResidual;
+                    ConstraintActivationType aCtrType;
+                    for (Index k=0; k<ObjDim; k++)
+                    {
+                        aResidual = residual_mu.segment(FirstRowIndex,ObjDim).coeff(k);
+                        aCtrType  = ctr_type[obj_info[ObjIndex].first_row_index + k];
+                        if ((aCtrType == CTR_ACTIVE_LB) && (aResidual > 0))
+                        {
+                            residual_mu.segment(FirstRowIndex,ObjDim).coeffRef(k) = 0;
+                        }
+                        else if ((aCtrType == CTR_ACTIVE_UB) && (aResidual < 0))
+                        {
+                            residual_mu.segment(FirstRowIndex,ObjDim).coeffRef(k) = 0;
+                        }
+                    }
+                    */
+
                     Lambda.segment(FirstRowIndex, ObjDim) = residual_mu.segment(FirstRowIndex,ObjDim);
                 }
 

@@ -421,15 +421,6 @@ namespace LexLS
                 \brief Outputs the Lagrange multipliers associated to all constraintes involved in all objectives
 
                 \note The order of constraints is like the one provided by the user (in the problem definition)
-
-                \note When status = MAX_NUMBER_OF_FACTORIZATIONS_EXCEDED, an output Lambda = 0 is
-                generated because the active constraints in objective[.] are different from the ones
-                from the last lexlse problem (and it is a mess).
-
-                \todo I don't handle things well now. There should not be a discrepancy between
-                objectives[ObjIndex].getActiveCtrCount() and lexlse.getDim(ObjIndex) upon
-                termination. So in verifyWorkingSet() I should monitor whether we are at the last
-                iteration and not add or remove constraints (if we are).
             */
             void getLambda(std::vector<dMatrixType> & vec_lambda)
             {
@@ -441,8 +432,11 @@ namespace LexLS
                     vec_lambda[ObjIndex].setZero(getObjDim(ObjIndex),nObj);
                 }
 
-                // maybe we could output Lambda when status = PROBLEM_SOLVED_CYCLING_HANDLING
-                if (status != PROBLEM_SOLVED)
+                // If we have reached parameters.max_number_of_factorizations number of
+                // factorizations, I make sure that objectives[ObjIndex].getActiveCtrCount() is the
+                // same as lexlse.getDim(ObjIndex). If we exit due to PROBLEM_SOLVED_CYCLING_HANDLING
+                // we could always deactivate cycling handling (to get the Lagrange multipliers)
+                if ((status == PROBLEM_SOLVED_CYCLING_HANDLING) || (status == TERMINATION_STATUS_UNKNOWN))
                 {
                     printf("Warning: Output of Lagrange multipliers suppressed (status = %d)\n", status);
                 }
@@ -978,7 +972,18 @@ namespace LexLS
                     }
 
                     operation = OPERATION_ADD;
-                    activate(ObjIndex2Manipulate, CtrIndex2Manipulate, CtrType2Manipulate);
+
+                    if (nFactorizations < parameters.max_number_of_factorizations-1)
+                    {
+                        activate(ObjIndex2Manipulate, CtrIndex2Manipulate, CtrType2Manipulate);
+                    }
+                    else
+                    {
+                        // no point in activating a constraint on the last allowed iteration
+                        // (otherwise there are problems in getLambda(...)). Nevertheless, we would
+                        // make a step below.
+                        operation = OPERATION_GIVE_UP;
+                    }
                 }
                 else
                 {
@@ -1005,8 +1010,18 @@ namespace LexLS
                                 working_set_log.push_back(wlog);
                             }
 
-                            operation = OPERATION_REMOVE;
-                            deactivate(ObjIndex2Manipulate, CtrIndex2Manipulate);
+                            if (nFactorizations < parameters.max_number_of_factorizations-1)
+                            {
+                                operation = OPERATION_REMOVE;
+                                deactivate(ObjIndex2Manipulate, CtrIndex2Manipulate);
+                            }
+                            else
+                            {
+                                // no point in deactivating a constraint on the last allowed
+                                // iteration (otherwise there are problems in
+                                // getLambda(...)). Nevertheless, we would make a step below.
+                                operation = OPERATION_GIVE_UP;
+                            }
                         }
                         else
                         {
