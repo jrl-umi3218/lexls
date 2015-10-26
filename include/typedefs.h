@@ -468,9 +468,7 @@ namespace LexLS
         {
             OPERATION_UNDEFINED, // used for initialization purposes
             OPERATION_ADD,       // when constraint is added
-            OPERATION_REMOVE,    // when constraint is removed
-            OPERATION_GIVE_UP    // don't add/remove constraint to/from the active set on the very
-                                 // last allowed iteration (i.e., parameters.max_number_of_factorizations)
+            OPERATION_REMOVE     // when constraint is removed
         };
 
         /**

@@ -432,52 +432,50 @@ namespace LexLS
                     vec_lambda[ObjIndex].setZero(getObjDim(ObjIndex),nObj);
                 }
 
-                // If we have reached parameters.max_number_of_factorizations number of
-                // factorizations, I make sure that objectives[ObjIndex].getActiveCtrCount() is the
-                // same as lexlse.getDim(ObjIndex). If we exit due to PROBLEM_SOLVED_CYCLING_HANDLING
-                // we could always deactivate cycling handling (to get the Lagrange multipliers)
-                if ((status == PROBLEM_SOLVED_CYCLING_HANDLING) || (status == TERMINATION_STATUS_UNKNOWN))
+                // make sure that objectives[ObjIndex].getActiveCtrCount() is the same as
+                // lexlse.getDim(ObjIndex) in case the problem is not solved.
+                if (status != PROBLEM_SOLVED)
                 {
-                    printf("Warning: Output of Lagrange multipliers suppressed (status = %d)\n", status);
+                    printf("Warning: status = %d, solving lexlse problem in getLambda(...) \n", status);
+                    formLexLSE();
+                    lexlse.factorize();
                 }
-                else
+
+                // "L_active" contains only the Lagrange multipliers associated to the active
+                // constraints in the working set (the order in the working set is preserved).
+                dMatrixType L_active = dMatrixType::Zero(nActiveCtr,nObj);
+                Index nMeaningful = lexlse.getFixedVariablesCount();
+
+                Index CtrIndex2Remove;
+                int ObjIndex2Remove;
+                RealScalar maxAbsValue;
+                for (Index ObjIndex=0; ObjIndex<nObj-nObjOffset; ObjIndex++) // Objectives of LexLSE
                 {
-                    // "L_active" contains only the Lagrange multipliers associated to the active
-                    // constraints in the working set (the order in the working set is preserved).
-                    dMatrixType L_active = dMatrixType::Zero(nActiveCtr,nObj);
-                    Index nMeaningful = lexlse.getFixedVariablesCount();
 
-                    Index CtrIndex2Remove;
-                    int ObjIndex2Remove;
-                    RealScalar maxAbsValue;
-                    for (Index ObjIndex=0; ObjIndex<nObj-nObjOffset; ObjIndex++) // Objectives of LexLSE
+                    //lexlse.ObjectiveSensitivity(ObjIndex);
+
+                    // test with the function that is actually used within the ative-set method
+                    lexlse.ObjectiveSensitivity(ObjIndex,
+                                                CtrIndex2Remove, ObjIndex2Remove,
+                                                parameters.tol_wrong_sign_lambda,
+                                                parameters.tol_correct_sign_lambda,
+                                                maxAbsValue);
+
+                    nMeaningful += lexlse.getDim(ObjIndex);
+                    L_active.col(nObjOffset + ObjIndex).head(nMeaningful) = lexlse.getWorkspace().head(nMeaningful);
+                }
+
+                Index ind;
+                Index accumulate_active_ctr = 0;
+
+                for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++) // Objectives of LexLSI
+                {
+                    for (Index k=0; k<objectives[ObjIndex].getActiveCtrCount(); k++)
                     {
-
-                        //lexlse.ObjectiveSensitivity(ObjIndex);
-
-                        // test with the function that is actually used within the ative-set method
-                        lexlse.ObjectiveSensitivity(ObjIndex,
-                                                    CtrIndex2Remove, ObjIndex2Remove,
-                                                    parameters.tol_wrong_sign_lambda,
-                                                    parameters.tol_correct_sign_lambda,
-                                                    maxAbsValue);
-
-                        nMeaningful += lexlse.getDim(ObjIndex);
-                        L_active.col(nObjOffset + ObjIndex).head(nMeaningful) = lexlse.getWorkspace().head(nMeaningful);
+                        ind = objectives[ObjIndex].getActiveCtrIndex(k);
+                        vec_lambda[ObjIndex].row(ind) = L_active.row(accumulate_active_ctr+k);
                     }
-
-                    Index ind;
-                    Index accumulate_active_ctr = 0;
-
-                    for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++) // Objectives of LexLSI
-                    {
-                        for (Index k=0; k<objectives[ObjIndex].getActiveCtrCount(); k++)
-                        {
-                            ind = objectives[ObjIndex].getActiveCtrIndex(k);
-                            vec_lambda[ObjIndex].row(ind) = L_active.row(accumulate_active_ctr+k);
-                        }
-                        accumulate_active_ctr += objectives[ObjIndex].getActiveCtrCount();
-                    }
+                    accumulate_active_ctr += objectives[ObjIndex].getActiveCtrCount();
                 }
             }
 
@@ -972,18 +970,7 @@ namespace LexLS
                     }
 
                     operation = OPERATION_ADD;
-
-                    if (nFactorizations < parameters.max_number_of_factorizations-1)
-                    {
-                        activate(ObjIndex2Manipulate, CtrIndex2Manipulate, CtrType2Manipulate);
-                    }
-                    else
-                    {
-                        // no point in activating a constraint on the last allowed iteration
-                        // (otherwise there are problems in getLambda(...)). Nevertheless, we would
-                        // make a step below.
-                        operation = OPERATION_GIVE_UP;
-                    }
+                    activate(ObjIndex2Manipulate, CtrIndex2Manipulate, CtrType2Manipulate);
                 }
                 else
                 {
@@ -1010,18 +997,8 @@ namespace LexLS
                                 working_set_log.push_back(wlog);
                             }
 
-                            if (nFactorizations < parameters.max_number_of_factorizations-1)
-                            {
-                                operation = OPERATION_REMOVE;
-                                deactivate(ObjIndex2Manipulate, CtrIndex2Manipulate);
-                            }
-                            else
-                            {
-                                // no point in deactivating a constraint on the last allowed
-                                // iteration (otherwise there are problems in
-                                // getLambda(...)). Nevertheless, we would make a step below.
-                                operation = OPERATION_GIVE_UP;
-                            }
+                            operation = OPERATION_REMOVE;
+                            deactivate(ObjIndex2Manipulate, CtrIndex2Manipulate);
                         }
                         else
                         {
