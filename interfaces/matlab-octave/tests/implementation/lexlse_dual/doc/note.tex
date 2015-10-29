@@ -165,13 +165,13 @@ with $D_k = \begin{bmatrix} R_k & T_k\end{bmatrix} = Q_k^{'T}A_kZ_1,\dots,Z_{k-1
 
 Consider the following sequence of problems
 %
-\begin{align}
+\begin{align*}
   \begin{split}
     \minimize{x_k, \, v_k} & \frac{1}{2}\norm{v_k}^2 + \frac{\mu_k^2}{2}\norm{x_k}^2\\
     \st & b \leq Cx_k - v \leq u \\
     & v_j = v_j^{\star}, \quad j=1,\dots,k-1.
   \end{split}
-\end{align}
+\end{align*}
 %
 for $k=1,\dots,P$. The pair $(v_k^{\star},x_k^{\star})$ is the unique solution to the $k$-th
 problem. We want to find $(v_P^{\star},x_P^{\star})$ by repeatedly solving
@@ -218,10 +218,10 @@ $Q_{\ell}^{'T}\lambda_{k}^{\star} = 0$).
 
 For $k=1,\dots,P$ compute a pair $(x_k^{\star},\lambda_{k}^{\star})$ using
 %
-\begin{align}
+\begin{align*}
 \lambda_k^{\star} \in \argmin{\lambda_{k}} & \norm{B_k\lambda_{k} - b_k}^2, \quad
 x_k^{\star} = -\frac{1}{\mu_k^2}\sum_{i=1}^{k}A_i^T\lambda_{ki}^{\star},
-\end{align}
+\end{align*}
 %
 where
 %
@@ -235,7 +235,7 @@ d_k = \sum_{i=1}^{k}m_i.
 The recursion in initialized with $x_0^{\star} = 0$. After performing the $P$ steps from above, one
 obtains a solution pair $(x^{\star}, \Lambda^{\star})$ with
 %
-\begin{align}
+\begin{align*}
 x^{\star} = x_P^{\star}, \quad
 \Lambda^{\star} =
 \begin{bmatrix}
@@ -244,7 +244,7 @@ x^{\star} = x_P^{\star}, \quad
                        &                      & \ddots & \vdots \\
                        &                      &        &\lambda_{PP}^{\star} \\
 \end{bmatrix}.
-\end{align}
+\end{align*}
 
 \newpage
 
@@ -256,12 +256,12 @@ x^{\star} = x_P^{\star}, \quad
 
 \item The primal problem
   %
-  \begin{align}
+  \begin{align*}
     \begin{split}
       \minimize{x, \, r_1} & f_1(r_1) = \frac{1}{2}\norm{r_1}^2 + \frac{\mu_1^2}{2}\norm{x}^2\\
       \st & r_1 = A_1x - y_1.
     \end{split}
-  \end{align}
+  \end{align*}
 
 \item The Lagrangian
   %
@@ -284,37 +284,37 @@ x^{\star} = -\frac{1}{\mu_1^2}A_1^T\lambda_{11}, \quad r_1^{\star} = \lambda_{11
 %
 Substituting back leads to
 %
-\begin{align}
+\begin{align*}
 \frac{1}{2}r_1^Tr_1 - \lambda_{11}^Tr_1 &= -\frac{1}{2}\lambda_{11}^T\lambda_{11} \\
 \frac{\mu_1^2}{2} x^Tx + \lambda_{11}^TA_1x &= -\frac{1}{2\mu_1^2} \lambda_{11}^T A_1A_1^T \lambda_{11}.
-\end{align}
+\end{align*}
 %
 Hence,
 %
-\begin{align}
+\begin{align*}
 g_1(\lambda_{11}) = -\frac{1}{2\mu_1^2}\lambda_{11}^T\left(\mu_1^2I+A_1A_1^T\right)\lambda_{11} - \lambda_{11}^Ty_1.
-\end{align}
+\end{align*}
 %
 Note that due to the regularization, the dual function cannot take infinite values and hence there
 is no need to have constraints.
 
 \item The dual problem
 %
-\begin{align}
+\begin{align*}
   \minimize{\lambda_{11}} -g_1(\lambda_{11}) = \frac{1}{2\mu_1^2}\lambda_{11}^T\left(\mu_1^2 I+A_1A_1^T\right)\lambda_{11} + \lambda_{11}^Ty_1,
-\end{align}
+\end{align*}
 %
 or equivalently
 %
-\begin{align}
+\begin{align*}
   \minimize{\lambda_{11}} \lambda_{11}^T\left(\mu_1^2 I+A_1A_1^T\right)\lambda_{11} + 2\mu_1^2\lambda_{11}^Ty_1.
-\end{align}
+\end{align*}
 %
 This can be formulated as the following least-squares problem
 %
-\begin{align}
+\begin{align*}
 \minimize{\lambda_{11}} & \norm{\begin{bmatrix}A_1^T \\ \mu_1I \end{bmatrix}\lambda_{11} - \begin{bmatrix} 0 \\ \mu_1y_1 \end{bmatrix}}^2.
-\end{align}
+\end{align*}
 
 \end{itemize}
 
@@ -326,13 +326,13 @@ This can be formulated as the following least-squares problem
 
 \item The primal problem
   %
-  \begin{align}
+  \begin{align*}
     \begin{split}
       \minimize{x, \, r_2} & f_2(r_2) = \frac{1}{2}\norm{r_2}^2 + \frac{\mu_2^2}{2}\norm{x}^2\\
       \st & r_2 = A_2x - y_2 \\
       & r_1^{\star} = A_1x - y_1.
     \end{split}
-  \end{align}
+  \end{align*}
 
 \item The Lagrangian
   %
@@ -355,44 +355,160 @@ x^{\star} = -\frac{1}{\mu_2^2}\sum_{i=1}^{2}A_i^T\lambda_{2i}, \quad r_2^{\star}
 %
 Substituting back leads to
 %
-\begin{align}
+\begin{align*}
 \frac{1}{2}r_2^Tr_2 - \lambda_{22}^Tr_2 &= -\frac{1}{2}\lambda_{22}^T\lambda_{22} \\
 \frac{\mu_2^2}{2} x^Tx + \lambda_{21}^TA_1x + \lambda_{22}^TA_2x
 &= -\frac{1}{2\mu_2^2} \begin{bmatrix} \lambda_{21} \\ \lambda_{22} \end{bmatrix}^T
 \begin{bmatrix} A_1A_1^T & A_1A_2^T \\ A_2A_1^T & A_2A_2^T \end{bmatrix}
 \begin{bmatrix} \lambda_{21} \\ \lambda_{22} \end{bmatrix}.
-\end{align}
+\end{align*}
 %
 Hence,
 %
-\begin{align}
+\begin{align*}
 g_2(\lambda_{21},\lambda_{22}) =
 -\frac{1}{2\mu_2^2} \begin{bmatrix} \lambda_{21} \\ \lambda_{22} \end{bmatrix}^T
 \begin{bmatrix} A_1A_1^T & A_1A_2^T \\ A_2A_1^T & \mu_2^2 I+A_2A_2^T \end{bmatrix}
 \begin{bmatrix} \lambda_{21} \\ \lambda_{22} \end{bmatrix} -
 \begin{bmatrix} \lambda_{21} \\ \lambda_{22} \end{bmatrix}^T \begin{bmatrix} y_1+r_1^{\star} \\ y_2 \end{bmatrix}.
-\end{align}
+\end{align*}
 
 \item The dual problem
 %
-\begin{align}
+\begin{align*}
 \minimize{\lambda_{2}} &
 \begin{bmatrix} \lambda_{21} \\ \lambda_{22} \end{bmatrix}^T
 \begin{bmatrix} A_1A_1^T & A_1A_2^T \\ A_2A_1^T & \mu_2^2 I+A_2A_2^T \end{bmatrix}
 \begin{bmatrix} \lambda_{21} \\ \lambda_{22} \end{bmatrix} +
 2\mu_2^2
 \begin{bmatrix} \lambda_{21} \\ \lambda_{22} \end{bmatrix}^T \begin{bmatrix} y_1+r_1^{\star} \\ y_2 \end{bmatrix}.
-\end{align}
+\end{align*}
 %
 This can be formulated as the following least-squares problem
 %
-\begin{align}
+\begin{align*}
   \minimize{\lambda_{21},\ \lambda_{22}} & \norm{\begin{bmatrix}A_1^T & A_2^T \\ 0 & \mu_2I \end{bmatrix}
     \begin{bmatrix} \lambda_{21} \\ \lambda_{22} \end{bmatrix} -
     \mu_2\begin{bmatrix} -\mu_2 x_1^{\star} \\ -\left(y_2 - A_2x_1^{\star}\right) \end{bmatrix}}^2.
-\end{align}
+\end{align*}
 
 \end{itemize}
+
+\section{Cycling example}
+
+Consider a lexicographic problem with the following objectives
+%
+\begin{itemize}
+  \item objective 1
+    %
+    \[
+    y \leq -1
+    \]
+
+  \item objective 2
+    %
+    \begin{align*}
+    x &= 1 \nonumber \\
+    x + \alpha y &= 0 \nonumber
+    \end{align*}
+\end{itemize}
+%
+For convenience, define
+%
+\[
+A_1 = \begin{bmatrix} 0 & 1 \end{bmatrix}, \quad
+A_2 = \begin{bmatrix} 1 & 0 \\ 1 & \alpha \end{bmatrix}, \quad
+b_2 = \begin{bmatrix} 1 \\ 0 \end{bmatrix}, \quad
+v = \begin{bmatrix} x \\ y \end{bmatrix}.
+\]
+
+\subsection{$y \leq -1$ is active}
+
+The solution is given by
+%
+\begin{align} \label{eq.solution}
+v = \begin{bmatrix} \frac{1}{2}(1+\alpha) \\ -1 \end{bmatrix}.
+\end{align}
+%
+%
+The residual for the second task is given by
+%
+\[
+w_2 = A_2 v - b_2 =
+\begin{bmatrix} \beta \\ -\beta \end{bmatrix}, \quad \beta = \frac{1}{2}(\alpha-1).
+\]
+%
+For the Lagrange multipliers we have
+\[
+A_1^T\lambda_1 + A_2^Tw_2 =
+\begin{bmatrix} 0 \\ 1 \end{bmatrix}\lambda_1 +
+\begin{bmatrix} 0 \\ -\alpha\beta \end{bmatrix} =
+\begin{bmatrix} 0 \\ 0 \end{bmatrix}.
+\]
+%
+Hence, $\lambda_1 = \alpha\beta = \frac{\alpha}{2}(\alpha-1)$. $\lambda_1$ is negative for $0 <
+\alpha < 1$, \emph{e.g.}, for $\alpha = 0.1$, $\lambda_1 = -0.045$. Obviously, dropping the
+inequality constraint is the better choice when the constraints of the second objective are
+considered to be linearly independent (if not, we have cycling).
+
+\subsection{$y \leq -1$ is inactive}
+
+\[
+Q = c\begin{bmatrix} 1 & -1 \\ 1 & 1\end{bmatrix}, \quad
+R = c\begin{bmatrix} 2 & \alpha \\ 0 & \alpha \end{bmatrix}, \quad
+A_2 = QR,
+\]
+%
+with $c = \frac{\sqrt{2}}{2}$. If $c\alpha$ is considered small, then the residual does not depend
+on $\alpha$. Note that the Lagrange multipliers above depend on $\alpha$. This discrepancy is what
+causes the cycling in this case.
+
+\subsection{Notes}
+
+If $c\alpha$ is considered to be small, we would have
+%
+\[
+c^2\begin{bmatrix} 1 \\ 1 \end{bmatrix}
+\begin{bmatrix} 2 & \alpha \end{bmatrix} =
+\frac{1}{2}\begin{bmatrix} 2 & \alpha \\ 2 & \alpha \end{bmatrix}.
+\]
+%
+Hence in the case $y \leq -1$ we would actually be solving
+%
+\[
+\underbrace{\frac{1}{2}\begin{bmatrix} 2 & \alpha \\ 2 & \alpha \end{bmatrix}}_{A_2^{'}}
+\begin{bmatrix} x \\y \end{bmatrix} = \begin{bmatrix} 1 \\ 0 \end{bmatrix}.
+\]
+
+Now, consider the hierarchy
+%
+\begin{itemize}
+\item $A_1v = -1$
+\item $A_2^{'}v = b_2$
+\end{itemize}
+%
+The solution is the same as in~\eqref{eq.solution}. The residual is given by
+%
+\[
+w_2^{'} = A_2^{'} v - b_2 =
+\frac{1}{2}\begin{bmatrix} -1 \\ 1 \end{bmatrix}.
+\]
+%
+Most importantly $A_2^{'T}w_2^{'} = 0$, which leads to $\lambda_1^{'} = 0$. Hence, there would be no
+cycling (for any choice of tolerances). Note as well that $A_2^{'T}w_2 = 0$. Essentially what we
+have to do is to apply a correction to the Lagrange multipliers in order for them to reflect our
+choice of linear dependence tolerance. One way to do this would be to first estimate the rank of the
+second object (\eg, by QR factorizing it) and during the elimination step to work only with the
+non-singular part.
+
+It seems that here we would have to seriously consider the order of computations in order to
+increase reliability. On this example, it appears that approaching the problem in reverse (something
+similar to Flacco's ``reverse priority approach'') might lead to better results (but probably it
+would be more expensive).
+
+If we set the linear dependence tolerance to zero (or something veeery small), then we shouldn't
+have such problems (at least in theory) but this doesn't strike me as a reasonable way to go. I
+think that this would pose significant challenges to the trust region method.
 
 \end{document}
 
