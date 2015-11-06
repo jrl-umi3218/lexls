@@ -394,7 +394,7 @@ This can be formulated as the following least-squares problem
 
 \end{itemize}
 
-\section{Cycling example}
+\section{Cycling example} \label{seq.Cycling}
 
 Consider a lexicographic problem with the following objectives
 %
@@ -509,6 +509,86 @@ would be more expensive).
 If we set the linear dependence tolerance to zero (or something veeery small), then we shouldn't
 have such problems (at least in theory) but this doesn't strike me as a reasonable way to go. I
 think that this would pose significant challenges to the trust region method.
+
+\newpage
+
+\section{Modify the bounds of the inequalities}
+
+\subsection{A direct truncation approach}
+
+Maybe it would be possible to reduce cycling (see Section~\ref{seq.Cycling}) by appropriately
+modifying the lower and upper bounds of the inequalities. Consider one level of an equality
+constrained problem
+%
+\begin{align*}
+  Ax = y,
+\end{align*}
+%
+and its factorization
+%
+\begin{align*}
+  A = \begin{bmatrix} Q^{'}
+    & Q^{''} & Q^{'''} \end{bmatrix}
+  \begin{bmatrix}
+    R & T_1 & T_2 \\
+    0 & S   & S_2 \\
+    0& 0   & 0
+  \end{bmatrix} \mathnormal{\Pi}^T,
+\end{align*}
+%
+with $S\approx0$ and $S_2\approx 0$. The (basic) solution that we compute is given by
+%
+\begin{align} \label{eq.basic_solution}
+  x = \mathnormal{\Pi}\begin{bmatrix} R^{-1}Q^{'T}y \\ 0 \end{bmatrix},
+\end{align}
+%
+and the residual is
+%
+\begin{align*}
+  r = -(Q^{''}Q^{''T} + Q^{'''}Q^{'''T})y.
+\end{align*}
+%
+If we want to modify $y$ so that the residual of $Ax-\hat{y}$ is zero, we simply have to project $y$
+on the range of $A$, \ie, $\hat{y} = Q^{'}Q^{'T}y$. But we don't want that because then all
+residuals would be zero. Probably we want to keep the $Q^{'''}Q^{'''T}y$ part of the residual, and
+get rid of the $Q^{''}Q^{''T}y$ part. This can be achieved by using
+%
+\begin{align*}
+\hat{y} = (Q^{'}Q^{'T} + Q^{'''}Q^{'''T})y.
+\end{align*}
+%
+In this way $Q^{''}Q^{''T}\hat{y} = 0$ and hence
+%
+\begin{align} \label{eq.residual}
+  \hat{r} = -Q^{'''}Q^{'''T}\hat{y}.
+\end{align}
+%
+We need to have two tolerances $\epsilon^{'}$ and $\epsilon^{''}$, where $\epsilon^{'} \leq
+\abs{\diag(R)}$, $\epsilon^{''} \leq \abs{\diag(S)} < \epsilon^{'}$.
+
+Note that our decomposition would terminate when pivots become smaller than $\epsilon^{'}$, but we
+have to obtain $\begin{bmatrix} S & S_2\end{bmatrix}$ using additional Householder transformations
+  applied as well to the corresponding part of $y$. Column permutations are required, but they
+  should not be mixed with the ones from our factorization. All we need to do is find where $S$ ends
+  and $0$ begins so that later we could use~\eqref{eq.residual} to compute the residual (required
+  for computing the Lagrange multipliers). We need to store the Householder transformations.
+
+\subsection{Using regularization}
+
+Some similarities with the above approach ({\color{red}to explain}).
+
+\subsection{Comment of using very small $\epsilon^{'}$}
+
+Using a very small $\epsilon^{'}$ is a bad idea not only because $R^{-1}$ is used
+in~\eqref{eq.basic_solution}, but because it appears in the elimination steps of the $\ell$-QR
+decomposition. When we have many levels, our decomposition becomes very sensitive to numerical
+errors. For example the solution of the same equality-constrained problem (taken from Nestor's
+examples) on a $64$-bit and $32$ bit architecture (running the same \verb|UBUNTU| and using the same
+version of \verb|g++|) could differ by a factor of \verb|1e+08|. Or even on the same machine, the
+solution of one equality constrained problem computed within the active-set method and the solution
+of the same equality constrained problem computed manually post-factum could differ by a factor of
+\verb|1e-02| (on the same example as above).
+
 
 \end{document}
 
