@@ -1,5 +1,5 @@
 function export_hierarchy(obj, file_name, active_set_guess, solution_guess, solution)
-    HIERARCHY_NONE                  = 0;   % 
+    HIERARCHY_NONE                  = 0;   %
     HIERARCHY_EQUALITIES            = 100; % equality constraints
     HIERARCHY_INEQUALITIES          = 200; % inequality constraints
     HIERARCHY_INEQUALITIES_WITH_AS  = 210; % inequality constraints with active set guess
@@ -27,7 +27,7 @@ function export_hierarchy(obj, file_name, active_set_guess, solution_guess, solu
     end
 
     if (nargin < 4)
-        solution_guess = []; 
+        solution_guess = [];
     end
 
     if (nargin < 3)
@@ -107,9 +107,9 @@ function export_hierarchy(obj, file_name, active_set_guess, solution_guess, solu
 
             for j = 1:number_of_constraints_per_level(i);
                 if (types_of_objectives(i) == TYPES_OF_OBJECTIVES_SIMPLE)
-                    fprintf(fileID,'% d % 1.15g ', [obj(i).A(j), obj(i).b(j)]);
+                    fprintf(fileID,'% d % 1.18e ', [obj(i).A(j), obj(i).b(j)]);
                 else
-                    fprintf(fileID,'% 1.15g ', [obj(i).A(j,:), obj(i).b(j)]);
+                    fprintf(fileID,'% 1.18e ', [obj(i).A(j,:), obj(i).b(j)]);
                 end
                 fprintf(fileID,'\n');
             end
@@ -122,9 +122,9 @@ function export_hierarchy(obj, file_name, active_set_guess, solution_guess, solu
 
             for j = 1:number_of_constraints_per_level(i);
                 if (types_of_objectives(i) == TYPES_OF_OBJECTIVES_SIMPLE)
-                    fprintf(fileID,'% d % 1.15g % 1.15g ', [obj(i).A(j), obj(i).lb(j), obj(i).ub(j)]);
+                    fprintf(fileID,'% d % 1.18e % 1.18e ', [obj(i).A(j), obj(i).lb(j), obj(i).ub(j)]);
                 else
-                    fprintf(fileID,'% 1.15g ', [obj(i).A(j,:), obj(i).lb(j), obj(i).ub(j)]);
+                    fprintf(fileID,'% 1.18e ', [obj(i).A(j,:), obj(i).lb(j), obj(i).ub(j)]);
                 end
 
                 if (hierarchy_type == HIERARCHY_INEQUALITIES_WITH_AS)
@@ -137,13 +137,13 @@ function export_hierarchy(obj, file_name, active_set_guess, solution_guess, solu
 
     if (~isempty(solution_guess))
         fprintf(fileID, ['\n', SOLUTION_GUESS,'\n']);
-        fprintf(fileID, '% 1.15g \n', solution_guess);
+        fprintf(fileID, '% 1.18e \n', solution_guess);
         fprintf(fileID, '\n');
     end
 
     if (~isempty(solution))
         fprintf(fileID, ['\n', SOLUTION,'\n']);
-        fprintf(fileID, '% 1.15g \n', solution);
+        fprintf(fileID, '% 1.18e \n', solution);
         fprintf(fileID, '\n');
     end
 

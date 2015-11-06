@@ -85,19 +85,25 @@ mxArray * formInfoStructure (
 
 mxArray * formDebugStructure (
         const std::vector<LexLS::WorkingSetLogEntry> &working_set_log,
+        std::vector<LexLS::ConstraintIdentifier> active_ctr,
         const std::vector<LexLS::dMatrixType> &lambda,
         const LexLS::dMatrixType &lexqr,
+        const LexLS::dVectorType &xStar,
         const LexLS::dMatrixType &X_mu,
         const LexLS::dMatrixType &X_mu_rhs,
-        const LexLS::dVectorType &residual_mu)
+        const LexLS::dVectorType &residual_mu,
+        const LexLS::dMatrixType &problem_data)
 {
     mxArray * info_struct;
 
-    int num_info_fields = 6;
+    int num_info_fields = 9;
     const char *info_field_names[] = {
         "working_set_log",
+        "active_ctr",
         "lambda",
         "lexqr",
+        "data",
+        "xStar",
         "X_mu",
         "X_mu_rhs",
         "residual_mu"
@@ -131,8 +137,6 @@ mxArray * formDebugStructure (
         mxArray *cycling_detected   = mxCreateNumericMatrix(1, 1, mxINT64_CLASS, mxREAL);
         mxArray *rank               = mxCreateNumericMatrix(1, 1, mxINT64_CLASS, mxREAL);
 
-
-
         ((INT64_T *) mxGetData (obj_index       ))[0] = working_set_log[i].obj_index;
         ((INT64_T *) mxGetData (ctr_index       ))[0] = working_set_log[i].ctr_index;
         ((INT64_T *) mxGetData (ctr_type        ))[0] = working_set_log[i].ctr_type;
@@ -150,6 +154,37 @@ mxArray * formDebugStructure (
 
     mxSetField (info_struct, 0, "working_set_log", ws_info_struct);
 
+    // ----------------------------------------------------------------
+
+    mxArray * active_ctr_struct;
+
+    int num_active_ctr_fields = 3;
+    const char *active_ctr_field_names[] = {
+        "obj_index",
+        "ctr_index",
+        "ctr_type"
+    };
+
+    active_ctr_struct = mxCreateStructMatrix(active_ctr.size(), 1, num_active_ctr_fields, active_ctr_field_names);
+
+    for (unsigned int i = 0; i < active_ctr.size(); ++i)
+    {
+        mxArray *obj_index = mxCreateNumericMatrix(1, 1, mxINT64_CLASS, mxREAL);
+        mxArray *ctr_index = mxCreateNumericMatrix(1, 1, mxINT64_CLASS, mxREAL);
+        mxArray *ctr_type  = mxCreateNumericMatrix(1, 1, mxINT64_CLASS, mxREAL);
+
+        ((INT64_T *) mxGetData (obj_index))[0] = active_ctr[i].obj_index;
+        ((INT64_T *) mxGetData (ctr_index))[0] = active_ctr[i].ctr_index;
+        ((INT64_T *) mxGetData (ctr_type ))[0] = active_ctr[i].ctr_type;
+
+        mxSetField (active_ctr_struct, i, "obj_index", obj_index);
+        mxSetField (active_ctr_struct, i, "ctr_index", ctr_index);
+        mxSetField (active_ctr_struct, i,  "ctr_type", ctr_type);
+    }
+
+    mxSetField (info_struct, 0, "active_ctr", active_ctr_struct);
+
+    // ----------------------------------------------------------------
 
     mxArray * lambda_cell = mxCreateCellMatrix(lambda.size(), 1);
 
@@ -191,6 +226,37 @@ mxArray * formDebugStructure (
     }
 
     mxSetField (info_struct, 0, "lexqr", lexqr_);
+
+    // ----------------------------------------------------------------
+
+    num_rows = problem_data.rows();
+    num_cols = problem_data.cols();
+
+    mxArray * problem_data_ = mxCreateDoubleMatrix(num_rows, num_cols, mxREAL);
+
+    for (unsigned int k = 0; k < num_cols; ++k)
+    {
+        for (unsigned int j = 0; j < num_rows; ++j)
+        {
+            mxGetPr(problem_data_)[j + k * num_rows] = problem_data(j,k);
+        }
+    }
+
+    mxSetField (info_struct, 0, "data", problem_data_);
+
+    // ----------------------------------------------------------------
+
+    num_rows = xStar.size();
+    num_cols = 1;
+
+    mxArray * xStar_ = mxCreateDoubleMatrix(num_rows, num_cols, mxREAL);
+
+    for (unsigned int j = 0; j < num_rows; j++)
+    {
+        mxGetPr(xStar_)[j] = xStar(j);
+    }
+
+    mxSetField (info_struct, 0, "xStar", xStar_);
 
     // ----------------------------------------------------------------
 
@@ -781,30 +847,39 @@ void mexFunction( int num_output, mxArray *output[],
     if (num_output >= 5)
     {
         std::vector<LexLS::WorkingSetLogEntry> working_set_log;
+        std::vector<LexLS::ConstraintIdentifier> active_ctr;
         std::vector<LexLS::dMatrixType> lambda;
         LexLS::dMatrixType lexqr;
+        LexLS::dVectorType xStar;
         LexLS::dMatrixType X_mu;
         LexLS::dMatrixType X_mu_rhs;
         LexLS::dVectorType residual_mu;
+        LexLS::dMatrixType problem_data;
 
         try
         {
             working_set_log = lexlsi.getWorkingSetLog();
             lexlsi.getLambda(lambda);
+            xStar = lexlsi.get_xStar();
             lexqr = lexlsi.get_lexqr();
             X_mu = lexlsi.get_X_mu();
             X_mu_rhs = lexlsi.get_X_mu_rhs();
             residual_mu = lexlsi.get_residual_mu();
+            lexlsi.getActiveCtr_order(active_ctr);
+            problem_data = lexlsi.get_data();
         }
         catch (std::exception &e)
         {
             mexErrMsgTxt(e.what());
         }
         output[4] = formDebugStructure( working_set_log,
+                                        active_ctr,
                                         lambda,
                                         lexqr,
+                                        xStar,
                                         X_mu,
                                         X_mu_rhs,
-                                        residual_mu);
+                                        residual_mu,
+                                        problem_data);
     }
 }

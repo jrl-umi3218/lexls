@@ -85,6 +85,7 @@ namespace LexLS
                 ctr_type.resize(maxObjDimSum, CTR_INACTIVE); // used only for initialization purposes
 
                 LOD.resize(maxObjDimSum,nVar+1); // store the RHS as well, thus the "+1"
+                PROBLEM_DATA.resize(maxObjDimSum,nVar+1);
 
                 Index dim = std::max(maxObjDimSum,nVar);
                 dWorkspace.resize(2*dim + nVar + 1);
@@ -117,6 +118,8 @@ namespace LexLS
             */
             void factorize()
             {
+                PROBLEM_DATA = LOD;
+
                 RealScalar maxColNormValue, tau, PivotValue;
                 Index RemainingRows, ObjRank, ObjDim, maxColNormIndex;
 
@@ -1488,6 +1491,11 @@ namespace LexLS
                 return LOD;
             }
 
+            dMatrixType get_data()
+            {
+                return PROBLEM_DATA;
+            }
+
             dMatrixType get_X_mu()
             {
                 return X_mu;
@@ -2680,6 +2688,11 @@ namespace LexLS
                 instance of LexLSE is used to solve problems with different dimensoins.
             */
             dMatrixType LOD;
+
+            /**
+               \todo REMOVE (JUST TESTING)
+            */
+            dMatrixType PROBLEM_DATA;
 
             /**
                 \brief nVar x (nVar+1) matrix containing the remaining null-space + right-hand-side

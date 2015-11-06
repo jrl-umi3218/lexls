@@ -30,7 +30,7 @@ namespace LexLS
             nor Lagrange multipliers to drop). But what if I am interested only in the rank field! Maybe we
             should separate rank?
 
-            \todowrite a function to deactivate weakly active inequality constraints (when requested
+            \todo write a function to deactivate weakly active inequality constraints (when requested
             by the user). Reason: hot starting, maybe we can write equate oc QPs by discriminating
             equality and inequality constraints.
         */
@@ -112,6 +112,11 @@ namespace LexLS
                 if (CountActivation)
                 {
                     nActivations++;
+
+                    if (objectives[ObjIndex].isZeroNormal(CtrIndex))
+                    {
+                        printf("WARNING: activated inequality constraint (0*x = b): (obj_index = %d, ctr_index = %d) \n", ObjIndex, CtrIndex);
+                    }
                 }
             }
 
@@ -311,7 +316,15 @@ namespace LexLS
 
                     if (isEqual(bl,bu))
                     {
-                        activate(ObjIndex,CtrIndex,CTR_ACTIVE_EQ,false);
+                        // don't activate meaningless constraints
+                        if (data.row(CtrIndex).head(nVar).squaredNorm() > 0)
+                        {
+                            activate(ObjIndex,CtrIndex,CTR_ACTIVE_EQ,false);
+                        }
+                        else
+                        {
+                            //printf("WARNING: equality constraint (0*x = b) not activated (obj_index = %d, ctr_index = %d) \n", ObjIndex, CtrIndex);
+                        }
                     }
                     else if (bl > bu)
                     {
@@ -396,6 +409,21 @@ namespace LexLS
             dVectorType& get_x()
             {
                 return x;
+            }
+
+            /**
+                \brief Return the solution vector of the lexlse problem corresponding to the last
+                active set
+
+                \todo In getLambda as well I solve a lexlse problem (this is wasteful).
+            */
+            dVectorType& get_xStar()
+            {
+                formLexLSE();
+                lexlse.factorize();
+                lexlse.solve();
+
+                return lexlse.get_x();
             }
 
             dVectorType& get_v(Index ObjIndex)
@@ -484,6 +512,11 @@ namespace LexLS
                 return lexlse.get_lexqr();
             }
 
+            dMatrixType get_data()
+            {
+                return lexlse.get_data();
+            }
+
             dMatrixType get_X_mu()
             {
                 return lexlse.get_X_mu();
@@ -534,6 +567,11 @@ namespace LexLS
                 return nDeactivations;
             }
 
+            Index getActiveCtrCount(Index ObjIndex) const
+            {
+                return objectives[ObjIndex].getActiveCtrCount();
+            }
+
             /**
                 \brief Returns number of active constraints
             */
@@ -549,7 +587,7 @@ namespace LexLS
             }
 
             /**
-                \brief Outputs the types of active constraints for a given objective
+                \brief Outputs the types (CTR_INACTIVE, CTR_ACTIVE_LB, CTR_ACTIVE_UB) of constraints for a given objective
             */
             void getActiveCtr(Index ObjIndex, std::vector<ConstraintActivationType>& ctr_type) const
             {
@@ -560,6 +598,25 @@ namespace LexLS
                 {
                     ind = objectives[ObjIndex].getActiveCtrIndex(k);
                     ctr_type[ind] = objectives[ObjIndex].getActiveCtrType(k);
+                }
+            }
+
+            /**
+                \brief Outputs the indexes and types of active constraints
+            */
+            void getActiveCtr_order(std::vector<ConstraintIdentifier>& ctr) const
+            {
+                for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
+                {
+                    for (Index k=0; k<objectives[ObjIndex].getActiveCtrCount(); k++)
+                    {
+                        ConstraintIdentifier aCtr;
+                        aCtr.set(ObjIndex,
+                                 objectives[ObjIndex].getActiveCtrIndex(k),
+                                 objectives[ObjIndex].getActiveCtrType(k));
+
+                        ctr.push_back(aCtr);
+                    }
                 }
             }
 
@@ -919,7 +976,7 @@ namespace LexLS
             OperationType verifyWorkingSet()
             {
                 // ----------------------------------------------------------------------
-                Index ObjIndex2Manipulate, CtrIndex2Manipulate;
+                Index ObjIndex2Manipulate = 0, CtrIndex2Manipulate = 0; // initialize so that the compiler doesn't complain
                 ConstraintActivationType CtrType2Manipulate = CTR_INACTIVE;
 
                 bool normalIteration = true;

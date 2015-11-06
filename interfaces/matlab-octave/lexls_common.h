@@ -70,8 +70,8 @@ void checkInputMatrix(const mxArray *M, const int objective_index, const char *n
     str_objective_index << objective_index + 1;
 
     failIfTrue (M == NULL, (std::string("Matrix '") + name + "' is missing on level " + str_objective_index.str() + ".").c_str());
-    failIfTrue (mxIsEmpty (M), (std::string("Matrix '") + name + "' is empty on level " + str_objective_index.str() + ".").c_str());
-    //warnIfTrue (mxIsEmpty (M), (std::string("Matrix '") + name + "' is empty on level " + str_objective_index.str() + ".").c_str()); // NOT PROPERLY TESTED
+    //failIfTrue (mxIsEmpty (M), (std::string("Matrix '") + name + "' is empty on level " + str_objective_index.str() + ".").c_str());
+    warnIfTrue (mxIsEmpty (M), (std::string("Matrix '") + name + "' is empty on level " + str_objective_index.str() + ".").c_str()); // NOT PROPERLY TESTED
     failIfTrue (!mxIsDouble(M), (std::string("Matrix '") + name + "' must be of 'double' type on level " + str_objective_index.str() + ".").c_str());
 }
 

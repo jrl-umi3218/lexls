@@ -22,7 +22,7 @@ namespace LexLS
                 nCtr(0),
                 obj_type(GENERAL_OBJECTIVE),
                 regularization_factor(0.0),
-                v0_is_specified(false){}
+                v0_is_specified(false) {}
 
             /**
                \brief Resize the objective
@@ -279,6 +279,10 @@ namespace LexLS
               dv{active}   = v{active}_star - v{active} = A{active}*x{next} - b{active} - (A{active}*x{current} - b{active})
                                                         = A{active}*(x{next} - x{current}) = A{active}*dx
               \endverbatim
+
+              \note Using dv{active} = A{active}*dx is not a good idea because there is a
+              drift. That is why here we use dv = A{active}*x{next} - b{active} - v{current}.
+
             */
             void formStep(dVectorType &dx)
             {
@@ -459,7 +463,7 @@ namespace LexLS
                 }
                 else if (obj_type == GENERAL_OBJECTIVE)
                 {
-                    RealScalar rhs;
+                    RealScalar rhs = 0; // initialize so that the compiler doesn't complain
                     for (Index CtrIndexActive=0; CtrIndexActive<getActiveCtrCount(); CtrIndexActive++)
                     {
                         CtrIndex = getActiveCtrIndex(CtrIndexActive); // CtrIndexActive --> CtrIndex
@@ -813,6 +817,24 @@ namespace LexLS
             RealScalar getRegularization()
             {
                 return regularization_factor;
+            }
+
+            /**
+               \brief Test whether a given constraint has a zero normal
+
+               \todo this test could be skipped. If one wants to keep it one could precompute the
+               norms of all normals once when the data is set.
+            */
+            bool isZeroNormal(Index CtrIndex)
+            {
+                if (data.row(CtrIndex).head(nVar).squaredNorm() == 0)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
             }
 
             /**
