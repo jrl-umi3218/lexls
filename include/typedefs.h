@@ -302,6 +302,71 @@ namespace LexLS
     };
 
     /**
+       \brief A class used to store information related to constraints.
+
+       \todo This class is very similar to WorkingSetLogEntry and ConstraintIdentifier (to organize
+       better). Now, I have this separate class just for testing purposes.
+    */
+
+    class ConstraintInfo
+    {
+    public:
+        ConstraintInfo():
+            obj_index(0),
+            ctr_index(0){}
+
+        ConstraintInfo(int obj_index_, int ctr_index_)
+        {
+            obj_index = obj_index_;
+            ctr_index = ctr_index_;
+        }
+
+        void increment_obj_index(int increment)
+        {
+            obj_index += increment;
+        }
+
+        void set_ctr_index(int ctr_index_)
+        {
+            ctr_index = ctr_index_;
+        }
+
+        int get_obj_index()
+        {
+            return obj_index;
+        }
+
+        int get_ctr_index()
+        {
+            return ctr_index;
+        }
+
+        void print() const
+        {
+            printf("obj_index = %d, ctr_index = %d \n", obj_index, ctr_index);
+        }
+
+        friend bool operator== (const ConstraintInfo &c1, const ConstraintInfo &c2);
+
+    private:
+        int obj_index;
+        int ctr_index;
+    };
+
+    bool operator== (const ConstraintInfo &c1, const ConstraintInfo &c2)
+    {
+        bool isEqual = false;
+        if ((c1.obj_index == c2.obj_index) &&
+            (c1.ctr_index == c2.ctr_index))
+        {
+            isEqual = true;
+        }
+
+        return isEqual;
+    }
+
+
+    /**
         \brief A class used to store information related to the working set.
     */
     class WorkingSetLogEntry

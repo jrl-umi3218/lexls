@@ -498,6 +498,120 @@ namespace LexLS
             } // END factorize()
 
             /**
+                \brief Output all constraints whose Lambda is with wrong sign
+            */
+            void ObjectiveSensitivity(Index ObjIndex,
+                                      RealScalar tol_wrong_sign_lambda,
+                                      RealScalar tol_correct_sign_lambda,
+                                      std::vector<ConstraintInfo> &ctr_wrong_sign)
+            {
+                Index FirstRowIndex, FirstColIndex, ObjDim, ObjRank;
+                Index &ColDim = FirstColIndex; // ColDim will be used to indicate column dimension (I use it for clarity)
+
+                // Even though this computation can be improved, it is very cheap and it is convenient to perform here
+                Index nLambda = 0; // Number of constraints that may influence objective ObjIndex (excluding "variable fixing" constraints)
+                Index nRank   = 0; // Total rank of objectives before objective ObjIndex
+                for (Index k=0; k<ObjIndex; k++)
+                {
+                    nLambda += obj_info[k].dim;
+                    nRank   += obj_info[k].rank;
+                }
+                nLambda += obj_info[ObjIndex].dim;
+
+                // ---------------------------------------------------------------------------------
+                dWorkspace.head(nVarFixed + nLambda + nRank + nVarFixed).setZero();
+                dVectorBlockType LambdaFixed(dWorkspace,                   0, nVarFixed);
+                dVectorBlockType      Lambda(dWorkspace,           nVarFixed, nLambda);
+                dVectorBlockType         rhs(dWorkspace, nLambda + nVarFixed, nRank+nVarFixed);
+                // ---------------------------------------------------------------------------------
+
+                FirstRowIndex = obj_info[ObjIndex].first_row_index;
+                FirstColIndex = obj_info[ObjIndex].first_col_index;
+                ObjDim        = obj_info[ObjIndex].dim;
+                ObjRank       = obj_info[ObjIndex].rank;
+
+                // Lambda.segment(FirstRowIndex, ObjRank).setZero(); assumed
+
+                // copy only what is needed to compute the residual v = A*x-b (i.e., -y_hat)
+                Lambda.segment(FirstRowIndex+ObjRank, ObjDim-ObjRank) = \
+                    -LOD.col(nVar).segment(FirstRowIndex+ObjRank, ObjDim-ObjRank);
+
+                // compute the optimal residual associated with objective ObjIndex (apply Q_{ObjIndex} on the left)
+                Lambda.segment(FirstRowIndex, ObjDim)
+                    .applyOnTheLeft(householderSequence(LOD.block(FirstRowIndex,
+                                                                  FirstColIndex,
+                                                                  ObjDim,
+                                                                  ObjRank),
+                                                        hh_scalars.segment(FirstRowIndex,ObjDim)));
+
+                // check for wrong sign of the Lagrange multipliers
+                findDescentDirection(ObjIndex,
+                                     FirstRowIndex,
+                                     ObjDim,
+                                     Lambda,
+                                     tol_wrong_sign_lambda,
+                                     tol_correct_sign_lambda,
+                                     ctr_wrong_sign);
+
+                if (ObjIndex>0) // the first objective has only Lagrange multipliers equal to the optimal residual
+                {
+                    // e.g., for the fourth objective, here we perform [L41, L42, L43]' * {optimal residual from above}
+                    rhs.head(ColDim).noalias() -= LOD.block(FirstRowIndex, 0, ObjDim, ColDim).transpose() * \
+                        Lambda.segment(FirstRowIndex, ObjDim);
+
+                    //for (int k=ObjIndex-1; k>=0; k--)
+                    for (Index k=ObjIndex; k--; ) //ObjIndex-1, ..., 0.
+                    {
+                        FirstRowIndex = obj_info[k].first_row_index;
+                        FirstColIndex = obj_info[k].first_col_index;
+                        ObjDim        = obj_info[k].dim;
+                        ObjRank       = obj_info[k].rank;
+
+                        // Lambda.segment(FirstRowIndex+ObjRank, ObjDim-ObjRank).setZero(); assumed
+
+                        Lambda.segment(FirstRowIndex, ObjRank) = rhs.segment(FirstColIndex, ObjRank);
+
+                        // apply Q_k' on the left
+                        Lambda.segment(FirstRowIndex, ObjDim)
+                            .applyOnTheLeft(householderSequence(LOD.block(FirstRowIndex,
+                                                                          FirstColIndex,
+                                                                          ObjDim,
+                                                                          ObjRank),
+                                                                hh_scalars.segment(FirstRowIndex,ObjDim)));
+
+                        rhs.head(ColDim).noalias() -= LOD.block(FirstRowIndex, 0, ObjDim, ColDim).transpose() * \
+                            Lambda.segment(FirstRowIndex, ObjDim);
+
+                        // check for wrong sign of the Lagrange multiplier
+                        findDescentDirection(k,
+                                             FirstRowIndex,
+                                             ObjDim,
+                                             Lambda,
+                                             tol_wrong_sign_lambda,
+                                             tol_correct_sign_lambda,
+                                             ctr_wrong_sign);
+                    } // END for (Index k=ObjIndex-1; k>=0; k--)
+                }
+
+                if (nVarFixed>0) // Handle fixed variables (if any)
+                {
+                    LambdaFixed = -LOD.block(0, 0, nLambda, nVarFixed).transpose() * Lambda;
+
+                    // check for wrong sign of the Lagrange multiplier
+                    // -1(-st) objective implies the fixed variables
+                    //   :if there are no fixed variables we will not be here
+                    //   :if there are fixed variables ObjIndex2Remove + ObjOffset is used in LexLSI
+                    findDescentDirection(-1,
+                                         -1,
+                                         ObjDim,
+                                         Lambda,
+                                         tol_wrong_sign_lambda,
+                                         tol_correct_sign_lambda,
+                                         ctr_wrong_sign);
+                }
+            }
+
+            /**
                 \brief Computes the sensitivity of objective ObjIndex with respect to (small) variatoins
                 of the constraints involved in the LexLSE problem
 
@@ -773,6 +887,57 @@ namespace LexLS
                 rhs.setZero(); // for convenience (easier to analyze the Lagrange multipliers by hand)
 
             } // END ObjectiveSensitivity(...)
+
+
+            /**
+               \brief Output all ctr whose Lambdas have wrong sign
+            */
+            void findDescentDirection(Index ObjIndex,
+                                      int FirstRowIndex,
+                                      Index ObjDim,
+                                      const dVectorType& lambda,
+                                      RealScalar tol_wrong_sign_lambda,
+                                      RealScalar tol_correct_sign_lambda,
+                                      std::vector<ConstraintInfo> &ctr_wrong_sign)
+            {
+                RealScalar aLambda;
+                Index ind;
+                ConstraintActivationType *aCtrType; // aCtrType cannot be CTR_INACTIVE
+
+                for (Index k=0; k<ObjDim; k++)
+                {
+                    if (FirstRowIndex < 0) // handle fixed variables
+                    {
+                        ind      = k;
+                        aCtrType = &fixed_var_type[ind];
+                    }
+                    else                   // handle general constraints
+                    {
+                        ind      = FirstRowIndex+k;
+                        aCtrType = &ctr_type[ind];
+                    }
+
+                    if (*aCtrType != CTR_ACTIVE_EQ && *aCtrType != CORRECT_SIGN_OF_LAMBDA)
+                    {
+                        aLambda = lambda.coeff(ind);
+
+                        if (*aCtrType == CTR_ACTIVE_LB)
+                        {
+                            aLambda = -aLambda;
+                        }
+
+                        if (aLambda > tol_correct_sign_lambda)
+                        {
+                            *aCtrType = CORRECT_SIGN_OF_LAMBDA;
+                        }
+                        else if (aLambda < -tol_wrong_sign_lambda)
+                        {
+                            ctr_wrong_sign.push_back(ConstraintInfo((int)ObjIndex,(int)k));
+                        }
+                    }
+                }
+            }
+
 
             /**
                \brief Given a vector of Lagrange multipliers, determine the largest (in absolute value)

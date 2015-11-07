@@ -654,6 +654,15 @@ namespace LexLS
             }
 
             /**
+               \brief see working_set.getCtrIndex()
+            */
+            Index getCtrIndex(Index k)
+            {
+                return working_set.getCtrIndex(k);
+            }
+
+
+            /**
                \brief Returns the type of the k-th active constraint
             */
             ConstraintActivationType getActiveCtrType(Index k) const

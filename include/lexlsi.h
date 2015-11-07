@@ -107,6 +107,8 @@ namespace LexLS
                     throw Exception("ObjIndex >= nObj");
                 }
 
+                WS.push_back(ConstraintInfo(ObjIndex,CtrIndex));
+
                 objectives[ObjIndex].activate(CtrIndex, type);
 
                 if (CountActivation)
@@ -132,6 +134,15 @@ namespace LexLS
                 {
                     throw Exception("ObjIndex >= nObj");
                 }
+
+                // -----------------------------------------------------------
+                std::vector<ConstraintInfo>::iterator it;
+                it = std::find(WS.begin(),
+                               WS.end(),
+                               ConstraintInfo(ObjIndex,
+                                              objectives[ObjIndex].getActiveCtrIndex(CtrIndexActive)));
+                WS.erase(it);
+                // -----------------------------------------------------------
 
                 objectives[ObjIndex].deactivate(CtrIndexActive);
 
@@ -936,6 +947,68 @@ namespace LexLS
                 }
             }
 
+            Index findFirstCtrWrongSign(std::vector<ConstraintInfo> &ctr_wrong_sign)
+            {
+                std::vector<ConstraintInfo>::iterator it = ctr_wrong_sign.end();
+
+                Index k = 0;
+                while (it == ctr_wrong_sign.end())
+                {
+                    it = std::find(ctr_wrong_sign.begin(), ctr_wrong_sign.end(), WS[k]);
+                    k++;
+                }
+                k--;
+
+                return k;
+            }
+
+            // remove first ctr with Lambda with wrong sign
+            bool findActiveCtr2Remove_first(Index &ObjIndex2Remove,
+                                            Index &CtrIndex2Remove,
+                                            RealScalar &lambda_wrong_sign)
+            {
+                std::vector<ConstraintInfo> ctr_wrong_sign;
+
+                lambda_wrong_sign = 0; // this doesn't matter (todo modify later)
+
+                bool DescentDirectionExists = false;
+                for (Index ObjIndex=0; ObjIndex<nObj-nObjOffset; ObjIndex++) // loop over objectives of LexLSE problem
+                {
+                    lexlse.ObjectiveSensitivity(ObjIndex,
+                                                parameters.tol_wrong_sign_lambda,
+                                                parameters.tol_correct_sign_lambda,
+                                                ctr_wrong_sign);
+
+                    if (ctr_wrong_sign.size() > 0)
+                    {
+                        DescentDirectionExists = true;
+                        break;
+                    }
+                }
+
+                if (DescentDirectionExists)
+                {
+                    for (Index k=0; k<ctr_wrong_sign.size(); k++)
+                    {
+                        ctr_wrong_sign[k].increment_obj_index(nObjOffset);
+
+                        int obj_tmp = ctr_wrong_sign[k].get_obj_index();
+                        int ctr_tmp = ctr_wrong_sign[k].get_ctr_index();
+
+                        ctr_tmp = objectives[obj_tmp].getActiveCtrIndex(ctr_tmp);
+                        ctr_wrong_sign[k].set_ctr_index(ctr_tmp);
+                    }
+
+                    Index k = findFirstCtrWrongSign(ctr_wrong_sign);
+                    ObjIndex2Remove = (Index)WS[k].get_obj_index();
+                    CtrIndex2Remove = (Index)WS[k].get_ctr_index();
+                    CtrIndex2Remove = objectives[ObjIndex2Remove].getCtrIndex(CtrIndex2Remove);
+                }
+
+                return DescentDirectionExists;
+            }
+
+
             /**
                \brief Finds active constraints that should be removed from the working set
 
@@ -1034,7 +1107,7 @@ namespace LexLS
                     if (normalIteration)
                     {
                         RealScalar lambda_wrong_sign;
-                        if (findActiveCtr2Remove(ObjIndex2Manipulate, CtrIndex2Manipulate, lambda_wrong_sign))
+                        if (findActiveCtr2Remove_first(ObjIndex2Manipulate, CtrIndex2Manipulate, lambda_wrong_sign))
                         {
                             if (parameters.cycling_handling_enabled)
                             {
@@ -1338,6 +1411,11 @@ namespace LexLS
                 \brief Parameters of the solver.
             */
             ParametersLexLSI parameters;
+
+            /**
+                \brief Store Working Set but in order to addition (objectives are not separated)
+            */
+            std::vector<ConstraintInfo> WS;
 
         }; // END class LexLSI
 
