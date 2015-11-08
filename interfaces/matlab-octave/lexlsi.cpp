@@ -429,6 +429,10 @@ void mexFunction( int num_output, mxArray *output[],
                             "output_file_name",
                             20);
 
+            getOptionBool(  &lexlsi_parameters.deactivate_first_wrong_sign,
+                            options_struct,
+                            "deactivate_first_wrong_sign");
+
             // ================================================
             // check provided options
 

@@ -15,8 +15,6 @@ namespace LexLS
             \todo When we solve a sequence of LexLSI problems we could specify the maximum size of the
             envisioned objectives so that we don't have to allocate memory online.
 
-            \todo Bug in cycling detection
-
             \todo When the first objective is of type SIMPLE_BOUNDS_OBJECTIVE, the user has to
             specify the indexes of the variables and their corresponding bounds. To monitor whether
             the bounds for the i-th variables have already been specified and if the user sets them
@@ -947,6 +945,9 @@ namespace LexLS
                 }
             }
 
+            /**
+               \note Probably this could be done in O(n*log(n))
+            */
             Index findFirstCtrWrongSign(std::vector<ConstraintInfo> &ctr_wrong_sign)
             {
                 std::vector<ConstraintInfo>::iterator it = ctr_wrong_sign.end();
@@ -957,9 +958,20 @@ namespace LexLS
                     it = std::find(ctr_wrong_sign.begin(), ctr_wrong_sign.end(), WS[k]);
                     k++;
                 }
-                k--;
 
-                return k;
+                return --k;
+            }
+
+            bool findActiveCtr2Remove(Index &ObjIndex2Remove, Index &CtrIndex2Remove, RealScalar &lambda_wrong_sign)
+            {
+                if (parameters.deactivate_first_wrong_sign)
+                {
+                    return findActiveCtr2Remove_first(ObjIndex2Remove, CtrIndex2Remove, lambda_wrong_sign);
+                }
+                else
+                {
+                    return findActiveCtr2Remove_largest(ObjIndex2Remove, CtrIndex2Remove, lambda_wrong_sign);
+                }
             }
 
             // remove first ctr with Lambda with wrong sign
@@ -1017,7 +1029,7 @@ namespace LexLS
 
                \return true if there are constraints to remove
             */
-            bool findActiveCtr2Remove(Index &ObjIndex2Remove, Index &CtrIndex2Remove, RealScalar &lambda_wrong_sign)
+            bool findActiveCtr2Remove_largest(Index &ObjIndex2Remove, Index &CtrIndex2Remove, RealScalar &lambda_wrong_sign)
             {
                 bool DescentDirectionExists = false;
                 int ObjIndex2Remove_int;
@@ -1054,7 +1066,7 @@ namespace LexLS
 
                 bool normalIteration = true;
                 OperationType operation = OPERATION_UNDEFINED;
-                ConstraintIdentifier constraint_identifier;
+                ConstraintIdentifier constraint_identifier(0,0,CTR_INACTIVE,0); // initialize so that g++ does not complain
 
                 RealScalar alpha;
 
@@ -1107,7 +1119,7 @@ namespace LexLS
                     if (normalIteration)
                     {
                         RealScalar lambda_wrong_sign;
-                        if (findActiveCtr2Remove_first(ObjIndex2Manipulate, CtrIndex2Manipulate, lambda_wrong_sign))
+                        if (findActiveCtr2Remove(ObjIndex2Manipulate, CtrIndex2Manipulate, lambda_wrong_sign))
                         {
                             if (parameters.cycling_handling_enabled)
                             {
@@ -1160,8 +1172,7 @@ namespace LexLS
                     status = cycling_handler.update(operation,
                                                     constraint_identifier,
                                                     objectives,
-                                                    nIterations,
-                                                    cycling_detected, false);
+                                                    cycling_detected);
 
                     if (parameters.log_working_set_enabled)
                     {

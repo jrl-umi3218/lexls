@@ -226,6 +226,12 @@ namespace LexLS
         */
         bool log_working_set_enabled;
 
+        /**
+           \brief If true, deactivate first constraints with lambda with wrong sign. Otherwise, deactivate
+           constraints with largest lambda (with wrong sign).
+        */
+        bool deactivate_first_wrong_sign;
+
         ParametersLexLSI()
         {
             setDefaults();
@@ -250,6 +256,7 @@ namespace LexLS
             printf("set_min_init_ctr_violation     = %d \n", set_min_init_ctr_violation);
             printf("use_phase1_v0                  = %d \n", use_phase1_v0);
             printf("log_working_set_enabled        = %d \n", log_working_set_enabled);
+            printf("deactivate_first_wrong_sign    = %d \n", deactivate_first_wrong_sign);
             printf("\n");
         }
 
@@ -277,6 +284,8 @@ namespace LexLS
 
             use_phase1_v0                  = false;
             log_working_set_enabled        = false;
+
+            deactivate_first_wrong_sign    = false;
         }
     };
 

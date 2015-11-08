@@ -16,157 +16,46 @@ namespace LexLS
                 counter(0),
                 max_counter(50),
                 relax_step(1e-08),
-                previous_operation(OPERATION_UNDEFINED){}
-
-            void print_counter()
+                previous_operation(OPERATION_UNDEFINED)
             {
-                printf("   counter = %d\n",counter);
-            }
-
-            void print()
-            {
-                printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ \n");
-                printf("ADD (%d): \n", (Index)ctr_added.size());
-                for (Index k=0; k<ctr_added.size(); k++)
-                {
-                    printf("     ");
-                    ctr_added[k].print();
-                }
-
-                printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ \n");
-                printf("REM (%d): \n", (Index)ctr_removed.size());
-                for (Index k=0; k<ctr_removed.size(); k++)
-                {
-                    printf("     ");
-                    ctr_removed[k].print();
-                }
+                previous_ctr_identifier.set(0,0,CTR_INACTIVE);
             }
 
             TerminationStatus update(OperationType operation,
                                      ConstraintIdentifier ctr_identifier,
                                      std::vector<Objective> &Obj,
-                                     Index iter,
-                                     bool &cycling_detected,
-                                     bool print_flag=false)
+                                     bool &cycling_detected)
             {
                 cycling_detected = false;
-
-                // this is executed only the first time this function is called
-                if (previous_operation == OPERATION_UNDEFINED)
+                if ((operation == OPERATION_ADD) &&
+                    (previous_operation == OPERATION_REMOVE))
                 {
-                    if (operation == OPERATION_ADD)
+                    if (ctr_identifier == previous_ctr_identifier)
                     {
-                        previous_operation = OPERATION_REMOVE;
-                    }
-                    else if (operation == OPERATION_REMOVE)
-                    {
-                        previous_operation = OPERATION_ADD;
-                    }
-                }
-
-                if (print_flag)
-                {
-                    printf("============================================= \n");
-                    printf("(%d), counter = %d, operation = %s (%s)\n",
-                           iter,
-                           counter,
-                           operation == OPERATION_ADD ? "ADD" : "REM",
-                           previous_operation == OPERATION_ADD ? "ADD" : "REM");
-                }
-
-                if (operation == OPERATION_ADD)
-                {
-                    if (previous_operation == OPERATION_REMOVE)
-                    {
-                        if (check_condition())
+                        if (counter >= max_counter)
                         {
-                            if (counter >= max_counter)
-                            {
-                                if (print_flag)
-                                {
-                                    print();
-                                }
-
-                                return PROBLEM_SOLVED_CYCLING_HANDLING;
-                            }
-                            else
-                            {
-                                relax_bounds(Obj);
-                                cycling_detected = true;
-                            }
+                            return PROBLEM_SOLVED_CYCLING_HANDLING;
                         }
-
-                        previous_operation = OPERATION_ADD;
-                        ctr_added.clear();
-                    }
-
-                    ctr_added.push_back(ctr_identifier);
-                }
-                else if (operation == OPERATION_REMOVE)
-                {
-                    if (previous_operation == OPERATION_ADD)
-                    {
-                        if (check_condition())
+                        else
                         {
-                            if (counter >= max_counter)
-                            {
-                                if (print_flag)
-                                {
-                                    print();
-                                }
-
-                                return PROBLEM_SOLVED_CYCLING_HANDLING;
-                            }
-                            else
-                            {
-                                relax_bounds(Obj);
-                                cycling_detected = true;
-                            }
+                            relax_bounds(Obj);
+                            cycling_detected = true;
                         }
-
-                        previous_operation = OPERATION_REMOVE;
-                        ctr_removed.clear();
                     }
-
-                    ctr_removed.push_back(ctr_identifier);
                 }
-
-                if (print_flag)
-                {
-                    print();
-                }
+                previous_operation      = operation;
+                previous_ctr_identifier = ctr_identifier;
 
                 return TERMINATION_STATUS_UNKNOWN;
             }
 
-            bool check_condition()
-            {
-                if (ctr_removed.size() == 0 || ctr_added.size() == 0) // disregard cases with empty containers
-                    return false;
-
-                bool condition = true;
-                if (ctr_removed.size() == ctr_added.size())
-                {
-                    for (Index k=0; k<(Index)ctr_removed.size(); k++)
-                    {
-                        if (std::find(ctr_removed.begin(), ctr_removed.end(), ctr_added[k]) == ctr_removed.end())
-                        {
-                            condition = false;
-                            break;
-                        }
-                    }
-                }
-
-                return condition;
-            }
-
             void relax_bounds(std::vector<Objective> &Obj)
             {
-                for (Index k=0; k<(Index)ctr_removed.size(); k++)
-                {
-                    Obj[ctr_removed[k].obj_index]
-                        .relax_bounds(ctr_removed[k].ctr_index, ctr_removed[k].ctr_type, relax_step);
-                }
+                Obj[previous_ctr_identifier.obj_index]
+                    .relax_bounds(previous_ctr_identifier.ctr_index,
+                                  previous_ctr_identifier.ctr_type,
+                                  relax_step);
+
                 counter++;
             }
 
@@ -206,14 +95,9 @@ namespace LexLS
             OperationType previous_operation;
 
             /**
-                \brief List of added constraints after the last removed constraint
+               \brief Constraint involved in the previous operation
             */
-            std::vector<ConstraintIdentifier> ctr_added;
-
-            /**
-                \brief List of removed constraints after the last added constraint
-            */
-            std::vector<ConstraintIdentifier> ctr_removed;
+            ConstraintIdentifier previous_ctr_identifier;
         };
 
     } // END namespace internal
