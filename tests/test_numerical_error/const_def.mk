@@ -23,7 +23,7 @@ EIGEN_FLAGS = -DEIGEN_INITIALIZE_MATRICES_BY_ZERO
 ## home directory (referred to as MAIN_DIR)
 ## ---------------------------------------------
 
-LEXLS_INCLUDE = /Users/drdv/Work/Git/bip/soft/lexls/include
+LEXLS_INCLUDE = ../../include
 
 ## ---------------------------------------------
 ## includes and libraries
