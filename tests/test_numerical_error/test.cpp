@@ -56,11 +56,13 @@ int main()
 
     lsi.solve();
 
+    int nCtr = 0;
     std::vector<LexLS::Index> eq_obj_dim(number_of_objectives);
     for (LexLS::Index k=0; k<number_of_objectives; k++)
     {
         eq_obj_dim[k] = lsi.getActiveCtrCount(k);
 
+        nCtr += eq_obj_dim[k];
         std::cout << eq_obj_dim[k] << " ";
     }
     std::cout << "\n\n";
@@ -72,6 +74,10 @@ int main()
     X.col(0) = lsi.get_xStar();
 
     LexLS::dMatrixType data = lsi.get_data(); // call after lsi.get_xStar()
+    LexLS::dMatrixType lexqr = lsi.get_lexqr();
+
+    std::vector<LexLS::ConstraintIdentifier> ctr;
+    lsi.getActiveCtr_order(ctr);
 
     // ==============================================================
     LexLS::internal::LexLSE lse(number_of_variables,
@@ -79,25 +85,79 @@ int main()
                                 &eq_obj_dim[0]);
 
     LexLS::Index row_ind = 0;
+    int k=0;
     for (unsigned int i = 0; i < number_of_objectives; ++i)
     {
-        if (i > 0)
+        lse.setData(i,data.block(row_ind, 0, eq_obj_dim[i], number_of_variables+1));
+
+        for (unsigned int j = 0; j < eq_obj_dim[i]; ++j)
         {
-            row_ind += eq_obj_dim[i-1];
+            lse.setCtrType(i, j, ctr[k].ctr_type);
+            k++;
         }
 
-        lse.setData(i,data.block(row_ind, 0, eq_obj_dim[i], number_of_variables+1));
+        row_ind += eq_obj_dim[i];
     }
+
     // ==============================================================
     lse.factorize();
     lse.solve();
 
+    // ==============================================================
+    LexLS::dMatrixType data1 = lse.get_data();
+    LexLS::dMatrixType lexqr1 = lse.get_lexqr();
+
+    //std::cout << "nCtr = " << nCtr << std::endl;
+    //std::cout << data.rows() << ", " << data.cols() << std::endl;
+    //std::cout << data1.rows() << ", " << data1.cols() << std::endl;
+
+    LexLS::RealScalar e1 = (data.topRows(nCtr) - data1).norm();
+
+    LexLS::RealScalar e2 = (lexqr.topRows(nCtr) - lexqr1).norm();
+    // ==============================================================
+
     X.col(1) = lse.get_x();
     X.col(2) = X.col(1) - X.col(0);
 
-    std::cout << X << "\n\n";
+    //std::cout << X << "\n\n";
 
-    printf("% 1.18e \n", X.col(2).norm());
+    printf("error(x)     = %1.18e \n", X.col(2).norm());
+    printf("error(data)  = %1.18e \n", e1);
+    printf("error(lexqr) = %1.18e \n", e2);
+
+    // ==============================================================
+    // residual
+    // ==============================================================
+/*
+    LexLS::dMatrixType R(nCtr,3);
+
+    std::cout << data.rows() << ", " << data.cols() << std::endl;
+    std::cout << number_of_variables << std::endl;
+    std::cout << X.col(1).size() << std::endl;
+
+    R.col(0) = data.topRows(nCtr).leftCols(number_of_variables)*X.col(0) - data.topRows(nCtr).col(number_of_variables);
+    R.col(1) = data1.leftCols(number_of_variables)*X.col(1) - data1.col(number_of_variables);
+    R.col(2) = R.col(1) - R.col(0);
+
+
+    row_ind = 0;
+    for (unsigned int i = 0; i < number_of_objectives; ++i)
+    {
+        std::cout << "----------------- obj = " << i << "-----------------\n";
+        std::cout << R.block(row_ind, 0, eq_obj_dim[i], 3) << "\n";
+
+        row_ind += eq_obj_dim[i];
+    }
+*/
+
+    row_ind = 0;
+    for (unsigned int i = 0; i < number_of_objectives; ++i)
+    {
+        double e = (lexqr.block(row_ind, 0, eq_obj_dim[i], number_of_variables+1) - lexqr1.block(row_ind, 0, eq_obj_dim[i], number_of_variables+1)).norm();
+        printf("   obj(%d): %1.18e \n",i,e);
+
+        row_ind += eq_obj_dim[i];
+    }
 
     return 0;
 }

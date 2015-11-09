@@ -638,7 +638,7 @@ namespace LexLS
             */
             void print() const
             {
-                printf("first_row_index = %d, first_col_index = %d, dim = %d, rank = %d \n", first_row_index, first_col_index, dim, rank);
+                printf("first_row_index = %d, first_col_index = %d, dim = %d, rank = %d, regularization_factor = %f \n", first_row_index, first_col_index, dim, rank, regularization_factor);
             }
 
             /*
