@@ -120,50 +120,6 @@ namespace LexLS
             {
                 PROBLEM_DATA = LOD;
 
-                // ================================================================================
-                // ================================================================================
-                // ================================================================================
-                if (false) // todo: remove after testing
-                {
-                    aRegularizationFactor = 0.0;
-
-                    std::cout << "nVar                  = " << nVar                  << "\n"
-                              << "nObj                  = " << nObj                  << "\n"
-                              << "nCtr                  = " << nCtr                  << "\n"
-                              << "nVarFixed             = " << nVarFixed             << "\n"
-                              << "nVarFixedInit         = " << nVarFixedInit         << "\n"
-                              << "TotalRank             = " << TotalRank             << "\n"
-                              << "aRegularizationFactor = " << aRegularizationFactor << "\n"
-                              << "fixed_var_type.size() = " << fixed_var_type.size() << "\n";
-
-                    for (Index kk=0; kk<nObj; kk++)
-                        obj_info[kk].print();
-                    parameters.print();
-
-                    std::cout << "[";
-                    for (Index kk=0; kk<nCtr; kk++)
-                        std::cout << ctr_type[kk] << " ";
-                    std::cout << "]\n";
-
-                    fixed_var_index.setZero();
-                    P.setIdentity();
-                    column_permutations.setZero();
-                    dWorkspace.setZero();
-                    x.setZero();
-                    hh_scalars.setZero();
-                    residual_mu.setZero();
-                    null_space.setZero();
-                    array.setZero();
-                    rqsp_work.setZero();
-                    X_mu.setZero();
-                    X_mu_rhs.setZero();
-                    std::cout << "-----------------------------------------------------\n\n";
-                }
-                // ================================================================================
-                // ================================================================================
-                // ================================================================================
-
-
                 RealScalar maxColNormValue, tau, PivotValue;
                 Index RemainingRows, ObjRank, ObjDim, maxColNormIndex;
 

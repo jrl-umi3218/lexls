@@ -1,9 +1,16 @@
 /*
+  Problem:
+  ---------
   In general the solution of the last equality constrained problem (solved in lexlsi) cannot be
   reproduced by passing exactly the same data to lexlse manually. It seems that the compiler treats
   the code differently (maybe some computations are sequenced differently). As a result there are
   small errors. When we have many levels (as in Nestor's examples) this error magnifies (I have an
   example where the norm of the difference is greater than 1e-02).
+
+  Solution:
+  ---------
+  This is due to Eigen's vectorization. If one defined EIGEN_DONT_VECTORIZE, the problem is gone
+  (but we don't want to do that).
 */
 
 #include <lexlsi.h>

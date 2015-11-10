@@ -325,8 +325,6 @@ namespace LexLS
 
                     if (isEqual(bl,bu))
                     {
-                        activate(ObjIndex,CtrIndex,CTR_ACTIVE_EQ,false);
-                        /*
                         // don't activate meaningless constraints
                         if (data.row(CtrIndex).head(nVar).squaredNorm() > 0)
                         {
@@ -336,7 +334,6 @@ namespace LexLS
                         {
                             //printf("WARNING: equality constraint (0*x = b) not activated (obj_index = %d, ctr_index = %d) \n", ObjIndex, CtrIndex);
                         }
-                        */
                     }
                     else if (bl > bu)
                     {
