@@ -11,6 +11,10 @@
   ---------
   This is due to Eigen's vectorization. If one defined EIGEN_DONT_VECTORIZE, the problem is gone
   (but we don't want to do that).
+
+  Or we could simply define lexlse with as many constraints as the inequality-constrained problem
+  and use ony a part of them (for the active constraints) - this solves the problem too. See #define
+  INITIALIZE_INEQUALITY
 */
 
 #include <lexlsi.h>
@@ -19,7 +23,9 @@
 #include <iostream>
 #include <iomanip>
 
-int main()
+#define INITIALIZE_INEQUALITY
+
+void foo()
 {
 
     LexLS::tools::HierarchyType       type_of_hierarchy;
@@ -64,12 +70,14 @@ int main()
     lsi.solve();
 
     int nCtr = 0;
+    int nCtrIneq = 0;
     std::vector<LexLS::Index> eq_obj_dim(number_of_objectives);
     for (LexLS::Index k=0; k<number_of_objectives; k++)
     {
         eq_obj_dim[k] = lsi.getActiveCtrCount(k);
 
         nCtr += eq_obj_dim[k];
+        nCtrIneq += number_of_constraints[k];
         std::cout << eq_obj_dim[k] << " ";
     }
     std::cout << "\n\n";
@@ -87,9 +95,16 @@ int main()
     lsi.getActiveCtr_order(ctr);
 
     // ==============================================================
+#ifdef INITIALIZE_INEQUALITY
+    LexLS::internal::LexLSE lse(number_of_variables,
+                                number_of_objectives,
+                                &number_of_constraints[0]);
+    lse.setObjDim(&eq_obj_dim[0]);
+#else
     LexLS::internal::LexLSE lse(number_of_variables,
                                 number_of_objectives,
                                 &eq_obj_dim[0]);
+#endif
 
     LexLS::Index row_ind = 0;
     int k=0;
@@ -114,13 +129,12 @@ int main()
     LexLS::dMatrixType data1 = lse.get_data();
     LexLS::dMatrixType lexqr1 = lse.get_lexqr();
 
-    //std::cout << "nCtr = " << nCtr << std::endl;
-    //std::cout << data.rows() << ", " << data.cols() << std::endl;
-    //std::cout << data1.rows() << ", " << data1.cols() << std::endl;
+    std::cout << "nCtr = " << nCtr << std::endl;
+    std::cout << data.rows() << ", " << data.cols() << std::endl;
+    std::cout << data1.rows() << ", " << data1.cols() << std::endl;
 
-    LexLS::RealScalar e1 = (data.topRows(nCtr) - data1).norm();
-
-    LexLS::RealScalar e2 = (lexqr.topRows(nCtr) - lexqr1).norm();
+    LexLS::RealScalar e1 = (data.topRows(nCtr) - data1.topRows(nCtr)).norm();
+    LexLS::RealScalar e2 = (lexqr.topRows(nCtr) - lexqr1.topRows(nCtr)).norm();
     // ==============================================================
 
     X.col(1) = lse.get_x();
@@ -165,6 +179,12 @@ int main()
 
         row_ind += eq_obj_dim[i];
     }
+}
+
+int main()
+{
+
+    foo();
 
     return 0;
 }
