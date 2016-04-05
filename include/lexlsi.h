@@ -337,6 +337,48 @@ namespace LexLS
                     }
                     else if (bl > bu)
                     {
+                        /**
+                         * \todo [AS] Minor inconsistency in the API.
+                         *
+                         * \verbatim
+                         *
+                         * This results in a failure
+                         *    1 <= x <= -1
+                         *
+                         * This is ok
+                         *    1       <=  x  <=  10^10
+                         *    -10^10  <=  x  <=  -1
+                         *
+                         * Even though the problems are equivalent.
+                         *
+                         * Dimitar:
+                         *  We explicitly assume that upper bounds are greater
+                         *  or equal to lower bounds.
+                         *
+                         *  It is interesting to mention as well the reason for
+                         *  this assumption. Note that we use a primal
+                         *  active-set method and it requires a feasible
+                         *  initial iterate. There is no scalar “v” for which
+                         *
+                         *  1 <= x - v <= -1
+                         *
+                         *  is satisfied. You would need to split things in two
+                         *  inequalities (in the way that you do) so that you
+                         *  can play with two scalars “v_1” and “v_2”. Of
+                         *  course, one could detect cases with lb > ub and
+                         *  reformulate the problem but I don’t see a good
+                         *  reason to do that, as I think that lb > ub simply
+                         *  indicates an error in the problem formulation (do
+                         *  you have an example of a meaningful problem for
+                         *  which lb > ub?).
+                         *
+                         *  Maybe the error
+                         *  "Lower bound is greater than upper bound"
+                         *  should be changed so that the user clearly
+                         *  understands what we assume. While the above note
+                         *  could be included somewhere else.
+                         * \endverbatim
+                         */
                         throw Exception("(general) Lower bound is greater than upper bound.");
                     }
                 }
