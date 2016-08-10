@@ -198,7 +198,7 @@ bool getOptionString(   std::string &option_value,
             is_parsing_successful = true;
         }
 
-        delete char_string;
+        delete[] char_string;
     }
 
 
@@ -320,7 +320,7 @@ mxArray * catenateMatrices( mxArray *matrix1,
         mexErrMsgTxt("Catenation of A and b failed!");
     }
     mxDestroyArray(dimension);
-    delete cat_input;
+    delete[] cat_input;
 
     return (cat_output[0]);
 }
