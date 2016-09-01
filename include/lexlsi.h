@@ -204,11 +204,11 @@ namespace LexLS
             */
             void print(const char * field)
             {
-                if (!strcmp(field, "WorkingSet"))
+                if (!strcmp(field, "working_set"))
                 {
                     for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
                     {
-                        objectives[ObjIndex].print("WorkingSet");
+                        objectives[ObjIndex].print("working_set");
                     }
                     std::cout << std::endl;
                 }

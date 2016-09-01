@@ -836,14 +836,16 @@ namespace LexLS
             */
             bool isZeroNormal(Index CtrIndex)
             {
-                if (data.row(CtrIndex).head(nVar).squaredNorm() == 0)
+                bool normal_is_zero = false;
+                if (obj_type == GENERAL_OBJECTIVE)
                 {
-                    return true;
+                    if (data.row(CtrIndex).head(nVar).squaredNorm() == 0)
+                    {
+                        normal_is_zero = true;
+                    }
                 }
-                else
-                {
-                    return false;
-                }
+
+                return normal_is_zero;
             }
 
             /**
