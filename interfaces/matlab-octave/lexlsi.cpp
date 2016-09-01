@@ -50,7 +50,7 @@ mxArray * formInfoStructure (
         case LexLS::PROBLEM_SOLVED_CYCLING_HANDLING:
             status = STATUS_CYCLING_HANDLING;
             break;
-        case LexLS::MAX_NUMBER_OF_FACTORIZATIONS_EXCEDED:
+        case LexLS::MAX_NUMBER_OF_FACTORIZATIONS_EXCEEDED:
             status = STATUS_MAXITER;
             break;
         default:

@@ -46,7 +46,7 @@ namespace LexLS
         TERMINATION_STATUS_UNKNOWN = -1,     // -1
         PROBLEM_SOLVED,                      // 0
         PROBLEM_SOLVED_CYCLING_HANDLING,     // 1
-        MAX_NUMBER_OF_FACTORIZATIONS_EXCEDED // 2
+        MAX_NUMBER_OF_FACTORIZATIONS_EXCEEDED // 2
     };
 
     /**

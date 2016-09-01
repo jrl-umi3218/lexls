@@ -187,7 +187,7 @@ namespace LexLS
                     {
                         if (nFactorizations >= parameters.max_number_of_factorizations)
                         {
-                            status = MAX_NUMBER_OF_FACTORIZATIONS_EXCEDED;
+                            status = MAX_NUMBER_OF_FACTORIZATIONS_EXCEEDED;
                             break;
                         }
                     }
