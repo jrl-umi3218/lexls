@@ -254,7 +254,7 @@ namespace LexLS
             /**
                \brief Sets the initial value for the decision variable x
             */
-            void set_x0(dVectorType &x0)
+            void set_x0(const dVectorType &x0)
             {
                 x = x0;
                 x_guess_is_specified = true;
