@@ -2,6 +2,7 @@ fn = note
 
 all:
 	latex $(fn).tex
+	latex $(fn).tex
 	dvips $(fn)
 	ps2pdf $(fn).ps
 
