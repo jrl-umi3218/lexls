@@ -270,14 +270,14 @@ namespace LexLS
                                 // the .col(0) and .row(0) are important only for efficient computation
                                 TrailingBlock.noalias() -= LeftBlock.col(0) * UpBlock.row(0);
                             }
-                            else if (ObjRank > 2 && ObjRank <= 8)
+                            else if (ObjRank == 2)
                             {
                                 for (Index k=0; k<RemainingColumns+1; k++)
                                 {
                                     TrailingBlock.col(k).noalias() -= LeftBlock * UpBlock.col(k);
                                 }
                             }
-                            else if ((ObjRank == 2) || (ObjRank > 8))
+                            else
                             {
                                 TrailingBlock.noalias() -= LeftBlock * UpBlock;
                             }
