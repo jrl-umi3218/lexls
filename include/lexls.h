@@ -49,10 +49,6 @@ namespace LexLS
             case 2:
                 lexlse.solveLeastNorm_2();
                 break;
-
-            case 3:
-                lexlse.solveLeastNorm_3();
-                break;
             }
 
             return lexlse.get_x();

@@ -88,11 +88,7 @@ mxArray * formDebugStructure (
         std::vector<LexLS::ConstraintIdentifier> active_ctr,
         const std::vector<LexLS::dMatrixType> &lambda,
         const LexLS::dMatrixType &lexqr,
-        const LexLS::dVectorType &xStar,
-        const LexLS::dMatrixType &X_mu,
-        const LexLS::dMatrixType &X_mu_rhs,
-        const LexLS::dVectorType &residual_mu,
-        const LexLS::dMatrixType &problem_data)
+        const LexLS::dVectorType &xStar)
 {
     mxArray * info_struct;
 
@@ -102,11 +98,7 @@ mxArray * formDebugStructure (
         "active_ctr",
         "lambda",
         "lexqr",
-        "data",
-        "xStar",
-        "X_mu",
-        "X_mu_rhs",
-        "residual_mu"
+        "xStar"
     };
 
 
@@ -229,23 +221,6 @@ mxArray * formDebugStructure (
 
     // ----------------------------------------------------------------
 
-    num_rows = problem_data.rows();
-    num_cols = problem_data.cols();
-
-    mxArray * problem_data_ = mxCreateDoubleMatrix(num_rows, num_cols, mxREAL);
-
-    for (unsigned int k = 0; k < num_cols; ++k)
-    {
-        for (unsigned int j = 0; j < num_rows; ++j)
-        {
-            mxGetPr(problem_data_)[j + k * num_rows] = problem_data(j,k);
-        }
-    }
-
-    mxSetField (info_struct, 0, "data", problem_data_);
-
-    // ----------------------------------------------------------------
-
     num_rows = xStar.size();
     num_cols = 1;
 
@@ -259,52 +234,6 @@ mxArray * formDebugStructure (
     mxSetField (info_struct, 0, "xStar", xStar_);
 
     // ----------------------------------------------------------------
-
-    num_rows = X_mu.rows();
-    num_cols = X_mu.cols();
-
-    mxArray * X_mu_ = mxCreateDoubleMatrix(num_rows, num_cols, mxREAL);
-
-    for (unsigned int k = 0; k < num_cols; ++k)
-    {
-        for (unsigned int j = 0; j < num_rows; ++j)
-        {
-            mxGetPr(X_mu_)[j + k * num_rows] = X_mu(j,k);
-        }
-    }
-
-    mxSetField (info_struct, 0, "X_mu", X_mu_);
-
-    // ----------------------------------------------------------------
-
-    num_rows = X_mu_rhs.rows();
-    num_cols = X_mu_rhs.cols();
-
-    mxArray * X_mu_rhs_ = mxCreateDoubleMatrix(num_rows, num_cols, mxREAL);
-
-    for (unsigned int k = 0; k < num_cols; ++k)
-    {
-        for (unsigned int j = 0; j < num_rows; ++j)
-        {
-            mxGetPr(X_mu_rhs_)[j + k * num_rows] = X_mu_rhs(j,k);
-        }
-    }
-
-    mxSetField (info_struct, 0, "X_mu_rhs", X_mu_rhs_);
-
-    // ----------------------------------------------------------------
-
-    num_rows = residual_mu.size();
-    num_cols = 1;
-
-    mxArray * residual_mu_ = mxCreateDoubleMatrix(num_rows, num_cols, mxREAL);
-
-    for (unsigned int k = 0; k < num_rows; ++k)
-    {
-        mxGetPr(residual_mu_)[k] = residual_mu(k);
-    }
-
-    mxSetField (info_struct, 0, "residual_mu", residual_mu_);
 
     return (info_struct);
 }
@@ -328,8 +257,6 @@ void mexFunction( int num_output, mxArray *output[],
     lexlsi_parameters.log_working_set_enabled = true;
 
     bool    is_simple_bounds_handling_enabled = false;
-    bool                is_regularization_set = false;
-    std::vector<double> regularization_factors;
 
 // parse parameters
 
@@ -376,13 +303,6 @@ void mexFunction( int num_output, mxArray *output[],
                             options_struct,
                             "cycling_relax_step");
 
-
-
-            is_regularization_set = getOptionArray( regularization_factors,
-                                                    mxGetNumberOfElements (input[0]),
-                                                    options_struct,
-                                                    "regularization_factors");
-
             getOptionBool(  &is_simple_bounds_handling_enabled,
                             options_struct,
                             "enable_simple_bounds");
@@ -407,43 +327,13 @@ void mexFunction( int num_output, mxArray *output[],
                             options_struct,
                             "modify_type_inactive_enabled");
 
-            unsigned int regularization_type = 0;
-            if (getOptionUnsignedInteger( &regularization_type,
-                              options_struct,
-                              "regularization_type"))
-            {
-                lexlsi_parameters.regularization_type = static_cast <LexLS::RegularizationType> (regularization_type);
-            }
-
-
-            getOptionUnsignedInteger(&lexlsi_parameters.max_number_of_CG_iterations,
-                                     options_struct,
-                                     "max_number_of_CG_iterations");
-
-            getOptionDouble(&lexlsi_parameters.variable_regularization_factor,
-                            options_struct,
-                            "variable_regularization_factor");
-
             getOptionString(lexlsi_parameters.output_file_name,
                             options_struct,
                             "output_file_name",
                             20);
 
-            getOptionBool(  &lexlsi_parameters.deactivate_first_wrong_sign,
-                            options_struct,
-                            "deactivate_first_wrong_sign");
-
             // ================================================
             // check provided options
-
-            /// @todo This check should probably go to the solver interface
-            if (
-                    ((lexlsi_parameters.regularization_type == LexLS::REGULARIZATION_NONE) && (is_regularization_set)) ||
-                    ((lexlsi_parameters.regularization_type != LexLS::REGULARIZATION_NONE) && (!is_regularization_set))
-               )
-            {
-                mexWarnMsgTxt("Both regularization type and regularization factors must be specified.");
-            }
         }
     }
 
@@ -621,15 +511,6 @@ void mexFunction( int num_output, mxArray *output[],
     try
     {
         lexlsi.setParameters(lexlsi_parameters);
-
-        // regularization
-        if (is_regularization_set)
-        {
-            for (unsigned int i = 0; i < num_obj; ++i)
-            {
-                lexlsi.setRegularizationFactor(i, regularization_factors[i]);
-            }
-        }
 
         // constraints
         if (is_simple_bounds_handling_enabled)
@@ -855,10 +736,6 @@ void mexFunction( int num_output, mxArray *output[],
         std::vector<LexLS::dMatrixType> lambda;
         LexLS::dMatrixType lexqr;
         LexLS::dVectorType xStar;
-        LexLS::dMatrixType X_mu;
-        LexLS::dMatrixType X_mu_rhs;
-        LexLS::dVectorType residual_mu;
-        LexLS::dMatrixType problem_data;
 
         try
         {
@@ -866,11 +743,7 @@ void mexFunction( int num_output, mxArray *output[],
             lexlsi.getLambda(lambda);
             xStar = lexlsi.get_xStar();
             lexqr = lexlsi.get_lexqr();
-            X_mu = lexlsi.get_X_mu();
-            X_mu_rhs = lexlsi.get_X_mu_rhs();
-            residual_mu = lexlsi.get_residual_mu();
             lexlsi.getActiveCtr_order(active_ctr);
-            problem_data = lexlsi.get_data();
         }
         catch (std::exception &e)
         {
@@ -880,10 +753,6 @@ void mexFunction( int num_output, mxArray *output[],
                                         active_ctr,
                                         lambda,
                                         lexqr,
-                                        xStar,
-                                        X_mu,
-                                        X_mu_rhs,
-                                        residual_mu,
-                                        problem_data);
+                                        xStar);
     }
 }

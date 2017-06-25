@@ -21,7 +21,6 @@ namespace LexLS
             Objective():
                 nCtr(0),
                 obj_type(GENERAL_OBJECTIVE),
-                regularization_factor(0.0),
                 v0_is_specified(false) {}
 
             /**
@@ -489,7 +488,6 @@ namespace LexLS
 
                         counter++;
                     }
-                    lexlse.setRegularizationFactor(ObjIndex,regularization_factor);
                 }
             }
 
@@ -808,27 +806,6 @@ namespace LexLS
             }
 
             /**
-               \brief Set regularization factor
-            */
-            void setRegularization(RealScalar factor)
-            {
-                if (obj_type == SIMPLE_BOUNDS_OBJECTIVE)
-                {
-                    printf("WARNING: setting a nonzero regularization factor has no effect on an objective of type SIMPLE_BOUNDS_OBJECTIVE. \n");
-                }
-
-                regularization_factor = factor;
-            }
-
-            /**
-               \brief Get the regularization factor
-            */
-            RealScalar getRegularization()
-            {
-                return regularization_factor;
-            }
-
-            /**
                \brief Test whether a given constraint has a zero normal
 
                \todo this test could be skipped. If one wants to keep it one could precompute the
@@ -959,11 +936,6 @@ namespace LexLS
                \brief Stores A*dx
             */
             dVectorType Adx;
-
-            /*
-              \brief Regularization factor for the current objective (default: 0.0)
-            */
-            RealScalar regularization_factor;
 
             /**
                 \brief If v0_is_initialized == true, the function set_v0(...) has been called.

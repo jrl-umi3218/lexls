@@ -23,21 +23,6 @@ namespace LexLS
     typedef Eigen::Block<dMatrixType , Eigen::Dynamic, 1>              dBlockType2Vector;
     typedef Eigen::VectorBlock<dVectorType, Eigen::Dynamic>            dVectorBlockType;
 
-
-    enum RegularizationType
-    {
-        REGULARIZATION_NONE = 0,       // 0
-        REGULARIZATION_TIKHONOV,       // 1
-        REGULARIZATION_TIKHONOV_CG,    // 2
-        REGULARIZATION_R,              // 3
-        REGULARIZATION_R_NO_Z,         // 4
-        REGULARIZATION_RT_NO_Z,        // 5
-        REGULARIZATION_RT_NO_Z_CG,     // 6
-        REGULARIZATION_TIKHONOV_1,     // 7
-        REGULARIZATION_TIKHONOV_2,     // 8
-        REGULARIZATION_TEST            // 9
-    };
-
     /**
        \brief Termination status
     */
@@ -78,24 +63,6 @@ namespace LexLS
         */
         RealScalar tol_linear_dependence;
 
-        /**
-            \brief Max number of iterations for cg_tikhonov(...)
-
-            \note used only with regularization_type = REGULARIZATION_TIKHONOV_CG
-        */
-        Index max_number_of_CG_iterations;
-
-        /**
-            \brief Type of regularization (Tikhonov, Basic Tikhonov, ...)
-        */
-        RegularizationType regularization_type;
-
-        /**
-         * @brief
-         * @todo add documentation
-         */
-        RealScalar variable_regularization_factor;
-
         ParametersLexLSE()
         {
             setDefaults();
@@ -104,18 +71,12 @@ namespace LexLS
         void print()
         {
             printf("tol_linear_dependence          = %e \n", tol_linear_dependence);
-            printf("regularization_type            = %d \n", regularization_type);
-            printf("variable_regularization_factor = %e \n", variable_regularization_factor);
-            printf("max_number_of_CG_iterations    = %d \n", max_number_of_CG_iterations);
             printf("\n");
         }
 
         void setDefaults()
         {
             tol_linear_dependence          = 1e-12;
-            max_number_of_CG_iterations    = 10;
-            regularization_type            = REGULARIZATION_NONE;
-            variable_regularization_factor = 0.0;
         }
     };
 
@@ -148,31 +109,6 @@ namespace LexLS
             \note This tolerance is used when checking for blocking constraint and when initializing v0.
         */
         RealScalar tol_feasibility;
-
-        /**
-            \brief Type of regularization (Tikhonov, Basic Tikhonov, ...)
-        */
-        RegularizationType regularization_type;
-
-        /**
-            \brief Max number of iterations for cg_tikhonov(...)
-
-            \note used only with regularization_type = REGULARIZATION_TIKHONOV_CG
-        */
-        Index max_number_of_CG_iterations;
-
-        /**
-         * \brief When variable_regularization_factor = 0 the user specified regularization factors
-         * are used directly. When variable_regularization_factor != 0 an estimation of the
-         * conditioning (conditioning_estimate) of each level is made (during the LOD). Then if
-         * conditioning_estimate > variable_regularization_factor no regularization is applied,
-         * while if conditioning_estimate < variable_regularization_factor the regularization
-         * factors (provided by the user) are modified (there are various approaches to do this, see
-         * lexlse::factorize(...)).
-         *
-         * \attention This functionality is not mature yet (use with caution).
-         */
-        RealScalar variable_regularization_factor;
 
         /**
             \brief If cycling_handling_enabled == true, cycling handling is performed
@@ -226,12 +162,6 @@ namespace LexLS
         */
         bool log_working_set_enabled;
 
-        /**
-           \brief If true, deactivate first constraints with lambda with wrong sign. Otherwise, deactivate
-           constraints with largest lambda (with wrong sign).
-        */
-        bool deactivate_first_wrong_sign;
-
         ParametersLexLSI()
         {
             setDefaults();
@@ -247,16 +177,12 @@ namespace LexLS
             printf("cycling_handling_enabled       = %d \n", cycling_handling_enabled);
             printf("cycling_max_counter            = %d \n", cycling_max_counter);
             printf("cycling_relax_step             = %e \n", cycling_relax_step);
-            printf("regularization_type            = %d \n", regularization_type);
-            printf("max_number_of_CG_iterations    = %d \n", max_number_of_CG_iterations);
-            printf("variable_regularization_factor = %e \n", variable_regularization_factor);
             printf("modify_x_guess_enabled         = %d \n", modify_x_guess_enabled);
             printf("modify_type_active_enabled     = %d \n", modify_type_active_enabled);
             printf("modify_type_inactive_enabled   = %d \n", modify_type_inactive_enabled);
             printf("set_min_init_ctr_violation     = %d \n", set_min_init_ctr_violation);
             printf("use_phase1_v0                  = %d \n", use_phase1_v0);
             printf("log_working_set_enabled        = %d \n", log_working_set_enabled);
-            printf("deactivate_first_wrong_sign    = %d \n", deactivate_first_wrong_sign);
             printf("\n");
         }
 
@@ -273,10 +199,6 @@ namespace LexLS
             cycling_max_counter            = 50;
             cycling_relax_step             = 1e-08;
 
-            regularization_type            = REGULARIZATION_NONE;
-            max_number_of_CG_iterations    = 10;
-            variable_regularization_factor = 0.0;
-
             modify_x_guess_enabled         = false;
             modify_type_active_enabled     = false;
             modify_type_inactive_enabled   = false;
@@ -284,8 +206,6 @@ namespace LexLS
 
             use_phase1_v0                  = false;
             log_working_set_enabled        = false;
-
-            deactivate_first_wrong_sign    = false;
         }
     };
 
@@ -630,15 +550,14 @@ namespace LexLS
                 dim(0),
                 rank(0),
                 first_row_index(0),
-                first_col_index(0),
-                regularization_factor(0.0){}
+                first_col_index(0){}
 
             /**
                \brief Print objective information.
             */
             void print() const
             {
-                printf("first_row_index = %d, first_col_index = %d, dim = %d, rank = %d, regularization_factor = %f \n", first_row_index, first_col_index, dim, rank, regularization_factor);
+                printf("first_row_index = %d, first_col_index = %d, dim = %d, rank = %d \n", first_row_index, first_col_index, dim, rank);
             }
 
             /*
@@ -669,11 +588,6 @@ namespace LexLS
               \note computed during factorization.
             */
             Index first_col_index;
-
-            /*
-              \brief Regularization factor for the current objective (default: 0.0)
-            */
-            RealScalar regularization_factor;
         };
 
     } // END namespace internal

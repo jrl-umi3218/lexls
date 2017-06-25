@@ -278,10 +278,7 @@ namespace LexLS
                 parameters = parameters_;
                 ParametersLexLSE lexlse_parameters;
 
-                lexlse_parameters.tol_linear_dependence          = parameters.tol_linear_dependence;
-                lexlse_parameters.regularization_type            = parameters.regularization_type;
-                lexlse_parameters.max_number_of_CG_iterations    = parameters.max_number_of_CG_iterations;
-                lexlse_parameters.variable_regularization_factor = parameters.variable_regularization_factor;
+                lexlse_parameters.tol_linear_dependence = parameters.tol_linear_dependence;
 
                 lexlse.setParameters(lexlse_parameters);
 
@@ -443,18 +440,6 @@ namespace LexLS
             }
 
             /**
-                \brief Set (a non-negative) regularization factor for objective ObjIndex
-
-                \note Regularization of an objective of type SIMPLE_BOUNDS_OBJECTIVE is not performed
-            */
-            void setRegularizationFactor(Index ObjIndex, RealScalar factor)
-            {
-                // @todo: check whether ObjIndex and factor make sense.
-
-                objectives[ObjIndex].setRegularization(factor);
-            }
-
-            /**
                 \brief Return the (primal) solution vector
             */
             dVectorType& get_x()
@@ -530,9 +515,6 @@ namespace LexLS
                 RealScalar maxAbsValue;
                 for (Index ObjIndex=0; ObjIndex<nObj-nObjOffset; ObjIndex++) // Objectives of LexLSE
                 {
-
-                    //lexlse.ObjectiveSensitivity(ObjIndex);
-
                     // test with the function that is actually used within the ative-set method
                     lexlse.ObjectiveSensitivity(ObjIndex,
                                                 CtrIndex2Remove, ObjIndex2Remove,
@@ -562,27 +544,6 @@ namespace LexLS
             {
                 return lexlse.get_lexqr();
             }
-
-            dMatrixType get_data()
-            {
-                return lexlse.get_data();
-            }
-
-            dMatrixType get_X_mu()
-            {
-                return lexlse.get_X_mu();
-            }
-
-            dMatrixType get_X_mu_rhs()
-            {
-                return lexlse.get_X_mu_rhs();
-            }
-
-            dVectorType get_residual_mu()
-            {
-                return lexlse.get_residual_mu();
-            }
-
 
             /**
                 \brief Get number of cycling relaxations
@@ -1004,65 +965,6 @@ namespace LexLS
                 return --k;
             }
 
-            bool findActiveCtr2Remove(Index &ObjIndex2Remove, Index &CtrIndex2Remove, RealScalar &lambda_wrong_sign)
-            {
-                if (parameters.deactivate_first_wrong_sign)
-                {
-                    return findActiveCtr2Remove_first(ObjIndex2Remove, CtrIndex2Remove, lambda_wrong_sign);
-                }
-                else
-                {
-                    return findActiveCtr2Remove_largest(ObjIndex2Remove, CtrIndex2Remove, lambda_wrong_sign);
-                }
-            }
-
-            // remove first ctr with Lambda with wrong sign
-            bool findActiveCtr2Remove_first(Index &ObjIndex2Remove,
-                                            Index &CtrIndex2Remove,
-                                            RealScalar &lambda_wrong_sign)
-            {
-                std::vector<ConstraintInfo> ctr_wrong_sign;
-
-                lambda_wrong_sign = 0; // this doesn't matter (todo modify later)
-
-                bool DescentDirectionExists = false;
-                for (Index ObjIndex=0; ObjIndex<nObj-nObjOffset; ObjIndex++) // loop over objectives of LexLSE problem
-                {
-                    lexlse.ObjectiveSensitivity(ObjIndex,
-                                                parameters.tol_wrong_sign_lambda,
-                                                parameters.tol_correct_sign_lambda,
-                                                ctr_wrong_sign);
-
-                    if (ctr_wrong_sign.size() > 0)
-                    {
-                        DescentDirectionExists = true;
-                        break;
-                    }
-                }
-
-                if (DescentDirectionExists)
-                {
-                    for (Index k=0; k<ctr_wrong_sign.size(); k++)
-                    {
-                        ctr_wrong_sign[k].increment_obj_index(nObjOffset);
-
-                        int obj_tmp = ctr_wrong_sign[k].get_obj_index();
-                        int ctr_tmp = ctr_wrong_sign[k].get_ctr_index();
-
-                        ctr_tmp = objectives[obj_tmp].getActiveCtrIndex(ctr_tmp);
-                        ctr_wrong_sign[k].set_ctr_index(ctr_tmp);
-                    }
-
-                    Index k = findFirstCtrWrongSign(ctr_wrong_sign);
-                    ObjIndex2Remove = (Index)WS[k].get_obj_index();
-                    CtrIndex2Remove = (Index)WS[k].get_ctr_index();
-                    CtrIndex2Remove = objectives[ObjIndex2Remove].getCtrIndex(CtrIndex2Remove);
-                }
-
-                return DescentDirectionExists;
-            }
-
-
             /**
                \brief Finds active constraints that should be removed from the working set
 
@@ -1071,7 +973,7 @@ namespace LexLS
 
                \return true if there are constraints to remove
             */
-            bool findActiveCtr2Remove_largest(Index &ObjIndex2Remove, Index &CtrIndex2Remove, RealScalar &lambda_wrong_sign)
+            bool findActiveCtr2Remove(Index &ObjIndex2Remove, Index &CtrIndex2Remove, RealScalar &lambda_wrong_sign)
             {
                 bool DescentDirectionExists = false;
                 int ObjIndex2Remove_int;
