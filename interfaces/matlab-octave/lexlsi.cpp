@@ -1,5 +1,6 @@
 #include <vector>
 #include <cmath>
+#include <chrono>
 
 #include <stdint.h>
 #include <mex.h>
@@ -28,13 +29,14 @@ mxArray * formInfoStructure (
 {
     mxArray * info_struct;
 
-    int num_info_fields = 5;
+    int num_info_fields = 6;
     const char *info_field_names[] = {
         "status",
         "number_of_activations",
         "number_of_deactivations",
         "number_of_factorizations",
         "cycling_counter",
+        "computation_time"
     };
 
 
@@ -317,6 +319,24 @@ mxArray * formDebugStructure (
 void mexFunction( int num_output, mxArray *output[],
                   int num_input, const mxArray *input[])
 {
+    std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
+    mexFunctionInternal(num_output, output, num_input, input);
+    std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
+
+    auto computation_time = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+
+    if (num_output >= 2) 
+    {
+        mxArray *info_computation_time = mxCreateNumericMatrix(1, 1, mxINT64_CLASS, mxREAL);
+        ((INT64_T *) mxGetData (info_computation_time))[0] = computation_time;
+        mxSetField (output[1], 0, "computation_time", info_computation_time);
+    }
+}
+
+void mexFunctionInternal(int num_output, mxArray *output[],
+                         int num_input, const mxArray *input[])
+{
+
     checkInputOutput(num_output, output, num_input, input,
                     MIN_OUTPUTS, MAX_OUTPUTS, MIN_INPUTS, MAX_INPUTS,
                     MIN_NUMBER_OF_FIELDS_IN_OBJ);
@@ -733,7 +753,6 @@ void mexFunction( int num_output, mxArray *output[],
         mexErrMsgTxt(e.what());
     }
 
-
 // output solution
     try
     {
@@ -775,7 +794,6 @@ void mexFunction( int num_output, mxArray *output[],
                                         num_factorizations,
                                         cycling_counter);
     }
-
 
 // output residual
     if (num_output >= 3)

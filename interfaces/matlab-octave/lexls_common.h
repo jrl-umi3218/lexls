@@ -324,3 +324,9 @@ mxArray * catenateMatrices( mxArray *matrix1,
 
     return (cat_output[0]);
 }
+
+// ======================================================================================
+// Internal functions
+// ======================================================================================
+
+void mexFunctionInternal(int num_output, mxArray *output[], int num_input, const mxArray *input[]);
