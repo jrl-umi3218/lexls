@@ -1,0 +1,10 @@
+.DS_Store
+doc/*.aux
+doc/*.dvi
+doc/*.log
+doc/*.out
+doc/*.pdf
+doc/*.ps
+doc/html
+*.mex
+*.o
