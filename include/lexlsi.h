@@ -533,7 +533,7 @@ namespace LexLS
 
                     //lexlse.ObjectiveSensitivity(ObjIndex);
 
-                    // test with the function that is actually used within the ative-set method
+                    // test with the function that is actually used within the active-set method
                     lexlse.ObjectiveSensitivity(ObjIndex,
                                                 CtrIndex2Remove, ObjIndex2Remove,
                                                 parameters.tol_wrong_sign_lambda,
@@ -1199,6 +1199,7 @@ namespace LexLS
                 {
                     step_length = -1; // this is used only for debugging purposes
                 }
+                //step_length = alpha;
 
                 if (alpha > 0) // take a step
                 {
@@ -1230,7 +1231,7 @@ namespace LexLS
             /**
                \brief Output stuff
 
-               \note this file makes sence only when using phase1() (and not phase1_v0())
+               \note this file makes sense only when using phase1() (and not phase1_v0())
             */
             void outputStuff(const char *file_name, OperationType operation, bool flag_clear_file = false)
             {

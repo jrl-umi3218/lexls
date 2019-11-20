@@ -612,7 +612,7 @@ namespace LexLS
             }
 
             /**
-                \brief Computes the sensitivity of objective ObjIndex with respect to (small) variatoins
+                \brief Computes the sensitivity of objective ObjIndex with respect to (small) variations
                 of the constraints involved in the LexLSE problem
 
                 \note Upon exit, the lagrange multipliers associated with objective ObjIndex can be accessed using
@@ -1009,6 +1009,10 @@ namespace LexLS
                                 maxAbsValue = aLambda;
                                 CtrIndex    = k;
                             }
+                        }
+                        else
+                        {
+                            // What should we do here? We have a weakly-active constraint
                         }
                     }
                 }
