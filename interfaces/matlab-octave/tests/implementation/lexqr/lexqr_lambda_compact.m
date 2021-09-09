@@ -1,3 +1,7 @@
+%
+% Copyright 2013-2021 INRIA
+%
+
 function L = lexqr_lambda_compact(lexqr_struct)
 %%%
 %

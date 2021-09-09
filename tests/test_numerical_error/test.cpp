@@ -1,4 +1,8 @@
 /*
+ * Copyright 2013-2021 INRIA
+ */
+
+/*
   Problem:
   ---------
   In general the solution of the last equality constrained problem (solved in lexlsi) cannot be

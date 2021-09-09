@@ -1,3 +1,7 @@
+%
+% Copyright 2013-2021 INRIA
+%
+
 function test_lexlse(m,n,r,options,tol,counter)
 %
 %

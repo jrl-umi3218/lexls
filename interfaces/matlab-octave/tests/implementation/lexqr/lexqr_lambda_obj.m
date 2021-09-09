@@ -1,3 +1,7 @@
+%
+% Copyright 2013-2021 INRIA
+%
+
 function Lambda = lexqr_lambda_obj(lexqr_struct, ObjIndex, rhs_all, residual_flag)
 %%%
 %

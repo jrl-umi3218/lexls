@@ -1,3 +1,7 @@
+%
+% Copyright 2013-2021 INRIA
+%
+
 function wset = wset_deactivate_all_ineq(wset)
 %%%
 %

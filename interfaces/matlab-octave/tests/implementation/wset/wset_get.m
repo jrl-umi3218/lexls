@@ -1,3 +1,7 @@
+%
+% Copyright 2013-2021 INRIA
+%
+
 function wset = wset_get(wset, wlog, iter_num)
 %%%
 %

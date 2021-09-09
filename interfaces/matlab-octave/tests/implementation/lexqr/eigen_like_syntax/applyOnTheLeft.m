@@ -1,3 +1,7 @@
+%
+% Copyright 2013-2021 INRIA
+%
+
 function matrix = applyOnTheLeft(hh_seq, matrix)
 %%%
 %

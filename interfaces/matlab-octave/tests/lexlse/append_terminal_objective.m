@@ -1,3 +1,7 @@
+%
+% Copyright 2013-2021 INRIA
+%
+
 function [obj, options] = append_terminal_objective(obj, options)
 %
 %

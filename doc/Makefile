@@ -1,3 +1,7 @@
+#
+# Copyright 2013-2021 INRIA
+#
+
 HOT_START=hot_start
 
 all: html hot_start

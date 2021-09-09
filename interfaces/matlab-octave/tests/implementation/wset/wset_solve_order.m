@@ -1,3 +1,7 @@
+%
+% Copyright 2013-2021 INRIA
+%
+
 function [x,L,v,obj_eq,d,A,x_eq] = wset_solve_order(active_ctr, obj, options)
 %%%
 %

@@ -1,4 +1,8 @@
 %
+% Copyright 2013-2021 INRIA
+%
+
+%
 % Tikhonov regularization using qr(A)
 %
 

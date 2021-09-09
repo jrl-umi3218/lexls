@@ -1,3 +1,7 @@
+%
+% Copyright 2013-2021 INRIA
+%
+
 function A = swap(A,c1,c2)
 %%%
 %

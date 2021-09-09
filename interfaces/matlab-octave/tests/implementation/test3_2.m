@@ -1,3 +1,7 @@
+%
+% Copyright 2013-2021 INRIA
+%
+
 %%%
 %
 % Compute Lambda for regularized problem using the compact lexqr

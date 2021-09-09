@@ -1,3 +1,7 @@
+%
+% Copyright 2013-2021 INRIA
+%
+
 function export_hierarchy(obj, file_name, active_set_guess, solution_guess, solution)
     HIERARCHY_NONE                  = 0;   %
     HIERARCHY_EQUALITIES            = 100; % equality constraints

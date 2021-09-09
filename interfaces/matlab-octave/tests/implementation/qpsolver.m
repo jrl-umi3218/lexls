@@ -1,3 +1,7 @@
+%
+% Copyright 2013-2021 INRIA
+%
+
 function [x, exitflag, info] = qpsolver(solver, x0, H, h, lb, ub, A, b, Ain, Alb, Aub)
     if (isempty(solver))
         solver = 'qpoases'

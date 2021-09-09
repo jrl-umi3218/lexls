@@ -1,3 +1,7 @@
+%
+% Copyright 2013-2021 INRIA
+%
+
 function x = seq_lexls(obj_in,mu,flag_basic)
 %
 % sequence of equality constrainted problems

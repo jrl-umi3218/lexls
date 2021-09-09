@@ -1,3 +1,7 @@
+%
+% Copyright 2013-2021 INRIA
+%
+
 function [x,info_out,w] = lex_sequence(lexobj,options,lambda)
 %
 % with damping

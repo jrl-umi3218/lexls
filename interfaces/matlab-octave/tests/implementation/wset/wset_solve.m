@@ -1,3 +1,7 @@
+%
+% Copyright 2013-2021 INRIA
+%
+
 function [x,L,v,obj,d] = wset_solve(wset, obj, options)
 %%%
 %

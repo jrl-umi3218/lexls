@@ -1,3 +1,7 @@
+#
+# Copyright 2013-2021 INRIA
+#
+
 # DEBUG
 CXXFLAGS=-pedantic -Wall -Wsign-compare -std=c++98 -g
 LDFLAGS=-g -v

@@ -1,3 +1,7 @@
+%
+% Copyright 2013-2021 INRIA
+%
+
 % on MACOS
 % copy mexopts.sh from ~/.matlab/R2011b to lexls/interface and set MACOSX_DEPLOYMENT_TARGET='10.7'
 %

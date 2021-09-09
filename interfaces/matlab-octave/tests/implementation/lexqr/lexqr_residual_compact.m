@@ -1,3 +1,7 @@
+%
+% Copyright 2013-2021 INRIA
+%
+
 function vec = lexqr_residual_compact(lexqr_struct)
 %%%
 %

@@ -1,3 +1,7 @@
+/*
+ * Copyright 2013-2021 INRIA
+ */
+
 #include <Eigen/Core>
 #include <stdexcept>
 #include <vector>

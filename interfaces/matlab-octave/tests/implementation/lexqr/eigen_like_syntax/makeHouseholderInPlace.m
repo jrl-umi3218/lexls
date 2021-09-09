@@ -1,3 +1,7 @@
+%
+% Copyright 2013-2021 INRIA
+%
+
 function [A,tau,beta,h] = makeHouseholderInPlace(A,row_start,row_dim,col)
 %%%
 %

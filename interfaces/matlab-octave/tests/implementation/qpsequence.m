@@ -1,3 +1,7 @@
+%
+% Copyright 2013-2021 INRIA
+%
+
 % Time-stamp: <2013-06-12 22:17:58 drdv>
 % Sequence to QPs for solving a lexicographic LS problem.
 % The k-th QP has the form

@@ -1,3 +1,7 @@
+%
+% Copyright 2013-2021 INRIA
+%
+
 function lexqr_struct = define_problem(n, m, r, fixed_variables)
 %%%%
 %

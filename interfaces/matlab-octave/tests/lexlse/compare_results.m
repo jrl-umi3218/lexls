@@ -1,3 +1,7 @@
+%
+% Copyright 2013-2021 INRIA
+%
+
 function [check_flag, out] = compare_results(obj,x1,x2,tol)
 %
 %

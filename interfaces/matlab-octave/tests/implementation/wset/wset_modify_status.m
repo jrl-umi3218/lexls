@@ -1,3 +1,7 @@
+%
+% Copyright 2013-2021 INRIA
+%
+
 function wset = wset_modify_status(wset, obj_index, ctr_index, ctr_type)
 %%%
 %

@@ -1,4 +1,8 @@
 /*
+ * Copyright 2013-2021 INRIA
+ */
+
+/*
   API for internal::LexLSE and internal::LexLSI
 */
 

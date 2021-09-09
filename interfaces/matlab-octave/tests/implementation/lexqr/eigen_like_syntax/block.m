@@ -1,3 +1,7 @@
+%
+% Copyright 2013-2021 INRIA
+%
+
 function out = block(matrix, row_start, col_start, row_dim, col_dim)
 %%%
 %

@@ -1,3 +1,7 @@
+%
+% Copyright 2013-2021 INRIA
+%
+
 function vector = tail_assign(v,vector,dim)
 %%%
 %

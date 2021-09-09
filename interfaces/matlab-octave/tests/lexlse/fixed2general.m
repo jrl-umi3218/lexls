@@ -1,3 +1,7 @@
+%
+% Copyright 2013-2021 INRIA
+%
+
 function [obj, options] = fixed2general(obj, options)
 %
 % from obj(1) with fixed variables generate obj(1) with general equality constraints

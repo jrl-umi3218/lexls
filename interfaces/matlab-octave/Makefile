@@ -1,3 +1,7 @@
+#
+# Copyright 2013-2021 INRIA
+#
+
 info:
 	@echo "Please use 'make matlab' or 'make octave'."
 

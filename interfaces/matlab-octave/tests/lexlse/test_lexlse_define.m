@@ -1,3 +1,7 @@
+%
+% Copyright 2013-2021 INRIA
+%
+
 function options = test_lexlse_define()
 %
 % defines tests 

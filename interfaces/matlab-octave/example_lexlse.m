@@ -1,3 +1,7 @@
+%
+% Copyright 2013-2021 INRIA
+%
+
 % test 1
 fprintf('=======================================\n     test 01\n')
 clear lexobj options;

@@ -1,3 +1,7 @@
+%
+% Copyright 2013-2021 INRIA
+%
+
 function lexqr_struct = lexqr_explicit(lexqr_struct)
 %%%
 %
