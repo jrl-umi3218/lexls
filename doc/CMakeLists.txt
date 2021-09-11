@@ -8,7 +8,7 @@ if(INSTALL_HTML_DOCUMENTATION)
     configure_file(Doxyfile.in "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile")
     add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/doxygen-html/index.html"
       COMMAND ${DOXYGEN} Doxyfile
-      DEPENDS ${LEXLS_HEADERS} "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile" "${CMAKE_CURRENT_SOURCE_DIR}/mainpage.dox"
+      DEPENDS ${LEXLS_HEADERS} "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile" "${CMAKE_CURRENT_SOURCE_DIR}/mainpage.dox" "${CMAKE_CURRENT_SOURCE_DIR}/newcommand.js"
       WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
     )
     add_custom_target(doc-html DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/doxygen-html/index.html")
@@ -28,7 +28,7 @@ if(INSTALL_PDF_DOCUMENTATION)
     add_custom_command(OUTPUT ${PDF_OUT}
       COMMAND ${PDFLATEX} ${PDF_SRC}
       COMMAND ${PDFLATEX} ${PDF_SRC}
-      DEPENDS ${PDF_SRC} "${CMAKE_CURRENT_SOURCE_DIR}/newcommand.sty"
+      DEPENDS ${PDF_SRC}
       WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
     )
     add_custom_target(doc-pdf DEPENDS ${PDF_OUT})
