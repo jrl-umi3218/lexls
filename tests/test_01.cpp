@@ -11,7 +11,7 @@
 
 
 #include <lexlsi.h>
-#include <lexls_tools.h>
+#include <tools.h>
 
 #include <iostream>
 #include <iomanip>
@@ -32,7 +32,7 @@ int main(int argc, char **argv)
     std::vector<LexLS::ObjectiveType>    types_of_objectives;
     std::vector<Eigen::MatrixXd>         objectives;
 
-    std::vector< std::vector<LexLS::tools::ConstraintActivationType> >  active_set_guess;
+    std::vector< std::vector<LexLS::ConstraintActivationType> >  active_set_guess;
     Eigen::VectorXd                                     solution_guess;
     Eigen::VectorXd                                     solution;
 

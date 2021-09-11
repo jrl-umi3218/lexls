@@ -9,7 +9,7 @@ FILE = test
 #-------------------------------------------------
 
 test:
-	$(CPP) $(CFLAGS) -o a $(FILE).cpp -I$(LEXLS_INCLUDE) $(EIGEN_INCLUDES) $(EIGEN_FLAGS)
+	$(CXX) $(CFLAGS) -o a $(FILE).cpp -I$(LEXLS_INCLUDE) $(EIGEN_INCLUDES) $(EIGEN_FLAGS)
 
 clean:
 	rm -f a

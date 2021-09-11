@@ -10,7 +10,7 @@
 ## compiler to use
 ## ---------------------------------------------
 
-CPP              = g++-4.8
+#CPP              = g++-4.8
 #CPP              = clang++
 
 ## ---------------------------------------------
@@ -28,6 +28,6 @@ EIGEN_FLAGS =
 ## ---------------------------------------------
 
 LEXLS_INCLUDE = ../../include
-EIGEN_INCLUDES = -I/usr/local/include/eigen3
+EIGEN_INCLUDES = -I/usr/include/eigen3
 
 ###EOF

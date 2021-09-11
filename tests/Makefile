@@ -10,7 +10,7 @@ LDFLAGS=-g -v
 #CXXFLAGS=-pedantic -Wall -Wsign-compare -std=c++98 -O3 -DNDEBUG
 #LDFLAGS=-v 
 
-IFLAGS=-I/usr/local/include/eigen3 -I../include/ -I../tools/ -I/usr/include/ -I/usr/local/include/
+IFLAGS=-I/usr/include/eigen3 -I../include/ -I../tools/ -I/usr/include/ -I/usr/local/include/
 #CXX=g++47
 
 
