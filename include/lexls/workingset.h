@@ -5,7 +5,7 @@
 #ifndef WORKING_SET
 #define WORKING_SET
 
-#include <typedefs.h>
+#include <lexls/typedefs.h>
 
 namespace LexLS
 {

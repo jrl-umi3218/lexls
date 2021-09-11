@@ -13,5 +13,39 @@ Formally this can be written as <br />
 ## Scope
 `LexLS` was optimized for problems with few changes of active set, leveraging warm-start to limit the number of iterations between the resolution of closely related problems as can be found in e.g succesive inverse kinematics problems. The l-QR decomposition is highly optimized to run from scratch, with speed comprised between Eigen's LU and QR, depending on the number of priority levels. No update mechanism has been implemented yet, so that each iteration of the solver performs a full decomposition.
 
+## Build and use with CMake
+
+### Dependencies
+
+- [Eigen](https://eigen.tuxfamily.org/)
+
+For documentation generation:
+- [Doxygen](https://www.doxygen.nl/index.html) (`sudo apt install doxygen` on Debian-based systems)
+- pdflatex with extra packages and extra fonts (`sudo apt install texlive-base texlive-science texlive-fonts-extra` on Debian-based systems)
+
+### Building
+
+This package can be built with CMake:
+```bash
+mkdir build
+cd build
+cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -GNinja
+ninja && sudo ninja install
+```
+
+You can customize the build with the following options:
+- `BUILD_TESTING` build unit tests (`ON` by default)
+- `INSTALL_HTML_DOCUMENTATION` build and install the HTML documentation (`ON` by default, automatically skipped if doxygen is missing)
+- `INSTALL_PDF_DOCUMENTATION` build and install the PDF documentation (`ON` by default, automatically skipped if pdflatex is missing, does not check for missing texlive packages)
+
+### Using it in your project
+
+Once the project is installed, you can use the following to use lexls in your project:
+
+```cmake
+find_package(lexls REQUIRED)
+target_link_libraries(MyProject PUBLIC lexls::lexls)
+```
+
 ## Credits
 The solver was mainly implemented by Dimitar Dimitrov, with additionnal code from Alexander Sherikov and Nestor Bohorquez, with supervision from Pierre-Brice Wieber.

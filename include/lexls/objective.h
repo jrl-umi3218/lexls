@@ -5,8 +5,8 @@
 #ifndef OBJECTIVE
 #define OBJECTIVE
 
-#include <utility.h>
-#include <workingset.h>
+#include <lexls/utility.h>
+#include <lexls/workingset.h>
 
 namespace LexLS
 {

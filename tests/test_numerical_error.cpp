@@ -21,15 +21,15 @@
   INITIALIZE_INEQUALITY
 */
 
-#include <lexlsi.h>
-#include <tools.h>
+#include <lexls/lexlsi.h>
+#include <lexls/tools.h>
 
 #include <iostream>
 #include <iomanip>
 
 #define INITIALIZE_INEQUALITY
 
-void foo()
+void foo(const char * filename)
 {
 
     LexLS::tools::HierarchyType       type_of_hierarchy;
@@ -46,7 +46,7 @@ void foo()
     // ==============================================================
 
     LexLS::tools::HierarchyFileProcessor fprocessor;
-    fprocessor.import("test_113.dat",
+    fprocessor.import(filename,
                       type_of_hierarchy,
                       number_of_variables,
                       number_of_objectives,
@@ -185,10 +185,14 @@ void foo()
     }
 }
 
-int main()
+int main(int argc, char * argv[])
 {
-
-    foo();
+    if(argc < 2)
+    {
+      std::cout << "Usage:\n" << argv[0] << " [hierarchy.dat]\n";
+      return 1;
+    }
+    foo(argv[1]);
 
     return 0;
 }

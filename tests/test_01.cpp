@@ -10,8 +10,8 @@
 */
 
 
-#include <lexlsi.h>
-#include <tools.h>
+#include <lexls/lexlsi.h>
+#include <lexls/tools.h>
 
 #include <iostream>
 #include <iomanip>

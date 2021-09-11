@@ -5,7 +5,7 @@
 #ifndef LEXLSE
 #define LEXLSE
 
-#include <utility.h>
+#include <lexls/utility.h>
 
 namespace LexLS
 {

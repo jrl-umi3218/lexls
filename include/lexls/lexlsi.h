@@ -5,9 +5,9 @@
 #ifndef LEXLSI
 #define LEXLSI
 
-#include <lexlse.h>
-#include <objective.h>
-#include <cycling.h>
+#include <lexls/lexlse.h>
+#include <lexls/objective.h>
+#include <lexls/cycling.h>
 
 namespace LexLS
 {

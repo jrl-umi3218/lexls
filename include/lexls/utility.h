@@ -5,7 +5,7 @@
 #ifndef UTILITY
 #define UTILITY
 
-#include <typedefs.h>
+#include <lexls/typedefs.h>
 
 /*
   Not in class definition, so define as inline (otherwise error if .h is included multiple times)
