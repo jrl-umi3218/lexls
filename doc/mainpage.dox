@@ -17,7 +17,7 @@
  *
  * This library can be used to solve a lexicographic least-squares problem with inequality constraints (LexLSI) which is defined as follows
  *
- * \f{eqnarray}
+ * \f{eqnarray}{
  *  \mathop{\mbox{lexminimize}}_{x,\, v_1,\dots,v_P} & & (\norm{v_1}_2^2, \, \dots, \, \norm{v_P}_2^2) \nonumber \\
  *  \mbox{subject to} & &
  *  \left[\begin{array}{c} b_1^{\ell} \\ \vdots \\ b_P^{\ell} \end{array}\right] \leq
@@ -35,7 +35,7 @@
  * If \f$b_k^{\ell} = b_{k}^{u} = b_k\f$, \f$k=1,\dots,P\f$, the problem is referred to as LexLSE 
  * i.e., lexicographic least-squares problem with equality constraints
  *
- * \f{eqnarray}
+ * \f{eqnarray}{
  *  \mathop{\mbox{lexminimize}}_{x,\, v_1,\dots,v_P} & & ( \norm{v_1}_2^2, \, \dots, \, \norm{v_P}_2^2 ) \nonumber \\
  *  \mbox{subject to} & & 
  * \left[\begin{array}{c} A_1 \\ \vdots \\ A_P \end{array}\right]x -
