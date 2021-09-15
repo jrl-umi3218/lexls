@@ -36,14 +36,15 @@ if(BUILD_OCTAVE_BINDINGS)
 endif()
 
 if(BUILD_MATLAB_BINDINGS)
-  find_package(Matlab REQUIRED)
+  cmake_minimum_required(VERSION 3.16.3) #see https://gitlab.kitware.com/cmake/cmake/-/issues/19382 and https://gitlab.kitware.com/cmake/cmake/-/merge_requests/4206
+  find_package(Matlab REQUIRED COMPONENTS MAIN_PROGRAM)
   matlab_add_mex(NAME matlab_lexlse
                  SRC "${CMAKE_CURRENT_SOURCE_DIR}/lexlse.cpp"
-                 OUTPUT_NAME lexlse${Matlab_MEX_EXTENSION}
+                 OUTPUT_NAME lexlse
                  LINK_TO lexls)
   matlab_add_mex(NAME matlab_lexlsi
-                 SRC "${CMAKE_CURRENT_SOURCE_DIR}/lexlse.cpp"
-                 OUTPUT_NAME lexlse${Matlab_MEX_EXTENSION}
+                 SRC "${CMAKE_CURRENT_SOURCE_DIR}/lexlsi.cpp"
+                 OUTPUT_NAME lexlsi
                  LINK_TO lexls)
   # FIXME Maybe not the correct location
   install(TARGETS matlab_lexlse matlab_lexlsi DESTINATION "${Matlab_ROOT_DIR}/toolbox/lexls")
@@ -57,7 +58,7 @@ macro(add_binding_test NAME FILE_IN)
   endif()
   if(BUILD_MATLAB_BINDINGS)
     # FIXME This assumes matlab_add_mex outputs the files in ${CMAKE_CURRENT_BINARY_DIR} and it's probably wrong
-    matlab_add_unit_test(NAME ${NAME} UNITTEST_FILE "${FILE}" WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
+    matlab_add_unit_test(NAME ${NAME} UNITTEST_FILE "${FILE}" WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIGURATION>")
   endif()
 endmacro()
 
