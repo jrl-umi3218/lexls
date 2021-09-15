@@ -7,12 +7,12 @@
 
 #include <stdint.h>
 #include <mex.h>
-#include <typedefs.h>
-#include <lexlsi.h>
+#include <lexls/typedefs.h>
+#include <lexls/lexlsi.h>
+#include <lexls/tools.h>
 
 
 #include "lexls_common.h"
-#include "../../include/tools.h"
 
 
 const int MIN_INPUTS = 1;

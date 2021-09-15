@@ -14,6 +14,8 @@ enable_testing()
 
 option(INSTALL_HTML_DOCUMENTATION "Install project HTML documentation" ON)
 option(INSTALL_PDF_DOCUMENTATION "Install project PDF documentation" ON)
+option(BUILD_OCTAVE_BINDINGS "Build GNU Octave bindings" OFF)
+option(BUILD_MATLAB_BINDINGS "Build MATLAB bindings" OFF)
 
 find_package(Eigen3 QUIET NO_CMAKE_PACKAGE_REGISTRY)
 if(Eigen3_FOUND)
@@ -30,3 +32,4 @@ if(BUILD_TESTING)
   add_subdirectory(tests)
 endif()
 add_subdirectory(doc)
+add_subdirectory(interfaces/matlab-octave)

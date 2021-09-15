@@ -8,8 +8,8 @@
 
 #include <stdint.h>
 #include <mex.h>
-#include <typedefs.h>
-#include <lexlse.h>
+#include <lexls/typedefs.h>
+#include <lexls/lexlse.h>
 
 
 #include "lexls_common.h"
