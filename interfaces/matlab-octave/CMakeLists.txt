@@ -57,8 +57,11 @@ macro(add_binding_test NAME FILE_IN)
              COMMAND ${CMAKE_COMMAND} -E chdir "${MAKE_OCTAVE_LOCATION}" ${OCTAVE} --no-gui --no-history "${FILE}")
   endif()
   if(BUILD_MATLAB_BINDINGS)
-    # FIXME This assumes matlab_add_mex outputs the files in ${CMAKE_CURRENT_BINARY_DIR} and it's probably wrong
-    matlab_add_unit_test(NAME ${NAME} UNITTEST_FILE "${FILE}" WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIGURATION>")
+    if(DEFINED CMAKE_CONFIGURATION_TYPES)
+      matlab_add_unit_test(NAME ${NAME} UNITTEST_FILE "${FILE}" WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIGURATION>")
+    else()
+      matlab_add_unit_test(NAME ${NAME} UNITTEST_FILE "${FILE}" WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
+    endif()
   endif()
 endmacro()
 
