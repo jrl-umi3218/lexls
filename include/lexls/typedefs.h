@@ -99,12 +99,12 @@ namespace LexLS
          */
         RealScalar variable_regularization_factor;
 
-        ParametersLexLSE()
+        inline ParametersLexLSE()
         {
             setDefaults();
         }
 
-        void print()
+        inline void print()
         {
             printf("tol_linear_dependence          = %e \n", tol_linear_dependence);
             printf("regularization_type            = %d \n", regularization_type);
@@ -113,7 +113,7 @@ namespace LexLS
             printf("\n");
         }
 
-        void setDefaults()
+        inline void setDefaults()
         {
             tol_linear_dependence          = 1e-12;
             max_number_of_CG_iterations    = 10;
@@ -235,12 +235,12 @@ namespace LexLS
         */
         bool deactivate_first_wrong_sign;
 
-        ParametersLexLSI()
+        inline ParametersLexLSI()
         {
             setDefaults();
         }
 
-        void print()
+        inline void print()
         {
             printf("max_number_of_factorizations   = %d \n", max_number_of_factorizations);
             printf("tol_linear_dependence          = %e \n", tol_linear_dependence);
@@ -263,7 +263,7 @@ namespace LexLS
             printf("\n");
         }
 
-        void setDefaults()
+        inline void setDefaults()
         {
             max_number_of_factorizations   = 200;
 
@@ -299,11 +299,11 @@ namespace LexLS
     {
     public:
 
-        explicit Exception(const char *message): ExceptionMessage(message) {}
+        inline explicit Exception(const char *message): ExceptionMessage(message) {}
 
-        ~Exception() throw() {}
+        inline ~Exception() throw() {}
 
-        const char* what() const throw()
+        inline const char* what() const throw()
         {
             return ExceptionMessage.c_str();
         }
@@ -323,37 +323,37 @@ namespace LexLS
     class ConstraintInfo
     {
     public:
-        ConstraintInfo():
-            obj_index(0),
-            ctr_index(0){}
+        inline ConstraintInfo():
+                   obj_index(0),
+                   ctr_index(0){}
 
-        ConstraintInfo(int obj_index_, int ctr_index_)
+        inline ConstraintInfo(int obj_index_, int ctr_index_)
         {
             obj_index = obj_index_;
             ctr_index = ctr_index_;
         }
 
-        void increment_obj_index(int increment)
+        inline void increment_obj_index(int increment)
         {
             obj_index += increment;
         }
 
-        void set_ctr_index(int ctr_index_)
+        inline void set_ctr_index(int ctr_index_)
         {
             ctr_index = ctr_index_;
         }
 
-        int get_obj_index()
+        inline int get_obj_index()
         {
             return obj_index;
         }
 
-        int get_ctr_index()
+        inline int get_ctr_index()
         {
             return ctr_index;
         }
 
-        void print() const
+        inline void print() const
         {
             printf("obj_index = %d, ctr_index = %d \n", obj_index, ctr_index);
         }
@@ -365,7 +365,7 @@ namespace LexLS
         int ctr_index;
     };
 
-    bool operator== (const ConstraintInfo &c1, const ConstraintInfo &c2)
+    inline bool operator== (const ConstraintInfo &c1, const ConstraintInfo &c2)
     {
         bool isEqual = false;
         if ((c1.obj_index == c2.obj_index) &&
@@ -445,34 +445,34 @@ namespace LexLS
     {
     public:
 
-        ConstraintIdentifier(){}
+        inline ConstraintIdentifier(){}
 
-        ConstraintIdentifier(Index obj_index_, Index ctr_index_, ConstraintActivationType ctr_type_):
-            obj_index(obj_index_),
-            ctr_index(ctr_index_),
-            ctr_type(ctr_type_) {}
+        inline ConstraintIdentifier(Index obj_index_, Index ctr_index_, ConstraintActivationType ctr_type_):
+                   obj_index(obj_index_),
+                   ctr_index(ctr_index_),
+                   ctr_type(ctr_type_) {}
 
-        ConstraintIdentifier(Index obj_index_, Index ctr_index_, ConstraintActivationType ctr_type_,
-                             RealScalar alpha_or_lambda_):
-            obj_index(obj_index_),
-            ctr_index(ctr_index_),
-            ctr_type(ctr_type_),
-            alpha_or_lambda(alpha_or_lambda_),
-            cycling_detected(false) {}
+        inline ConstraintIdentifier(Index obj_index_, Index ctr_index_, ConstraintActivationType ctr_type_,
+                                    RealScalar alpha_or_lambda_):
+                   obj_index(obj_index_),
+                   ctr_index(ctr_index_),
+                   ctr_type(ctr_type_),
+                   alpha_or_lambda(alpha_or_lambda_),
+                   cycling_detected(false) {}
 
-        void set(Index obj_index_, Index ctr_index_, ConstraintActivationType ctr_type_)
+        inline void set(Index obj_index_, Index ctr_index_, ConstraintActivationType ctr_type_)
         {
             obj_index = obj_index_;
             ctr_index = ctr_index_;
             ctr_type  = ctr_type_;
         }
 
-        bool operator==(const ConstraintIdentifier& ci)
+        inline bool operator==(const ConstraintIdentifier& ci)
         {
             return compare(ci);
         }
 
-        bool compare(const ConstraintIdentifier& ci)
+        inline bool compare(const ConstraintIdentifier& ci)
         {
             if (obj_index != ci.obj_index)
             {
@@ -492,7 +492,7 @@ namespace LexLS
             return true;
         }
 
-        void print()
+        inline void print()
         {
             printf("type = %d, obj = %2d, ind = %3d \n", ctr_type, obj_index, ctr_index);
         }
@@ -554,21 +554,21 @@ namespace LexLS
         class GivensRotation
         {
         public:
-            GivensRotation(){}
+            inline GivensRotation(){}
 
-            GivensRotation(RealScalar a, RealScalar b, Index i_, Index j_)
+            inline GivensRotation(RealScalar a, RealScalar b, Index i_, Index j_)
             {
                 set(a, b, i_, j_);
             }
 
-            void set(RealScalar a, RealScalar b, Index i_, Index j_)
+            inline void set(RealScalar a, RealScalar b, Index i_, Index j_)
             {
                 G.makeGivens(a,b);
                 i = i_;
                 j = j_;
             }
 
-            void print()
+            inline void print()
             {
                 printf("i = % d, j = % d, c = % f, s = % f \n", i, j, G.c(), G.s());
             }
@@ -584,34 +584,34 @@ namespace LexLS
         class GivensRotationSequence
         {
         public:
-            GivensRotationSequence(){}
+            inline GivensRotationSequence(){}
 
-            GivensRotationSequence(Index dim)
+            inline GivensRotationSequence(Index dim)
             {
                 seq.reserve(dim);
             }
 
-            void push(GivensRotation& G)
+            inline void push(GivensRotation& G)
             {
                 seq.push_back(G);
             }
 
-            Eigen::JacobiRotation<RealScalar>& get(Index k)
+            inline Eigen::JacobiRotation<RealScalar>& get(Index k)
             {
                 return seq[k].G;
             }
 
-            Index get_i(Index k)
+            inline Index get_i(Index k)
             {
                 return seq[k].i;
             }
 
-            Index get_j(Index k)
+            inline Index get_j(Index k)
             {
                 return seq[k].j;
             }
 
-            Index size()
+            inline Index size()
             {
                 return seq.size();
             }
@@ -629,17 +629,17 @@ namespace LexLS
         {
         public:
 
-            ObjectiveInfo():
-                dim(0),
-                rank(0),
-                first_row_index(0),
-                first_col_index(0),
-                regularization_factor(0.0){}
+            inline ObjectiveInfo():
+                       dim(0),
+                       rank(0),
+                       first_row_index(0),
+                       first_col_index(0),
+                       regularization_factor(0.0){}
 
             /**
                \brief Print objective information.
             */
-            void print() const
+            inline void print() const
             {
                 printf("first_row_index = %d, first_col_index = %d, dim = %d, rank = %d, regularization_factor = %f \n", first_row_index, first_col_index, dim, rank, regularization_factor);
             }

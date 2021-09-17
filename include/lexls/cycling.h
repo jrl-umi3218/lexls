@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <lexls/objective.h>
+
 namespace LexLS
 {
     namespace internal
@@ -15,19 +17,19 @@ namespace LexLS
         {
         public:
 
-            CyclingHandler():
-                counter(0),
-                max_counter(50),
-                relax_step(1e-08),
-                previous_operation(OPERATION_UNDEFINED)
+            inline CyclingHandler():
+                       counter(0),
+                       max_counter(50),
+                       relax_step(1e-08),
+                       previous_operation(OPERATION_UNDEFINED)
             {
                 previous_ctr_identifier.set(0,0,CTR_INACTIVE);
             }
 
-            TerminationStatus update(OperationType operation,
-                                     ConstraintIdentifier ctr_identifier,
-                                     std::vector<Objective> &Obj,
-                                     bool &cycling_detected)
+            inline TerminationStatus update(OperationType operation,
+                                            ConstraintIdentifier ctr_identifier,
+                                            std::vector<Objective> &Obj,
+                                            bool &cycling_detected)
             {
                 cycling_detected = false;
                 if ((operation == OPERATION_ADD) &&
@@ -52,7 +54,7 @@ namespace LexLS
                 return TERMINATION_STATUS_UNKNOWN;
             }
 
-            void relax_bounds(std::vector<Objective> &Obj)
+            inline void relax_bounds(std::vector<Objective> &Obj)
             {
                 Obj[previous_ctr_identifier.obj_index]
                     .relax_bounds(previous_ctr_identifier.ctr_index,
@@ -62,17 +64,17 @@ namespace LexLS
                 counter++;
             }
 
-            void set_max_counter(Index max_counter_)
+            inline void set_max_counter(Index max_counter_)
             {
                 max_counter = max_counter_;
             }
 
-            void set_relax_step(RealScalar relax_step_)
+            inline void set_relax_step(RealScalar relax_step_)
             {
                 relax_step = relax_step_;
             }
 
-            Index get_counter() const
+            inline Index get_counter() const
             {
                 return counter;
             }

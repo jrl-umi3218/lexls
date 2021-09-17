@@ -41,18 +41,18 @@ namespace LexLS
             /**
                 \brief Default constructor
             */
-            LexLSE():
-                nVarFixed(0),
-                nVarFixedInit(0){}
+            inline LexLSE():
+                       nVarFixed(0),
+                       nVarFixedInit(0){}
 
             /**
                 \param[in] nVar_   Number of variables (only number of elements in x, and not in the residuals v)
                 \param[in] nObj_   Number of objectives
                 \param[in] ObjDim_ Number of constraints involved in each objective
             */
-            LexLSE(Index nVar_, Index nObj_, Index *ObjDim_):
-                nVarFixed(0),
-                nVarFixedInit(0)
+            inline LexLSE(Index nVar_, Index nObj_, Index *ObjDim_):
+                       nVarFixed(0),
+                       nVarFixedInit(0)
             {
                 resize(nVar_, nObj_, ObjDim_);
                 setObjDim(ObjDim_);
@@ -69,7 +69,7 @@ namespace LexLS
                 \param[in] nObj_     Number of objectives
                 \param[in] maxObjDim Maximum number of constraints involved in each objective
             */
-            void resize(Index nVar_, Index nObj_, Index *maxObjDim)
+            inline void resize(Index nVar_, Index nObj_, Index *maxObjDim)
             {
                 nVar = nVar_;
                 nObj = nObj_;
@@ -119,7 +119,7 @@ namespace LexLS
 
                 \todo residual_mu and fixed variables (see WARNING below)
             */
-            void factorize()
+            inline void factorize()
             {
                 PROBLEM_DATA = LOD;
 
@@ -503,10 +503,10 @@ namespace LexLS
             /**
                 \brief Output all constraints whose Lambda is with wrong sign
             */
-            void ObjectiveSensitivity(Index ObjIndex,
-                                      RealScalar tol_wrong_sign_lambda,
-                                      RealScalar tol_correct_sign_lambda,
-                                      std::vector<ConstraintInfo> &ctr_wrong_sign)
+            inline void ObjectiveSensitivity(Index ObjIndex,
+                                             RealScalar tol_wrong_sign_lambda,
+                                             RealScalar tol_correct_sign_lambda,
+                                             std::vector<ConstraintInfo> &ctr_wrong_sign)
             {
                 Index FirstRowIndex, FirstColIndex, ObjDim, ObjRank;
                 Index &ColDim = FirstColIndex; // ColDim will be used to indicate column dimension (I use it for clarity)
@@ -621,10 +621,10 @@ namespace LexLS
                 \note Upon exit, the lagrange multipliers associated with objective ObjIndex can be accessed using
                 dWorkspace.head(nVarFixed + nLambda)
             */
-            bool ObjectiveSensitivity(Index ObjIndex,
-                                      Index &CtrIndex2Remove, int &ObjIndex2Remove,
-                                      RealScalar tol_wrong_sign_lambda, RealScalar tol_correct_sign_lambda,
-                                      RealScalar &maxAbsValue)
+            inline bool ObjectiveSensitivity(Index ObjIndex,
+                                             Index &CtrIndex2Remove, int &ObjIndex2Remove,
+                                             RealScalar tol_wrong_sign_lambda, RealScalar tol_correct_sign_lambda,
+                                             RealScalar &maxAbsValue)
             {
                 maxAbsValue = 0.0;
                 bool tmp_bool, FoundBetterDescentDirection = false;
@@ -795,7 +795,7 @@ namespace LexLS
                 \note In the main ObjectiveSensitivity(...) function the real residual might be used. Here
                 only the residual based on the factorization is used.
             */
-            void ObjectiveSensitivity(Index ObjIndex)
+            inline void ObjectiveSensitivity(Index ObjIndex)
             {
                 Index FirstRowIndex, FirstColIndex, ObjDim, ObjRank;
                 Index &ColDim = FirstColIndex; // ColDim will be used to indicate column dimension (I use it for clarity)
@@ -895,13 +895,13 @@ namespace LexLS
             /**
                \brief Output all ctr whose Lambdas have wrong sign
             */
-            void findDescentDirection(Index ObjIndex,
-                                      int FirstRowIndex,
-                                      Index ObjDim,
-                                      const dVectorType& lambda,
-                                      RealScalar tol_wrong_sign_lambda,
-                                      RealScalar tol_correct_sign_lambda,
-                                      std::vector<ConstraintInfo> &ctr_wrong_sign)
+            inline void findDescentDirection(Index ObjIndex,
+                                             int FirstRowIndex,
+                                             Index ObjDim,
+                                             const dVectorType& lambda,
+                                             RealScalar tol_wrong_sign_lambda,
+                                             RealScalar tol_correct_sign_lambda,
+                                             std::vector<ConstraintInfo> &ctr_wrong_sign)
             {
                 RealScalar aLambda;
                 Index ind;
@@ -965,13 +965,13 @@ namespace LexLS
                than the largest multiplier with a wrong sign from previous groups of Lagrange
                multipliers.
             */
-            bool findDescentDirection(int FirstRowIndex,
-                                      Index ObjDim,
-                                      RealScalar &maxAbsValue,   // modified
-                                      Index &CtrIndex,           // modified
-                                      const dVectorType& lambda,
-                                      RealScalar tol_wrong_sign_lambda,
-                                      RealScalar tol_correct_sign_lambda)
+            inline bool findDescentDirection(int FirstRowIndex,
+                                             Index ObjDim,
+                                             RealScalar &maxAbsValue,   // modified
+                                             Index &CtrIndex,           // modified
+                                             const dVectorType& lambda,
+                                             RealScalar tol_wrong_sign_lambda,
+                                             RealScalar tol_correct_sign_lambda)
             {
                 bool FoundBetterDescentDirection = false;
                 RealScalar aLambda;
@@ -1045,7 +1045,7 @@ namespace LexLS
                could be used). As a result the code is much simpler, and just a bit slower (~1% for the
                problems I have tested) from the built-in solvers.
             */
-            void solve()
+            inline void solve()
             {
                 Index ObjRank, AccumulatedRanks = 0;
                 //for(Index k=nObj-1; k>=0; k--)
@@ -1082,7 +1082,7 @@ namespace LexLS
 
                \note using Givens rotations
             */
-            void solveLeastNorm_1()
+            inline void solveLeastNorm_1()
             {
                 Index FirstRowIndex, FirstColIndex, ObjRank, counter = 0;
                 Index nVarRank = 0; // number of variables determined by rank([R,T])
@@ -1168,7 +1168,7 @@ namespace LexLS
 
                \note using the normal equations
             */
-            void solveLeastNorm_2()
+            inline void solveLeastNorm_2()
             {
                 Index FirstRowIndex, FirstColIndex, ObjRank, counter = 0;
                 Index nVarRank = 0; // number of variables determined by rank([R,T])
@@ -1251,7 +1251,7 @@ namespace LexLS
                regularization). Hence in order to use this, one has to set regularization_type =
                REGULARIZATION_TIKHONOV and obj_info[:].regularization_factor = 0;
             */
-            void solveLeastNorm_3()
+            inline void solveLeastNorm_3()
             {
                 Index FirstRowIndex, ObjRank, counter = 0;
                 Index nVarRank = 0; // number of variables determined by rank([R,T])
@@ -1315,7 +1315,7 @@ namespace LexLS
 
                \note M is copied (because I modify it below)
             */
-            void solveGeneralNorm(dMatrixType M)
+            inline void solveGeneralNorm(dMatrixType M)
             {
                 Index FirstRowIndex, FirstColIndex, ObjRank, counter = 0;
                 Index nVarRank = 0; // number of variables determined by rank([R,T])
@@ -1409,7 +1409,7 @@ namespace LexLS
                multipliers), CTR_ACTIVE_UB is (arbitrary) chosen as a default value for type.
 
             */
-            void fixVariable(Index VarIndex, RealScalar VarValue, ConstraintActivationType type = CTR_ACTIVE_UB)
+            inline void fixVariable(Index VarIndex, RealScalar VarValue, ConstraintActivationType type = CTR_ACTIVE_UB)
             {
                 fixed_var_index(nVarFixedInit) = VarIndex;
                 x(nVarFixedInit)               = VarValue;
@@ -1426,7 +1426,7 @@ namespace LexLS
                 \param[in] VarValue   Values of the fixed variables
                 \param[in] type       can be CTR_ACTIVE_LB or CTR_ACTIVE_UB
             */
-            void fixVariables(Index nVarFixed_, Index *VarIndex, RealScalar *VarValue, ConstraintActivationType *type)
+            inline void fixVariables(Index nVarFixed_, Index *VarIndex, RealScalar *VarValue, ConstraintActivationType *type)
             {
                 if (nVarFixed_ > nVar)
                 {
@@ -1451,7 +1451,7 @@ namespace LexLS
 
                 \param[in] ObjDim_ Number of constraints involved in each objective
             */
-            void setObjDim(Index *ObjDim_)
+            inline void setObjDim(Index *ObjDim_)
             {
                 nCtr = 0;
                 for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
@@ -1474,7 +1474,7 @@ namespace LexLS
 
                 \param[in] nVarFixed_ Number of fixed variables
             */
-            void setFixedVariablesCount(Index nVarFixed_)
+            inline void setFixedVariablesCount(Index nVarFixed_)
             {
                 if (nVarFixed_ > nVar)
                 {
@@ -1493,7 +1493,7 @@ namespace LexLS
             /**
                \brief Sets parameters
             */
-            void setParameters(const ParametersLexLSE &parameters_)
+            inline void setParameters(const ParametersLexLSE &parameters_)
             {
                 parameters = parameters_;
             }
@@ -1503,7 +1503,7 @@ namespace LexLS
 
                 \note Note that fixed variables are not counted as an objective
             */
-            void setRegularizationFactor(Index ObjIndex, RealScalar factor)
+            inline void setRegularizationFactor(Index ObjIndex, RealScalar factor)
             {
                 /// @todo: check whether ObjIndex and factor make sense.
 
@@ -1513,7 +1513,7 @@ namespace LexLS
             /**
                 \brief Get number of fixed variables
             */
-            Index getFixedVariablesCount()
+            inline Index getFixedVariablesCount()
             {
                 return nVarFixed;
             }
@@ -1521,7 +1521,7 @@ namespace LexLS
             /**
                 \brief Get indexes of fixed variables
             */
-            iVectorType& getFixedVarIndex()
+            inline iVectorType& getFixedVarIndex()
             {
                 return fixed_var_index;
             }
@@ -1529,7 +1529,7 @@ namespace LexLS
             /**
                \brief Return #TotalRank (should be called after factorizing)
             */
-            Index getTotalRank()
+            inline Index getTotalRank()
             {
                 return TotalRank;
             }
@@ -1537,7 +1537,7 @@ namespace LexLS
             /**
                 \brief set a random problem [A,RHS]
             */
-            void setProblem(const dMatrixType& data)
+            inline void setProblem(const dMatrixType& data)
             {
                 LOD = data;
             }
@@ -1548,7 +1548,7 @@ namespace LexLS
                 \param[in] ObjIndex Index of objective
                 \param[in] data     data (including LHS & RHS)
             */
-            void setData(Index ObjIndex, const dMatrixType& data)
+            inline void setData(Index ObjIndex, const dMatrixType& data)
             {
                 if (ObjIndex >= nObj)
                 {
@@ -1565,7 +1565,7 @@ namespace LexLS
                 \param[in] row      Constraint vector (LHS)
                 \param[in] rhs      RHS vector
             */
-            void setCtr(Index CtrIndex, const dRowVectorType& row, RealScalar rhs)
+            inline void setCtr(Index CtrIndex, const dRowVectorType& row, RealScalar rhs)
             {
                 LOD.row(CtrIndex).head(nVar) = row;
                 LOD.coeffRef(CtrIndex,nVar)  = rhs;
@@ -1574,7 +1574,7 @@ namespace LexLS
             /**
                 \brief Set the type of a constraint with index CtrIndex in LexLSE objective ObjIndex
             */
-            void setCtrType(Index ObjIndex, Index CtrIndex, ConstraintActivationType type)
+            inline void setCtrType(Index ObjIndex, Index CtrIndex, ConstraintActivationType type)
             {
                 Index FirstRowIndex = obj_info[ObjIndex].first_row_index;
                 ctr_type[FirstRowIndex + CtrIndex] = type;
@@ -1586,7 +1586,7 @@ namespace LexLS
 
                \note This function could compute an incorect residual depending on parameters.tol_linear_dependence.
             */
-            dVectorType& get_v()
+            inline dVectorType& get_v()
             {
                 Index FirstRowIndex, FirstColIndex, ObjDim, ObjRank;
                 dVectorBlockType v(dWorkspace,0,nCtr);
@@ -1615,7 +1615,7 @@ namespace LexLS
             /**
                 \brief Return the (primal) solution vector
             */
-            dVectorType& get_x()
+            inline dVectorType& get_x()
             {
                 return x;
             }
@@ -1623,7 +1623,7 @@ namespace LexLS
             /**
                 \brief Return the number of equations in objective ObjIndex
             */
-            Index getDim(Index ObjIndex) const
+            inline Index getDim(Index ObjIndex) const
             {
                 return obj_info[ObjIndex].dim;
             }
@@ -1631,17 +1631,17 @@ namespace LexLS
             /**
                 \brief Return the rank of the equations in objective ObjIndex
             */
-            Index getRank(Index ObjIndex) const
+            inline Index getRank(Index ObjIndex) const
             {
                 return obj_info[ObjIndex].rank;
             }
 
-            Index get_nObj()
+            inline Index get_nObj()
             {
                 return nObj;
             }
 
-            Index get_nVar()
+            inline Index get_nVar()
             {
                 return nVar;
             }
@@ -1649,32 +1649,32 @@ namespace LexLS
             /**
                 \brief Return dWorkspace
             */
-            dVectorType& getWorkspace()
+            inline dVectorType& getWorkspace()
             {
                 return dWorkspace;
             }
 
-            dMatrixType get_lexqr()
+            inline dMatrixType get_lexqr()
             {
                 return LOD;
             }
 
-            dMatrixType get_data()
+            inline dMatrixType get_data()
             {
                 return PROBLEM_DATA;
             }
 
-            dMatrixType get_X_mu()
+            inline dMatrixType get_X_mu()
             {
                 return X_mu;
             }
 
-            dMatrixType get_X_mu_rhs()
+            inline dMatrixType get_X_mu_rhs()
             {
                 return X_mu_rhs;
             }
 
-            dVectorType get_residual_mu()
+            inline dVectorType get_residual_mu()
             {
                 return residual_mu;
             }
@@ -1682,7 +1682,7 @@ namespace LexLS
             /**
                 \brief Reset the factorization (initialize A separately)
             */
-            void reset()
+            inline void reset()
             {
                 initialize();
                 x.head(nVarFixed).setZero();
@@ -1701,7 +1701,7 @@ namespace LexLS
                 necessary to initialize them again here. This is necessary when an instance of the class
                 LexLSE is used to solve multiplie problems (as it is done in LexLSI).
             */
-            void initialize()
+            inline void initialize()
             {
                 nVarFixedInit = 0;
                 TotalRank     = 0;
@@ -1729,7 +1729,7 @@ namespace LexLS
 
                 \note fast when column-dimension is small
             */
-            void regularize_tikhonov_1(Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
+            inline void regularize_tikhonov_1(Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
             {
                 RealScalar mu = aRegularizationFactor*aRegularizationFactor;
 
@@ -1810,7 +1810,7 @@ namespace LexLS
                 \todo If I endup passig ObjIndex as input argument, there is no need to pass
                 FirstRowIndex, FirstColIndex and ObjRank
             */
-            void regularize_tikhonov_1_test(Index FirstRowIndex,
+            inline void regularize_tikhonov_1_test(Index FirstRowIndex,
                                             Index FirstColIndex,
                                             Index ObjRank,
                                             Index RemainingColumns,
@@ -2058,7 +2058,7 @@ namespace LexLS
               \brief Compute the solution of the ObjIndex-th regularized problem (needed for
               computing the Lagrange multipliers)
             */
-            void get_intermediate_x(Index ObjIndex, Index x_tail_size)
+            inline void get_intermediate_x(Index ObjIndex, Index x_tail_size)
             {
                 Index ObjRank, FirstColIndex, FirstRowIndex;
 
@@ -2130,7 +2130,7 @@ namespace LexLS
 
                 \note fast when row-dimension is small
             */
-            void regularize_tikhonov_2(Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
+            inline void regularize_tikhonov_2(Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
             {
                 RealScalar mu = aRegularizationFactor*aRegularizationFactor;
 
@@ -2184,7 +2184,7 @@ namespace LexLS
             /**
                 \brief Tikhonov regularization (basic variables)
             */
-            void regularize_R(Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
+            inline void regularize_R(Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
             {
                 RealScalar mu = aRegularizationFactor*aRegularizationFactor;
 
@@ -2220,7 +2220,7 @@ namespace LexLS
             /**
                 \brief Tikhonov regularization (basic variables no Z)
             */
-            void regularize_R_NO_Z(Index FirstRowIndex, Index FirstColIndex, Index ObjRank)
+            inline void regularize_R_NO_Z(Index FirstRowIndex, Index FirstColIndex, Index ObjRank)
             {
                 RealScalar mu = aRegularizationFactor*aRegularizationFactor;
 
@@ -2291,7 +2291,7 @@ namespace LexLS
             /**
                \brief For testing purposes
             */
-            void regularize_test(Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
+            inline void regularize_test(Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
             {
                 // just scale the RHS (not a good idea)
                 LOD.col(nVar).segment(FirstRowIndex,ObjRank) *= aRegularizationFactor;
@@ -2300,7 +2300,7 @@ namespace LexLS
             /**
                 \brief Tikhonov regularization using CGLS
             */
-            void regularize_tikhonov_CG(Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
+            inline void regularize_tikhonov_CG(Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
             {
                 // -------------------------------------------------------------------------
                 // create blocks
@@ -2326,7 +2326,7 @@ namespace LexLS
 
                 \note hot-start from RT_NO_Z
             */
-            void regularize_tikhonov_CG_x0(Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
+            inline void regularize_tikhonov_CG_x0(Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
             {
                 RealScalar mu = aRegularizationFactor*aRegularizationFactor;
 
@@ -2369,7 +2369,7 @@ namespace LexLS
             /**
                 \brief RT_NO_Z regularization using CGLS
             */
-            void regularize_RT_NO_Z_CG(Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
+            inline void regularize_RT_NO_Z_CG(Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
             {
                 // -------------------------------------------------------------------------
                 // create blocks
@@ -2399,8 +2399,8 @@ namespace LexLS
               |  Ik   | 0  | row_dim: rk + RemainingColumns
               --------------------------------------------------------------------------
             */
-            Index cg_tikhonov(dVectorType &sol_x,
-                              Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
+            inline Index cg_tikhonov(dVectorType &sol_x,
+                                     Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
             {
                 RealScalar alpha, beta, gamma, gamma_previous;
 
@@ -2495,8 +2495,8 @@ namespace LexLS
               |  Ik   | 0  | row_dim: rk + RemainingColumns
               --------------------------------------------------------------------------
             */
-            Index cg_RT(dVectorType &sol_x,
-                        Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
+            inline Index cg_RT(dVectorType &sol_x,
+                               Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
             {
                 RealScalar alpha, beta, gamma, gamma_previous;
 
@@ -2611,7 +2611,7 @@ namespace LexLS
 
                \todo the above observation is worth verifying again
             */
-            void accumulate_nullspace_basis(Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
+            inline void accumulate_nullspace_basis(Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
             {
                 dBlockType Rk(LOD,
                               FirstRowIndex, FirstColIndex,
@@ -2677,7 +2677,7 @@ namespace LexLS
 
                \note This function has not been tested properly (with simple bounds)
             */
-            void accumulate_nullspace_basis_1(Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
+            inline void accumulate_nullspace_basis_1(Index FirstRowIndex, Index FirstColIndex, Index ObjRank, Index RemainingColumns)
             {
                 dBlockType Rk(LOD,
                               FirstRowIndex, FirstColIndex,

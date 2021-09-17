@@ -9,6 +9,8 @@
 #include <vector>
 #include <fstream>
 
+#include <lexls/typedefs.h>
+
 namespace LexLS
 {
     namespace tools
@@ -50,10 +52,9 @@ namespace LexLS
                 std::string SOLUTION             ;
 
 
-                void readNumberOfVariables(
-                        std::ifstream   & ifs,
-                        bool            & set_number_of_variables,
-                        unsigned int    & number_of_variables)
+                inline void readNumberOfVariables(std::ifstream   & ifs,
+                                                  bool            & set_number_of_variables,
+                                                  unsigned int    & number_of_variables)
                 {
                     if (set_number_of_variables)
                     {
@@ -69,7 +70,7 @@ namespace LexLS
                 }
 
 
-                void readNumberOfObjectives(
+                inline void readNumberOfObjectives(
                         std::ifstream   & ifs,
                         bool            & set_number_of_objectives,
                         unsigned int    & number_of_objectives)
@@ -87,7 +88,7 @@ namespace LexLS
                 }
 
 
-                void readTypeOfHieararchy(
+                inline void readTypeOfHieararchy(
                         std::ifstream   & ifs,
                         bool            & set_type_of_hierarchy,
                         HierarchyType   & type_of_hierarchy,
@@ -124,7 +125,7 @@ namespace LexLS
                 }
 
 
-                void readNumberOfConstraints(
+                inline void readNumberOfConstraints(
                         std::ifstream               & ifs,
                         bool                        & set_number_of_constraints,
                         std::vector<unsigned int>   & number_of_constraints)
@@ -157,7 +158,7 @@ namespace LexLS
                 }
 
 
-                void readTypesOfObjectives(
+                inline void readTypesOfObjectives(
                         std::ifstream                       & ifs,
                         bool                                & set_types_of_objectives,
                         std::vector<LexLS::ObjectiveType>   & types_of_objectives)
@@ -201,7 +202,7 @@ namespace LexLS
                 }
 
 
-                void readObjective( const unsigned int  number_of_rows,
+                inline void readObjective( const unsigned int  number_of_rows,
                                     const unsigned int  number_of_columns,
                                     const unsigned int  objective_index,
                                     const unsigned int  type_of_hierarchy_header,
@@ -261,7 +262,7 @@ namespace LexLS
                 }
 
 
-                void readSolution(  const unsigned int  number_of_variables,
+                inline void readSolution(  const unsigned int  number_of_variables,
                                     std::ifstream       & ifs,
                                     Eigen::VectorXd     & solution_vector)
                 {
@@ -281,7 +282,7 @@ namespace LexLS
 
 
             public:
-                HierarchyFileProcessor()
+                inline HierarchyFileProcessor()
                 {
                     NUMBER_OF_VARIABLES         = "#nVar";
                     NUMBER_OF_OBJECTIVES        = "#nObj";
@@ -294,7 +295,7 @@ namespace LexLS
                 }
 
 
-                void import(const std::string                       & file_name,
+                inline void import(const std::string                       & file_name,
                             HierarchyType                           & type_of_hierarchy,
                             unsigned int                            & number_of_variables,
                             unsigned int                            & number_of_objectives,

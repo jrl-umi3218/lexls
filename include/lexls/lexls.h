@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include <lexls/lexlse.h>
+
 namespace LexLS
 {
 
@@ -15,27 +17,27 @@ namespace LexLS
     {
     public:
 
-        LexLSE(){}
+        inline LexLSE(){}
 
-        LexLSE(Index nVar_, Index nObj_, Index *ObjDim_)
+        inline LexLSE(Index nVar_, Index nObj_, Index *ObjDim_)
         {
             resize(nVar_, nObj_, ObjDim_);
             setObjDim(ObjDim_);
         }
 
-        void resize(Index nVar_, Index nObj_, Index *ObjDim_)
+        inline void resize(Index nVar_, Index nObj_, Index *ObjDim_)
         {
             lexlse.resize(nVar_, nObj_, ObjDim_);
         }
 
-        void setObjDim(Index *ObjDim_)
+        inline void setObjDim(Index *ObjDim_)
         {
             lexlse.setObjDim(ObjDim_);
         }
 
         // @todo introduce enum
         // @todo include solve_option in the list of parameters
-        dVectorType& solve(Index solve_option = 0)
+        inline dVectorType& solve(Index solve_option = 0)
         {
             lexlse.factorize();
 

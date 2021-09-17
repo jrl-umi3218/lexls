@@ -22,7 +22,7 @@ namespace LexLS
 
                 \param[in] dim Number of constraints
             */
-            void resize(Index dim)
+            inline void resize(Index dim)
             {
                 // initialize all constraints as inactive
                 all_type.resize(dim,CTR_INACTIVE);
@@ -42,7 +42,7 @@ namespace LexLS
 
                \note The order of indexes of remaining inactive constraints is modified (but this is not important)
             */
-            void activate(Index CtrIndex, ConstraintActivationType type)
+            inline void activate(Index CtrIndex, ConstraintActivationType type)
             {
                 if (all_type[CtrIndex] != CTR_INACTIVE)
                 {
@@ -76,7 +76,7 @@ namespace LexLS
 
                 \note Note the difference with the function #activate(...).
             */
-            void deactivate(Index CtrIndexActive)
+            inline void deactivate(Index CtrIndexActive)
             {
                 // CtrIndex is the index of WorkingSet.active[CtrIndexActive] in the LexLSI objective
                 Index CtrIndex = getActiveCtrIndex(CtrIndexActive); // CtrIndexActive --> CtrIndex
@@ -102,7 +102,7 @@ namespace LexLS
             /**
                \brief Returns the number of active constraints
             */
-            Index getActiveCtrCount() const
+            inline Index getActiveCtrCount() const
             {
                 return active.size();
             }
@@ -110,7 +110,7 @@ namespace LexLS
             /**
                \brief Returns the index of the k-th active constraint
             */
-            Index getActiveCtrIndex(Index k) const
+            inline Index getActiveCtrIndex(Index k) const
             {
                 return active[k];
             }
@@ -118,7 +118,7 @@ namespace LexLS
             /**
                \brief Returns the type of the k-th active constraint
             */
-            ConstraintActivationType getActiveCtrType(Index k) const
+            inline ConstraintActivationType getActiveCtrType(Index k) const
             {
                 return active_ctr_type[k];
             }
@@ -126,7 +126,7 @@ namespace LexLS
             /**
                \brief Returns the type of the k-th constraint
             */
-            ConstraintActivationType getCtrType(Index k) const
+            inline ConstraintActivationType getCtrType(Index k) const
             {
                 return all_type[k];
             }
@@ -136,7 +136,7 @@ namespace LexLS
                active constraints. If the constraint with index k is inactive then return its index
                among the inactive constraints.
             */
-            Index getCtrIndex(Index k)
+            inline Index getCtrIndex(Index k)
             {
                 std::vector<Index>::iterator it;
 
@@ -157,7 +157,7 @@ namespace LexLS
             /**
                \brief Returns the number of inactive constraints
             */
-            Index getInactiveCtrCount() const
+            inline Index getInactiveCtrCount() const
             {
                 return inactive.size();
             }
@@ -165,7 +165,7 @@ namespace LexLS
             /**
                \brief Returns the index of the k-th inactive constraint
             */
-            Index getInactiveCtrIndex(Index k) const
+            inline Index getInactiveCtrIndex(Index k) const
             {
                 return inactive[k];
             }
@@ -173,7 +173,7 @@ namespace LexLS
             /**
                \brief Returns true if the k-th constraint is active, otherwise returns false
             */
-            bool isActive(Index k) const
+            inline bool isActive(Index k) const
             {
                 if (all_type[k] == CTR_INACTIVE)
                 {
@@ -188,7 +188,7 @@ namespace LexLS
             /**
                \brief Prints the contents of the working set
             */
-            void print() const
+            inline void print() const
             {
                 // -----------------------------------------------------------
                 // all

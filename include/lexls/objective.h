@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <lexls/lexlse.h>
 #include <lexls/utility.h>
 #include <lexls/workingset.h>
 
@@ -21,11 +22,11 @@ namespace LexLS
             /**
                \brief Default constructor
             */
-            Objective():
-                nCtr(0),
-                obj_type(GENERAL_OBJECTIVE),
-                regularization_factor(0.0),
-                v0_is_specified(false) {}
+            inline Objective():
+                       nCtr(0),
+                       obj_type(GENERAL_OBJECTIVE),
+                       regularization_factor(0.0),
+                       v0_is_specified(false) {}
 
             /**
                \brief Resize the objective
@@ -34,7 +35,7 @@ namespace LexLS
                \param[in] nVar_     Number of variables (without the constraint violations).
                \param[in] obj_type_ Objective type
             */
-            void resize(Index nCtr_, Index nVar_, ObjectiveType obj_type_)
+            inline void resize(Index nCtr_, Index nVar_, ObjectiveType obj_type_)
             {
                 obj_type = obj_type_;
                 nCtr     = nCtr_;
@@ -71,7 +72,7 @@ namespace LexLS
                 initialize();
             }
 
-            void ensureZeroCtrViolationForSimpleBounds(dVectorType &x)
+            inline void ensureZeroCtrViolationForSimpleBounds(dVectorType &x)
             {
                 if (obj_type == SIMPLE_BOUNDS_OBJECTIVE)
                 {
@@ -113,7 +114,7 @@ namespace LexLS
 
                \note This function requires for Ax to be initialized
             */
-            void formInitialWorkingSet(dVectorType &x,
+            inline void formInitialWorkingSet(dVectorType &x,
                                        const bool modify_type_active_enabled,
                                        const bool modify_type_inactive_enabled,
                                        const bool modify_x_guess_enabled)
@@ -181,8 +182,8 @@ namespace LexLS
                \todo Consider rewriting this function (it is correct by the implementation can be
                improved).
             */
-            void initialize_v0(const RealScalar tol_feasibility,
-                               const bool set_min_init_ctr_violation)
+            inline void initialize_v0(const RealScalar tol_feasibility,
+                                      const bool set_min_init_ctr_violation)
             {
                 Index CtrIndex;
                 ConstraintActivationType CtrType;
@@ -241,7 +242,7 @@ namespace LexLS
             /**
                \brief Initialize Ax
             */
-            void initialize_Ax(dVectorType &x)
+            inline void initialize_Ax(dVectorType &x)
             {
                 if (obj_type == GENERAL_OBJECTIVE)
                 {
@@ -259,7 +260,7 @@ namespace LexLS
             /**
                \brief Form Adx
             */
-            void form_Adx(dVectorType &dx)
+            inline void form_Adx(dVectorType &dx)
             {
                 if (obj_type == GENERAL_OBJECTIVE)
                 {
@@ -287,7 +288,7 @@ namespace LexLS
               drift. That is why here we use dv = A{active}*x{next} - b{active} - v{current}.
 
             */
-            void formStep(dVectorType &dx)
+            inline void formStep(dVectorType &dx)
             {
                 form_Adx(dx);
 
@@ -352,7 +353,7 @@ namespace LexLS
 
                \note #Ax is initialized
             */
-            void phase1(dVectorType &x,
+            inline void phase1(dVectorType &x,
                         const bool x_guess_is_specified,
                         const bool modify_type_active_enabled,
                         const bool modify_type_inactive_enabled,
@@ -383,7 +384,7 @@ namespace LexLS
                 \param[in] CtrIndex         Index of constraint in a given LexLSI objective
                 \param[in] type             Type of the constraint to be included in the working set.
             */
-            void activate(Index CtrIndex, ConstraintActivationType type)
+            inline void activate(Index CtrIndex, ConstraintActivationType type)
             {
                 if (CtrIndex >= nCtr)
                 {
@@ -399,7 +400,7 @@ namespace LexLS
                 \param[in] CtrIndexActive Index of constraint in the working set in a given objective,
                 i.e., Obj[ObjIndex].working_set.active[CtrIndexActive] will be removed.
             */
-            void deactivate(Index CtrIndexActive)
+            inline void deactivate(Index CtrIndexActive)
             {
                 if (CtrIndexActive >= getActiveCtrCount())
                 {
@@ -435,7 +436,7 @@ namespace LexLS
                 -----------------------------------------
                 \endverbatim
             */
-            void formLexLSE(LexLSE& lexlse, Index& counter, Index ObjIndex)
+            inline void formLexLSE(LexLSE& lexlse, Index& counter, Index ObjIndex)
             {
                 Index CtrIndex;
                 ConstraintActivationType CtrType;
@@ -521,10 +522,10 @@ namespace LexLS
                alpha \in [0,1]
                \endverbatim
             */
-            bool checkBlockingConstraints(Index &CtrIndexBlocking,
-                                          ConstraintActivationType &CtrTypeBlocking,
-                                          RealScalar &alpha,
-                                          const RealScalar tol_feasibility)
+            inline bool checkBlockingConstraints(Index &CtrIndexBlocking,
+                                                 ConstraintActivationType &CtrTypeBlocking,
+                                                 RealScalar &alpha,
+                                                 const RealScalar tol_feasibility)
             {
                 bool condition;
                 RealScalar num, den, ratio, rhs, alpha_input = alpha;
@@ -585,7 +586,7 @@ namespace LexLS
 
                \param[in] alpha step scaling
             */
-            void step(RealScalar alpha)
+            inline void step(RealScalar alpha)
             {
                 v  += alpha*dv;
                 Ax += alpha*Adx;
@@ -598,7 +599,7 @@ namespace LexLS
             /**
                \brief Returns #v
             */
-            dVectorType& get_v()
+            inline dVectorType& get_v()
             {
                 return v;
             }
@@ -611,7 +612,7 @@ namespace LexLS
                \note The result might be different from get_v() if the active-set iterations are
                prematurely terminated.
             */
-            void getConstraintViolation(dVectorType &ctr_violation)
+            inline void getConstraintViolation(dVectorType &ctr_violation)
             {
                 ctr_violation.resize(nCtr);
 
@@ -635,7 +636,7 @@ namespace LexLS
             /**
                \brief Returns #dv
             */
-            dVectorType& get_dv()
+            inline dVectorType& get_dv()
             {
                 return dv;
             }
@@ -643,7 +644,7 @@ namespace LexLS
             /**
                \brief Returns the number of active constraints
             */
-            Index getActiveCtrCount() const
+            inline Index getActiveCtrCount() const
             {
                 return working_set.getActiveCtrCount();
             }
@@ -651,7 +652,7 @@ namespace LexLS
             /**
                \brief Returns the index of the k-th active constraint
             */
-            Index getActiveCtrIndex(Index k) const
+            inline Index getActiveCtrIndex(Index k) const
             {
                 return working_set.getActiveCtrIndex(k);
             }
@@ -659,7 +660,7 @@ namespace LexLS
             /**
                \brief see working_set.getCtrIndex()
             */
-            Index getCtrIndex(Index k)
+            inline Index getCtrIndex(Index k)
             {
                 return working_set.getCtrIndex(k);
             }
@@ -668,7 +669,7 @@ namespace LexLS
             /**
                \brief Returns the type of the k-th active constraint
             */
-            ConstraintActivationType getActiveCtrType(Index k) const
+            inline ConstraintActivationType getActiveCtrType(Index k) const
             {
                 return working_set.getActiveCtrType(k);
             }
@@ -676,7 +677,7 @@ namespace LexLS
             /**
                \brief Returns the type of the k-th constraint
             */
-            ConstraintActivationType getCtrType(Index k) const
+            inline ConstraintActivationType getCtrType(Index k) const
             {
                 return working_set.getCtrType(k);
             }
@@ -684,7 +685,7 @@ namespace LexLS
             /**
                \brief Returns the number of inactive constraints
             */
-            Index getInactiveCtrCount() const
+            inline Index getInactiveCtrCount() const
             {
                 return working_set.getInactiveCtrCount();
             }
@@ -692,7 +693,7 @@ namespace LexLS
             /**
                \brief Returns the index of the k-th inactive constraint
             */
-            Index getInactiveCtrIndex(Index k) const
+            inline Index getInactiveCtrIndex(Index k) const
             {
                 return working_set.getInactiveCtrIndex(k);
             }
@@ -700,7 +701,7 @@ namespace LexLS
             /**
                \brief Returns the index storde in var_index[k]
             */
-            Index getVarIndex(Index k) const
+            inline Index getVarIndex(Index k) const
             {
                 return var_index(k);
             }
@@ -708,7 +709,7 @@ namespace LexLS
             /**
                \brief Get objective type
             */
-            ObjectiveType getObjType() const
+            inline ObjectiveType getObjType() const
             {
                 return obj_type;
             }
@@ -716,7 +717,7 @@ namespace LexLS
             /**
                \brief Get number of constraints in objective
             */
-            Index getDim() const
+            inline Index getDim() const
             {
                 return nCtr;
             }
@@ -724,7 +725,7 @@ namespace LexLS
             /**
                 \brief Get objective data
             */
-            dMatrixType& getData()
+            inline dMatrixType& getData()
             {
                 return data;
             }
@@ -732,7 +733,7 @@ namespace LexLS
             /**
                \brief Returns true if the k-th constraint is active, otherwise returns false
             */
-            bool isActive(Index CtrIndex) const
+            inline bool isActive(Index CtrIndex) const
             {
                 return working_set.isActive(CtrIndex);
             }
@@ -740,7 +741,7 @@ namespace LexLS
             /**
                \brief Returns the value of v0_is_specified.
             */
-            bool getFlag_v0_is_specified() const
+            inline bool getFlag_v0_is_specified() const
             {
                 return v0_is_specified;
             }
@@ -748,7 +749,7 @@ namespace LexLS
             /**
                \brief Set the value of v0_is_specified.
             */
-            void setFlag_v0_is_specified(bool flag_value)
+            inline void setFlag_v0_is_specified(bool flag_value)
             {
                 v0_is_specified = flag_value;
             }
@@ -758,7 +759,7 @@ namespace LexLS
 
                \note Use this function with caution (advanced initialization)
             */
-            void set_v0(const dVectorType& v_)
+            inline void set_v0(const dVectorType& v_)
             {
                 v = v_;
                 setFlag_v0_is_specified(true);
@@ -767,7 +768,7 @@ namespace LexLS
             /**
                \brief Modify upper or lower bound
             */
-            void relax_bounds(Index CtrIndex, ConstraintActivationType CtrType, RealScalar p)
+            inline void relax_bounds(Index CtrIndex, ConstraintActivationType CtrType, RealScalar p)
             {
                 if (CtrType == CTR_ACTIVE_LB)
                 {
@@ -786,7 +787,7 @@ namespace LexLS
             /**
                \brief Set objective data (obj_type = GENERAL_OBJECTIVE)
             */
-            void setData(const dMatrixType& data_)
+            inline void setData(const dMatrixType& data_)
             {
                 data = data_;
             }
@@ -794,7 +795,7 @@ namespace LexLS
             /**
                \brief Set objective data + var_index (obj_type = SIMPLE_BOUNDS_OBJECTIVE)
             */
-            void setData(Index *var_index_, const dMatrixType& data_)
+            inline void setData(Index *var_index_, const dMatrixType& data_)
             {
                 var_index = Eigen::Map<iVectorType>(var_index_,nCtr);
                 data      = data_;
@@ -803,7 +804,7 @@ namespace LexLS
             /**
                \brief Set objective data + var_index one by one (obj_type = SIMPLE_BOUNDS_OBJECTIVE)
             */
-            void setData(Index k, Index var_index_, RealScalar lb_, RealScalar ub_)
+            inline void setData(Index k, Index var_index_, RealScalar lb_, RealScalar ub_)
             {
                 var_index(k) = var_index_;
                 data(k,0)    = lb_;
@@ -813,7 +814,7 @@ namespace LexLS
             /**
                \brief Set regularization factor
             */
-            void setRegularization(RealScalar factor)
+            inline void setRegularization(RealScalar factor)
             {
                 if (obj_type == SIMPLE_BOUNDS_OBJECTIVE)
                 {
@@ -826,7 +827,7 @@ namespace LexLS
             /**
                \brief Get the regularization factor
             */
-            RealScalar getRegularization()
+            inline RealScalar getRegularization()
             {
                 return regularization_factor;
             }
@@ -837,7 +838,7 @@ namespace LexLS
                \todo this test could be skipped. If one wants to keep it one could precompute the
                norms of all normals once when the data is set.
             */
-            bool isZeroNormal(Index CtrIndex)
+            inline bool isZeroNormal(Index CtrIndex)
             {
                 bool normal_is_zero = false;
                 if (obj_type == GENERAL_OBJECTIVE)
@@ -856,7 +857,7 @@ namespace LexLS
 
                \param[in] field description of field to print.
             */
-            void print(const char * field) const
+            inline void print(const char * field) const
             {
                 if (!strcmp(field, "working_set"))
                 {
@@ -881,7 +882,7 @@ namespace LexLS
             /**
                \brief Initializations
             */
-            void initialize()
+            inline void initialize()
             {
                 v.setZero();
                 dv.setZero();

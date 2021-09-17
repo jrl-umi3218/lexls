@@ -49,11 +49,11 @@ namespace LexLS
                 \param[in] ObjDim_  Number of constraints involved in each objective
                 \param[in] ObjType_ Type of each objective
             */
-            LexLSI(Index nVar_, Index nObj_, Index *ObjDim_, ObjectiveType *ObjType_):
-                nVar(nVar_),
-                nObj(nObj_),
-                x_guess_is_specified(false),
-                status(TERMINATION_STATUS_UNKNOWN)
+            inline LexLSI(Index nVar_, Index nObj_, Index *ObjDim_, ObjectiveType *ObjType_):
+                       nVar(nVar_),
+                       nObj(nObj_),
+                       x_guess_is_specified(false),
+                       status(TERMINATION_STATUS_UNKNOWN)
             {
                 parameters.setDefaults();
                 setParameters(parameters);
@@ -75,7 +75,7 @@ namespace LexLS
 
                 \todo Move all veification of inputs to the API level
             */
-            void api_activate(Index ObjIndex, Index CtrIndex, ConstraintActivationType type)
+            inline void api_activate(Index ObjIndex, Index CtrIndex, ConstraintActivationType type)
             {
                 if (!objectives[ObjIndex].isActive(CtrIndex))
                 {
@@ -101,7 +101,7 @@ namespace LexLS
 
                 \note CountActivation = false is used when specifying the initial working set
             */
-            void activate(Index ObjIndex, Index CtrIndex, ConstraintActivationType type, bool CountActivation=true)
+            inline void activate(Index ObjIndex, Index CtrIndex, ConstraintActivationType type, bool CountActivation=true)
             {
                 if (ObjIndex >= nObj)
                 {
@@ -129,7 +129,7 @@ namespace LexLS
                 \param[in] ObjIndex          Index of objective.
                 \param[in] CtrIndexActive    Index of constraint: objectives[ObjIndex].working_set.active[CtrIndexActive].
             */
-            void deactivate(Index ObjIndex, Index CtrIndexActive)
+            inline void deactivate(Index ObjIndex, Index CtrIndexActive)
             {
                 if (ObjIndex >= nObj)
                 {
@@ -155,7 +155,7 @@ namespace LexLS
 
                \return the termination reason
             */
-            TerminationStatus solve()
+            inline TerminationStatus solve()
             {
                 OperationType operation;
 
@@ -205,7 +205,7 @@ namespace LexLS
 
                \todo Remove this function.
             */
-            void print(const char * field)
+            inline void print(const char * field)
             {
                 if (!strcmp(field, "working_set"))
                 {
@@ -257,7 +257,7 @@ namespace LexLS
             /**
                \brief Sets the initial value for the decision variable x
             */
-            void set_x0(const dVectorType &x0)
+            inline void set_x0(const dVectorType &x0)
             {
                 x = x0;
                 x_guess_is_specified = true;
@@ -268,7 +268,7 @@ namespace LexLS
 
                \todo Check the validity of the hot-start
             */
-            void set_v0(Index ObjIndex, dVectorType &v0_)
+            inline void set_v0(Index ObjIndex, dVectorType &v0_)
             {
                 objectives[ObjIndex].set_v0(v0_);
             }
@@ -276,7 +276,7 @@ namespace LexLS
             /**
                \brief Sets parameters
             */
-            void setParameters(const ParametersLexLSI &parameters_)
+            inline void setParameters(const ParametersLexLSI &parameters_)
             {
                 parameters = parameters_;
                 ParametersLexLSE lexlse_parameters;
@@ -302,7 +302,7 @@ namespace LexLS
                 \param[in] ObjIndex Index of objective
                 \param[in] data     [A,LowerBounds,UpperBounds]
             */
-            void setData(Index ObjIndex, const dMatrixType& data)
+            inline void setData(Index ObjIndex, const dMatrixType& data)
             {
                 if (ObjIndex >= nObj)
                 {
@@ -396,7 +396,7 @@ namespace LexLS
                 \param[in] VarIndex Index variables subject to simple bounds
                 \param[in] data     [LowerBounds,UpperBounds]
             */
-            void setData(Index ObjIndex, Index *VarIndex, const dMatrixType& data)
+            inline void setData(Index ObjIndex, Index *VarIndex, const dMatrixType& data)
             {
                 if (ObjIndex >= nObj)
                 {
@@ -450,7 +450,7 @@ namespace LexLS
 
                 \note Regularization of an objective of type SIMPLE_BOUNDS_OBJECTIVE is not performed
             */
-            void setRegularizationFactor(Index ObjIndex, RealScalar factor)
+            inline void setRegularizationFactor(Index ObjIndex, RealScalar factor)
             {
                 // @todo: check whether ObjIndex and factor make sense.
 
@@ -460,7 +460,7 @@ namespace LexLS
             /**
                 \brief Return the (primal) solution vector
             */
-            dVectorType& get_x()
+            inline dVectorType& get_x()
             {
                 return x;
             }
@@ -471,7 +471,7 @@ namespace LexLS
 
                 \todo In getLambda as well I solve a lexlse problem (this is wasteful).
             */
-            dVectorType& get_xStar()
+            inline dVectorType& get_xStar()
             {
                 formLexLSE();
                 lexlse.factorize();
@@ -480,7 +480,7 @@ namespace LexLS
                 return lexlse.get_x();
             }
 
-            dVectorType& get_v(Index ObjIndex)
+            inline dVectorType& get_v(Index ObjIndex)
             {
                 return objectives[ObjIndex].get_v();
             }
@@ -494,7 +494,7 @@ namespace LexLS
                \note The result might be different from get_v() if the active-set iterations are
                prematurely terminated.
             */
-            void getConstraintViolation(Index ObjIndex, dVectorType &ctr_violation)
+            inline void getConstraintViolation(Index ObjIndex, dVectorType &ctr_violation)
             {
                 objectives[ObjIndex].getConstraintViolation(ctr_violation);
             }
@@ -504,7 +504,7 @@ namespace LexLS
 
                 \note The order of constraints is like the one provided by the user (in the problem definition)
             */
-            void getLambda(std::vector<dMatrixType> & vec_lambda)
+            inline void getLambda(std::vector<dMatrixType> & vec_lambda)
             {
                 Index nActiveCtr = 0; // number of active constraints
                 vec_lambda.resize(nObj);
@@ -561,27 +561,27 @@ namespace LexLS
                 }
             }
 
-            dMatrixType get_lexqr()
+            inline dMatrixType get_lexqr()
             {
                 return lexlse.get_lexqr();
             }
 
-            dMatrixType get_data()
+            inline dMatrixType get_data()
             {
                 return lexlse.get_data();
             }
 
-            dMatrixType get_X_mu()
+            inline dMatrixType get_X_mu()
             {
                 return lexlse.get_X_mu();
             }
 
-            dMatrixType get_X_mu_rhs()
+            inline dMatrixType get_X_mu_rhs()
             {
                 return lexlse.get_X_mu_rhs();
             }
 
-            dVectorType get_residual_mu()
+            inline dVectorType get_residual_mu()
             {
                 return lexlse.get_residual_mu();
             }
@@ -590,7 +590,7 @@ namespace LexLS
             /**
                 \brief Get number of cycling relaxations
             */
-            Index getCyclingCounter() const
+            inline Index getCyclingCounter() const
             {
                 return cycling_handler.get_counter();
             }
@@ -598,7 +598,7 @@ namespace LexLS
             /**
                 \brief Returns number of iterations in the active-set method
             */
-            Index getFactorizationsCount() const
+            inline Index getFactorizationsCount() const
             {
                 return nFactorizations;
             }
@@ -607,7 +607,7 @@ namespace LexLS
                 \brief Returns number of iterations during which a constraint has been added to the
                 working set
             */
-            Index getActivationsCount() const
+            inline Index getActivationsCount() const
             {
                 return nActivations;
             }
@@ -616,12 +616,12 @@ namespace LexLS
                 \brief Returns number of iterations during which a constraint has been removed to the
                 working set
             */
-            Index getDeactivationsCount() const
+            inline Index getDeactivationsCount() const
             {
                 return nDeactivations;
             }
 
-            Index getActiveCtrCount(Index ObjIndex) const
+            inline Index getActiveCtrCount(Index ObjIndex) const
             {
                 return objectives[ObjIndex].getActiveCtrCount();
             }
@@ -629,7 +629,7 @@ namespace LexLS
             /**
                 \brief Returns number of active constraints
             */
-            Index getActiveCtrCount() const
+            inline Index getActiveCtrCount() const
             {
                 Index n = 0;
                 for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
@@ -643,7 +643,7 @@ namespace LexLS
             /**
                 \brief Outputs the types (CTR_INACTIVE, CTR_ACTIVE_LB, CTR_ACTIVE_UB) of constraints for a given objective
             */
-            void getActiveCtr(Index ObjIndex, std::vector<ConstraintActivationType>& ctr_type) const
+            inline void getActiveCtr(Index ObjIndex, std::vector<ConstraintActivationType>& ctr_type) const
             {
                 Index ind;
                 Index dim = objectives[ObjIndex].getDim();
@@ -658,7 +658,7 @@ namespace LexLS
             /**
                 \brief Outputs the indexes and types of active constraints
             */
-            void getActiveCtr_order(std::vector<ConstraintIdentifier>& ctr) const
+            inline void getActiveCtr_order(std::vector<ConstraintIdentifier>& ctr) const
             {
                 for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
                 {
@@ -677,7 +677,7 @@ namespace LexLS
             /**
                 \brief Returns number of objectives
             */
-            Index getObjectivesCount() const
+            inline Index getObjectivesCount() const
             {
                 return nObj;
             }
@@ -687,7 +687,7 @@ namespace LexLS
 
                 \param[in] ObjIndex Index of objective
             */
-            Index getObjDim(Index ObjIndex) const
+            inline Index getObjDim(Index ObjIndex) const
             {
                 return objectives[ObjIndex].getDim();
             }
@@ -695,7 +695,7 @@ namespace LexLS
             /**
                 \brief Returns working_set_log
             */
-            std::vector<WorkingSetLogEntry>& getWorkingSetLog()
+            inline std::vector<WorkingSetLogEntry>& getWorkingSetLog()
             {
                 return working_set_log;
             }
@@ -715,7 +715,7 @@ namespace LexLS
 
                 \todo Additional tests shouls be implemented (e.g., feasibility of (x0,v0)).
             */
-            void hot_start_related_tests()
+            inline void hot_start_related_tests()
             {
                 // make sure that v0 is not only partially specified
                 bool v0_is_only_partially_specified = false;
@@ -773,7 +773,7 @@ namespace LexLS
                 ----------------------------------------------------------------------------------------------------
                 \endverbatim
             */
-            void phase1()
+            inline void phase1()
             {
                 hot_start_related_tests();
 
@@ -839,7 +839,7 @@ namespace LexLS
 
                \attention x_guess has to be specified by the user.
             */
-            void phase1_v0()
+            inline void phase1_v0()
             {
                 if (!x_guess_is_specified)
                 {
@@ -911,7 +911,7 @@ namespace LexLS
             /**
                 \brief Initializations
             */
-            void initialize()
+            inline void initialize()
             {
                 nIterations     = 0;
                 nActivations    = 0;
@@ -928,7 +928,7 @@ namespace LexLS
             /**
                 \brief Form an LexLSE problem (using the current working set)
             */
-            void formLexLSE()
+            inline void formLexLSE()
             {
                 // obj_info.FirstRowIndex has to be initialized before I start setting CtrType in formLexLSE below
                 for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
@@ -947,7 +947,7 @@ namespace LexLS
             /**
                \brief Form the step (dx,dw) from the current iterate and compute the step length StepLength
             */
-            void formStep()
+            inline void formStep()
             {
                 dx = lexlse.get_x() - x;
                 for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
@@ -966,10 +966,10 @@ namespace LexLS
 
                \return true if there are blocking constraints
             */
-            bool checkBlockingConstraints(Index &ObjIndexBlocking,
-                                          Index &CtrIndexBlocking,
-                                          ConstraintActivationType &CtrTypeBlocking,
-                                          RealScalar &alpha)
+            inline bool checkBlockingConstraints(Index &ObjIndexBlocking,
+                                                 Index &CtrIndexBlocking,
+                                                 ConstraintActivationType &CtrTypeBlocking,
+                                                 RealScalar &alpha)
             {
                 alpha = 1;
                 for (Index ObjIndex=0; ObjIndex<nObj; ObjIndex++)
@@ -993,7 +993,7 @@ namespace LexLS
             /**
                \note Probably this could be done in O(n*log(n))
             */
-            Index findFirstCtrWrongSign(std::vector<ConstraintInfo> &ctr_wrong_sign)
+            inline Index findFirstCtrWrongSign(std::vector<ConstraintInfo> &ctr_wrong_sign)
             {
                 std::vector<ConstraintInfo>::iterator it = ctr_wrong_sign.end();
 
@@ -1007,7 +1007,7 @@ namespace LexLS
                 return --k;
             }
 
-            bool findActiveCtr2Remove(Index &ObjIndex2Remove, Index &CtrIndex2Remove, RealScalar &lambda_wrong_sign)
+            inline bool findActiveCtr2Remove(Index &ObjIndex2Remove, Index &CtrIndex2Remove, RealScalar &lambda_wrong_sign)
             {
                 if (parameters.deactivate_first_wrong_sign)
                 {
@@ -1020,9 +1020,9 @@ namespace LexLS
             }
 
             // remove first ctr with Lambda with wrong sign
-            bool findActiveCtr2Remove_first(Index &ObjIndex2Remove,
-                                            Index &CtrIndex2Remove,
-                                            RealScalar &lambda_wrong_sign)
+            inline bool findActiveCtr2Remove_first(Index &ObjIndex2Remove,
+                                                   Index &CtrIndex2Remove,
+                                                   RealScalar &lambda_wrong_sign)
             {
                 std::vector<ConstraintInfo> ctr_wrong_sign;
 
@@ -1074,7 +1074,7 @@ namespace LexLS
 
                \return true if there are constraints to remove
             */
-            bool findActiveCtr2Remove_largest(Index &ObjIndex2Remove, Index &CtrIndex2Remove, RealScalar &lambda_wrong_sign)
+            inline bool findActiveCtr2Remove_largest(Index &ObjIndex2Remove, Index &CtrIndex2Remove, RealScalar &lambda_wrong_sign)
             {
                 bool DescentDirectionExists = false;
                 int ObjIndex2Remove_int;
@@ -1103,7 +1103,7 @@ namespace LexLS
             /**
                \brief One iteration of an active-set method
             */
-            OperationType verifyWorkingSet()
+            inline OperationType verifyWorkingSet()
             {
                 // ----------------------------------------------------------------------
                 Index ObjIndex2Manipulate = 0, CtrIndex2Manipulate = 0; // initialize so that the compiler doesn't complain
@@ -1235,7 +1235,7 @@ namespace LexLS
 
                \note this file makes sence only when using phase1() (and not phase1_v0())
             */
-            void outputStuff(const char *file_name, OperationType operation, bool flag_clear_file = false)
+            inline void outputStuff(const char *file_name, OperationType operation, bool flag_clear_file = false)
             {
                 // clear the content of the file
                 if (flag_clear_file)
