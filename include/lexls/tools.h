@@ -2,6 +2,8 @@
  * Copyright 2013-2021 INRIA
  */
 
+#pragma once
+
 #include <Eigen/Core>
 #include <stdexcept>
 #include <vector>

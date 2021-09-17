@@ -2,8 +2,7 @@
  * Copyright 2013-2021 INRIA
  */
 
-#ifndef CYCLING
-#define CYCLING
+#pragma once
 
 namespace LexLS
 {
@@ -107,5 +106,3 @@ namespace LexLS
     } // END namespace internal
 
 } // END namespace LexLS
-
-#endif // CYCLING

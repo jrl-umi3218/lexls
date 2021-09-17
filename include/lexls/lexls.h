@@ -6,8 +6,7 @@
   API for internal::LexLSE and internal::LexLSI
 */
 
-#ifndef LEXLSE_API
-#define LEXLSE_API
+#pragma once
 
 namespace LexLS
 {
@@ -68,5 +67,3 @@ namespace LexLS
     };
 
 }
-
-#endif // LEXLSE_API

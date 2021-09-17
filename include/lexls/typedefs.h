@@ -2,8 +2,7 @@
  * Copyright 2013-2021 INRIA
  */
 
-#ifndef TYPEDEFS
-#define TYPEDEFS
+#pragma once
 
 #include <iostream>
 #include <vector>
@@ -684,5 +683,3 @@ namespace LexLS
     // ----------------------------------------------------------------------------------------------------------
 
 } // END namespace LexLS
-
-#endif // TYPEDEFS

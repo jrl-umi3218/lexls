@@ -2,8 +2,7 @@
  * Copyright 2013-2021 INRIA
  */
 
-#ifndef UTILITY
-#define UTILITY
+#pragma once
 
 #include <lexls/typedefs.h>
 
@@ -63,5 +62,3 @@ namespace LexLS
     // ----------------------------------------------------------------------------------------------------------
 
 } // END namespace LexLS
-
-#endif // UTILITY

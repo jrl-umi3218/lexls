@@ -2,8 +2,7 @@
  * Copyright 2013-2021 INRIA
  */
 
-#ifndef WORKING_SET
-#define WORKING_SET
+#pragma once
 
 #include <lexls/typedefs.h>
 
@@ -258,5 +257,3 @@ namespace LexLS
     } // END namespace internal
 
 } // END namespace LexLS
-
-#endif // WORKING_SET

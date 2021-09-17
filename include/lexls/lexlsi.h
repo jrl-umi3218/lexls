@@ -2,8 +2,7 @@
  * Copyright 2013-2021 INRIA
  */
 
-#ifndef LEXLSI
-#define LEXLSI
+#pragma once
 
 #include <lexls/lexlse.h>
 #include <lexls/objective.h>
@@ -1479,5 +1478,3 @@ namespace LexLS
     } // END namespace internal
 
 } // END namespace LexLS
-
-#endif // LEXLSE

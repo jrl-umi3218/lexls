@@ -2,8 +2,7 @@
  * Copyright 2013-2021 INRIA
  */
 
-#ifndef OBJECTIVE
-#define OBJECTIVE
+#pragma once
 
 #include <lexls/utility.h>
 #include <lexls/workingset.h>
@@ -978,5 +977,3 @@ namespace LexLS
     } // END namespace internal
 
 } // END namespace LexLS
-
-#endif // OBJECTIVE
