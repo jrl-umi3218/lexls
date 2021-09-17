@@ -694,7 +694,7 @@ namespace LexLS
             }
 
             /**
-               \brief Returns the index storde in var_index[k]
+               \brief Returns the index stored in var_index[k]
             */
             inline Index getVarIndex(Index k) const
             {

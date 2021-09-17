@@ -456,7 +456,7 @@ void mexFunction(int num_output, mxArray *output[], int num_input, const mxArray
         if ((active_set_cell != NULL) && (!mxIsEmpty(active_set_cell)))
         {
             failIfTrue(!mxIsCell(active_set_cell), "Active set must be of 'cell' type.");
-            failIfTrue(mxGetNumberOfElements(active_set_cell) != num_obj, "Wrong dimention of the active set.");
+            failIfTrue(mxGetNumberOfElements(active_set_cell) != num_obj, "Wrong dimension of the active set.");
 
             for (unsigned int i = 0; i < num_obj; ++i)
             {
@@ -503,7 +503,7 @@ void mexFunction(int num_output, mxArray *output[], int num_input, const mxArray
         if ((residuals_cell != NULL) && (!mxIsEmpty(residuals_cell)))
         {
             failIfTrue(!mxIsCell(residuals_cell), "Residuals must be of 'cell' type.");
-            failIfTrue(mxGetNumberOfElements(residuals_cell) != num_obj, "Wrong dimention of the residuals.");
+            failIfTrue(mxGetNumberOfElements(residuals_cell) != num_obj, "Wrong dimension of the residuals.");
 
             for (unsigned int i = 0; i < num_obj; ++i)
             {

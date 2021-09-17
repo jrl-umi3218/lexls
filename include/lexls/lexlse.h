@@ -28,7 +28,7 @@ namespace LexLS
             approaches (and only then to start changing things like this).
 
             \todo to have a custom implementation of applyOnTheLeft(householderSequence (no need to
-            realocate workspace every time)
+            reallocate workspace every time)
         */
         class LexLSE
         {
@@ -127,7 +127,7 @@ namespace LexLS
                 Index FirstRowIndexNextObjective; // The first index of the next objective
 
                 // --------------------------------------------------------------------------
-                // Handling of fixed valiables (apply row & column permutations)
+                // Handling of fixed variables (apply row & column permutations)
                 // --------------------------------------------------------------------------
                 if (nVarFixed > 0) // if there are fixed variables
                 {
@@ -284,7 +284,7 @@ namespace LexLS
                         if (ObjRank > 0)
                         {
                             // -----------------------------------------------------------------------
-                            // conditioninig estimation
+                            // conditioning estimation
                             // -----------------------------------------------------------------------
                             dVectorType rhs_tmp = LOD.col(nVar).segment(FirstRowIndex, ObjRank);
 
@@ -602,10 +602,10 @@ namespace LexLS
             }
 
             /**
-                \brief Computes the sensitivity of objective ObjIndex with respect to (small) variatoins
+                \brief Computes the sensitivity of objective ObjIndex with respect to (small) variations
                 of the constraints involved in the LexLSE problem
 
-                \note Upon exit, the lagrange multipliers associated with objective ObjIndex can be accessed using
+                \note Upon exit, the Lagrange multipliers associated with objective ObjIndex can be accessed using
                 dWorkspace.head(nVarFixed + nLambda)
             */
             inline bool ObjectiveSensitivity(Index ObjIndex,
@@ -917,7 +917,7 @@ namespace LexLS
                \param[in]     ObjDim         Number of constraints.
                \param[in,out] maxAbsValue    Largest (in absolute value) multiplier with wrong sign
                \param[in,out] CtrIndex       Index of largest (in absolute value) multiplier with wrong sign.
-               \param[in]     lambda         Vector of lagrange multipliers.
+               \param[in]     lambda         Vector of Lagrange multipliers.
                \param[in]     tol_wrong_sign_lambda   Absolute value of Lagrange multiplier to be considered with "wrong" sign.
                \param[in]     tol_correct_sign_lambda Absolute value of Lagrange multiplier to be considered with "correct" sign.
 
@@ -925,7 +925,7 @@ namespace LexLS
 
                \note Using tol_correct_sign_lambda = 0 is not a good idea in general. This might lead to
                situations where in order to decrease the norm of the residual of a higher-level task
-               with e.g., 1e-12, the solver might worsen the nor of the residual of lower-level taks
+               with e.g., 1e-12, the solver might worsen the norm of the residual of lower-level tasks
                with a lot more (e.g., 10).
 
                \return true if there are multipliers with a wrong sign whose absolute value is larger
@@ -1555,7 +1555,7 @@ namespace LexLS
                \brief Form the residuals (A*x-RHS) through the LOD. The residual of the
                fixed variables is always zero (and is not included).
 
-               \note This function could compute an incorect residual depending on parameters.tol_linear_dependence.
+               \note This function could compute an incorrect residual depending on parameters.tol_linear_dependence.
             */
             inline dVectorType &get_v()
             {
@@ -1667,7 +1667,7 @@ namespace LexLS
 
                 \note Some of the fields have already been initialized in the constructors but it is
                 necessary to initialize them again here. This is necessary when an instance of the class
-                LexLSE is used to solve multiplie problems (as it is done in LexLSI).
+                LexLSE is used to solve multiple problems (as it is done in LexLSI).
             */
             inline void initialize()
             {
@@ -1768,7 +1768,7 @@ namespace LexLS
                 \todo IMPORTANT: if we don't enter here at iteration i (because the i-th objective
                 doesn't have a single pivot), we have to set X_mu.col(i) = X_mu.col(i-1).
 
-                \todo If I endup passig ObjIndex as input argument, there is no need to pass
+                \todo If I end up passing ObjIndex as input argument, there is no need to pass
                 FirstRowIndex, FirstColIndex and ObjRank
             */
             inline void regularize_tikhonov_1_test(Index FirstRowIndex,
@@ -1931,7 +1931,7 @@ namespace LexLS
                 X_mu_k = P.transpose() * X_mu_k;
                 X_mu_k *= -aRegularizationFactor * aRegularizationFactor;
 
-                // last index of interes for objective ObjIndex
+                // last index of interest for objective ObjIndex
                 Index last_col_index = obj_info[ObjIndex].first_col_index + obj_info[ObjIndex].rank - 1;
                 Index remain_col;
 
@@ -1971,7 +1971,7 @@ namespace LexLS
                 X_mu_k = P.transpose()*X_mu_k;
                 X_mu_k *= -aRegularizationFactor*aRegularizationFactor;
 
-                // last index of interes for objective ObjIndex
+                // last index of interest for objective ObjIndex
                 Index last_col_index = obj_info[ObjIndex].first_col_index + obj_info[ObjIndex].rank - 1;
                 Index remain_col;
 
@@ -2820,9 +2820,9 @@ namespace LexLS
                 stored in Householder factored form below the main diagonal of the leading triangular
                 matrices of each objective, while the last column contains (LQ)^{-1}*RHS.
 
-                \note The row-size of LOD is set to the the maximum number of envisioned constraints
-                (excluding "fixing constraints"). This is usefull in the context of LexLSI where one
-                instance of LexLSE is used to solve problems with different dimensoins.
+                \note The row-size of LOD is set to the maximum number of envisioned constraints
+                (excluding "fixing constraints"). This is useful in the context of LexLSI where one
+                instance of LexLSE is used to solve problems with different dimensions.
             */
             dMatrixType LOD;
 

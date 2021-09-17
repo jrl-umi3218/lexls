@@ -69,13 +69,13 @@ namespace LexLS
                 \note This function will be a part of the interface level and its purpose is to provide
                 the initial working set.
 
-                \todo Move all veification of inputs to the API level
+                \todo Move all verification of inputs to the API level
             */
             inline void api_activate(Index ObjIndex, Index CtrIndex, ConstraintActivationType type)
             {
                 if (!objectives[ObjIndex].isActive(CtrIndex))
                 {
-                    // which constraints are considered as CTR_ACTIVE_EQ is determined internaly
+                    // which constraints are considered as CTR_ACTIVE_EQ is determined internally
                     if (type == CTR_ACTIVE_LB || type == CTR_ACTIVE_UB)
                     {
                         activate(ObjIndex, CtrIndex, type, false);
@@ -498,7 +498,7 @@ namespace LexLS
             }
 
             /**
-                \brief Outputs the Lagrange multipliers associated to all constraintes involved in all objectives
+                \brief Outputs the Lagrange multipliers associated to all constraints involved in all objectives
 
                 \note The order of constraints is like the one provided by the user (in the problem definition)
             */
@@ -534,7 +534,7 @@ namespace LexLS
 
                     //lexlse.ObjectiveSensitivity(ObjIndex);
 
-                    // test with the function that is actually used within the ative-set method
+                    // test with the function that is actually used within the active-set method
                     lexlse.ObjectiveSensitivity(ObjIndex, CtrIndex2Remove, ObjIndex2Remove,
                                                 parameters.tol_wrong_sign_lambda, parameters.tol_correct_sign_lambda,
                                                 maxAbsValue);
@@ -706,7 +706,7 @@ namespace LexLS
             /**
                 \brief Some tests on the validity of hot-start (currently only related to advanced initialization)
 
-                \todo Additional tests shouls be implemented (e.g., feasibility of (x0,v0)).
+                \todo Additional tests should be implemented (e.g., feasibility of (x0,v0)).
             */
             inline void hot_start_related_tests()
             {
@@ -935,7 +935,7 @@ namespace LexLS
             }
 
             /**
-               \brief Form the step (dx,dw) from the current iterate and compute the step length StepLength
+               \brief Form the step (dx,dv) from the current iterate and compute the step length StepLength
             */
             inline void formStep()
             {
@@ -1220,7 +1220,7 @@ namespace LexLS
             /**
                \brief Output stuff
 
-               \note this file makes sence only when using phase1() (and not phase1_v0())
+               \note this file makes sense only when using phase1() (and not phase1_v0())
             */
             inline void outputStuff(const char *file_name, OperationType operation, bool flag_clear_file = false)
             {
@@ -1340,7 +1340,7 @@ namespace LexLS
                 \brief Number of decision variables #x
 
                 \note If we consider the problem: minimize_{x,w} norm(w,2)^2, subject to A*x - b = w,
-                then clearly w is a decision variable as well, but we could always think of this propblem in
+                then clearly w is a decision variable as well, but we could always think of this problem in
                 terms of: minimize_{x} norm(A*x-b,2)^2.
             */
             Index nVar;
@@ -1423,14 +1423,14 @@ namespace LexLS
             // ==================================================================
 
             /**
-                \brief Provides information about the reson for termination
+                \brief Provides information about the reason for termination
             */
             TerminationStatus status;
 
             /**
                 \brief Handles the lexicographic least-squares problem with equality constraints
 
-                \note This instance of LexLSE is used to solve multiplie problems - it is initialized
+                \note This instance of LexLSE is used to solve multiple problems - it is initialized
                 with the largest expected problem dimensions.
             */
             LexLSE lexlse;

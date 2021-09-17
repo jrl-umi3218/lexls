@@ -189,7 +189,7 @@ namespace LexLS
         Index cycling_max_counter;
 
         /**
-         * \brief Ammount of relaxation performed during each attempt to handle cycling
+         * \brief Amount of relaxation performed during each attempt to handle cycling
          */
         RealScalar cycling_relax_step;
 
@@ -411,7 +411,7 @@ namespace LexLS
 
         /**
            \brief Used to store the step length when constraint is added and largest (in
-           absolute value) worng lambda when constraint is removed
+           absolute value) wrong lambda when constraint is removed
 
            \note: not used when comparing
         */
@@ -511,7 +511,7 @@ namespace LexLS
 
         /**
            \brief Used to store the step length when constraint is added and largest (in
-           absolute value) worng lambda when constraint is removed
+           absolute value) wrong lambda when constraint is removed
 
            \note: not used when comparing
         */
