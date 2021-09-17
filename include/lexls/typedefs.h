@@ -2,15 +2,14 @@
  * Copyright 2013-2021 INRIA
  */
 
-#ifndef TYPEDEFS
-#define TYPEDEFS
+#pragma once
 
-#include <iostream>
-#include <vector>
-#include <algorithm> // for std::copy
-#include <iterator>  // for std::ostream_iterator
-#include <fstream>
 #include <Eigen/Dense>
+#include <algorithm> // for std::copy
+#include <fstream>
+#include <iostream>
+#include <iterator> // for std::ostream_iterator
+#include <vector>
 
 namespace LexLS
 {
@@ -21,25 +20,24 @@ namespace LexLS
 
     typedef Eigen::Matrix<RealScalar, Eigen::Dynamic, 1> dVectorType;
     typedef Eigen::Matrix<RealScalar, 1, Eigen::Dynamic> dRowVectorType;
-    typedef Eigen::Matrix<     Index, Eigen::Dynamic, 1> iVectorType;
+    typedef Eigen::Matrix<Index, Eigen::Dynamic, 1> iVectorType;
 
-    typedef Eigen::Block<dMatrixType , Eigen::Dynamic, Eigen::Dynamic> dBlockType;
-    typedef Eigen::Block<dMatrixType , Eigen::Dynamic, 1>              dBlockType2Vector;
-    typedef Eigen::VectorBlock<dVectorType, Eigen::Dynamic>            dVectorBlockType;
-
+    typedef Eigen::Block<dMatrixType, Eigen::Dynamic, Eigen::Dynamic> dBlockType;
+    typedef Eigen::Block<dMatrixType, Eigen::Dynamic, 1> dBlockType2Vector;
+    typedef Eigen::VectorBlock<dVectorType, Eigen::Dynamic> dVectorBlockType;
 
     enum RegularizationType
     {
-        REGULARIZATION_NONE = 0,       // 0
-        REGULARIZATION_TIKHONOV,       // 1
-        REGULARIZATION_TIKHONOV_CG,    // 2
-        REGULARIZATION_R,              // 3
-        REGULARIZATION_R_NO_Z,         // 4
-        REGULARIZATION_RT_NO_Z,        // 5
-        REGULARIZATION_RT_NO_Z_CG,     // 6
-        REGULARIZATION_TIKHONOV_1,     // 7
-        REGULARIZATION_TIKHONOV_2,     // 8
-        REGULARIZATION_TEST            // 9
+        REGULARIZATION_NONE = 0,    // 0
+        REGULARIZATION_TIKHONOV,    // 1
+        REGULARIZATION_TIKHONOV_CG, // 2
+        REGULARIZATION_R,           // 3
+        REGULARIZATION_R_NO_Z,      // 4
+        REGULARIZATION_RT_NO_Z,     // 5
+        REGULARIZATION_RT_NO_Z_CG,  // 6
+        REGULARIZATION_TIKHONOV_1,  // 7
+        REGULARIZATION_TIKHONOV_2,  // 8
+        REGULARIZATION_TEST         // 9
     };
 
     /**
@@ -47,9 +45,9 @@ namespace LexLS
     */
     enum TerminationStatus
     {
-        TERMINATION_STATUS_UNKNOWN = -1,     // -1
-        PROBLEM_SOLVED,                      // 0
-        PROBLEM_SOLVED_CYCLING_HANDLING,     // 1
+        TERMINATION_STATUS_UNKNOWN = -1,      // -1
+        PROBLEM_SOLVED,                       // 0
+        PROBLEM_SOLVED_CYCLING_HANDLING,      // 1
         MAX_NUMBER_OF_FACTORIZATIONS_EXCEEDED // 2
     };
 
@@ -58,8 +56,8 @@ namespace LexLS
     */
     enum ObjectiveType
     {
-        GENERAL_OBJECTIVE = 0,    // bl <= A*x - w <= bu, assuming bl <= bu
-        SIMPLE_BOUNDS_OBJECTIVE   // bl <=   x - w <= bu, assuming bl <= bu (only for the objective with highest priority)
+        GENERAL_OBJECTIVE = 0,  // bl <= A*x - w <= bu, assuming bl <= bu
+        SIMPLE_BOUNDS_OBJECTIVE // bl <=   x - w <= bu, assuming bl <= bu (only for the objective with highest priority)
     };
 
     /**
@@ -67,11 +65,11 @@ namespace LexLS
     */
     enum ConstraintActivationType
     {
-        CTR_INACTIVE = 0,        // 0
-        CTR_ACTIVE_LB,           // 1: bl <= A*x - w
-        CTR_ACTIVE_UB,           // 2:       A*x - w <= bu
-        CTR_ACTIVE_EQ,           // 3:       A*x - w  = b
-        CORRECT_SIGN_OF_LAMBDA   // 4: positive if CTR_ACTIVE_UB, negative if CTR_ACTIVE_LB (for internal use)
+        CTR_INACTIVE = 0,      // 0
+        CTR_ACTIVE_LB,         // 1: bl <= A*x - w
+        CTR_ACTIVE_UB,         // 2:       A*x - w <= bu
+        CTR_ACTIVE_EQ,         // 3:       A*x - w  = b
+        CORRECT_SIGN_OF_LAMBDA // 4: positive if CTR_ACTIVE_UB, negative if CTR_ACTIVE_LB (for internal use)
     };
 
     class ParametersLexLSE
@@ -100,12 +98,12 @@ namespace LexLS
          */
         RealScalar variable_regularization_factor;
 
-        ParametersLexLSE()
+        inline ParametersLexLSE()
         {
             setDefaults();
         }
 
-        void print()
+        inline void print()
         {
             printf("tol_linear_dependence          = %e \n", tol_linear_dependence);
             printf("regularization_type            = %d \n", regularization_type);
@@ -114,7 +112,7 @@ namespace LexLS
             printf("\n");
         }
 
-        void setDefaults()
+        inline void setDefaults()
         {
             tol_linear_dependence          = 1e-12;
             max_number_of_CG_iterations    = 10;
@@ -236,12 +234,12 @@ namespace LexLS
         */
         bool deactivate_first_wrong_sign;
 
-        ParametersLexLSI()
+        inline ParametersLexLSI()
         {
             setDefaults();
         }
 
-        void print()
+        inline void print()
         {
             printf("max_number_of_factorizations   = %d \n", max_number_of_factorizations);
             printf("tol_linear_dependence          = %e \n", tol_linear_dependence);
@@ -264,53 +262,51 @@ namespace LexLS
             printf("\n");
         }
 
-        void setDefaults()
+        inline void setDefaults()
         {
-            max_number_of_factorizations   = 200;
+            max_number_of_factorizations = 200;
 
-            tol_linear_dependence          = 1e-12;
-            tol_wrong_sign_lambda          = 1e-08;
-            tol_correct_sign_lambda        = 1e-12;
-            tol_feasibility                = 1e-13;
+            tol_linear_dependence   = 1e-12;
+            tol_wrong_sign_lambda   = 1e-08;
+            tol_correct_sign_lambda = 1e-12;
+            tol_feasibility         = 1e-13;
 
-            cycling_handling_enabled       = false;
-            cycling_max_counter            = 50;
-            cycling_relax_step             = 1e-08;
+            cycling_handling_enabled = false;
+            cycling_max_counter      = 50;
+            cycling_relax_step       = 1e-08;
 
             regularization_type            = REGULARIZATION_NONE;
             max_number_of_CG_iterations    = 10;
             variable_regularization_factor = 0.0;
 
-            modify_x_guess_enabled         = false;
-            modify_type_active_enabled     = false;
-            modify_type_inactive_enabled   = false;
-            set_min_init_ctr_violation     = true;
+            modify_x_guess_enabled       = false;
+            modify_type_active_enabled   = false;
+            modify_type_inactive_enabled = false;
+            set_min_init_ctr_violation   = true;
 
-            use_phase1_v0                  = false;
-            log_working_set_enabled        = false;
+            use_phase1_v0           = false;
+            log_working_set_enabled = false;
 
-            deactivate_first_wrong_sign    = false;
+            deactivate_first_wrong_sign = false;
         }
     };
 
     /**
        \brief A class for handling exceptions
     */
-    class Exception: public std::exception
+    class Exception : public std::exception
     {
     public:
+        inline explicit Exception(const char *message) : ExceptionMessage(message) {}
 
-        explicit Exception(const char *message): ExceptionMessage(message) {}
+        inline ~Exception() throw() {}
 
-        ~Exception() throw() {}
-
-        const char* what() const throw()
+        inline const char *what() const throw()
         {
             return ExceptionMessage.c_str();
         }
 
     private:
-
         std::string ExceptionMessage;
     };
 
@@ -324,53 +320,50 @@ namespace LexLS
     class ConstraintInfo
     {
     public:
-        ConstraintInfo():
-            obj_index(0),
-            ctr_index(0){}
+        inline ConstraintInfo() : obj_index(0), ctr_index(0) {}
 
-        ConstraintInfo(int obj_index_, int ctr_index_)
+        inline ConstraintInfo(int obj_index_, int ctr_index_)
         {
             obj_index = obj_index_;
             ctr_index = ctr_index_;
         }
 
-        void increment_obj_index(int increment)
+        inline void increment_obj_index(int increment)
         {
             obj_index += increment;
         }
 
-        void set_ctr_index(int ctr_index_)
+        inline void set_ctr_index(int ctr_index_)
         {
             ctr_index = ctr_index_;
         }
 
-        int get_obj_index()
+        inline int get_obj_index()
         {
             return obj_index;
         }
 
-        int get_ctr_index()
+        inline int get_ctr_index()
         {
             return ctr_index;
         }
 
-        void print() const
+        inline void print() const
         {
             printf("obj_index = %d, ctr_index = %d \n", obj_index, ctr_index);
         }
 
-        friend bool operator== (const ConstraintInfo &c1, const ConstraintInfo &c2);
+        friend bool operator==(const ConstraintInfo &c1, const ConstraintInfo &c2);
 
     private:
         int obj_index;
         int ctr_index;
     };
 
-    bool operator== (const ConstraintInfo &c1, const ConstraintInfo &c2)
+    inline bool operator==(const ConstraintInfo &c1, const ConstraintInfo &c2)
     {
         bool isEqual = false;
-        if ((c1.obj_index == c2.obj_index) &&
-            (c1.ctr_index == c2.ctr_index))
+        if ((c1.obj_index == c2.obj_index) && (c1.ctr_index == c2.ctr_index))
         {
             isEqual = true;
         }
@@ -378,24 +371,23 @@ namespace LexLS
         return isEqual;
     }
 
-
     /**
         \brief A class used to store information related to the working set.
     */
     class WorkingSetLogEntry
     {
     public:
+        WorkingSetLogEntry() {}
 
-        WorkingSetLogEntry(){}
-
-        WorkingSetLogEntry(Index obj_index_, Index ctr_index_, ConstraintActivationType ctr_type_,
-                           RealScalar alpha_or_lambda_, Index rank_):
-            obj_index(obj_index_),
-            ctr_index(ctr_index_),
-            ctr_type(ctr_type_),
-            alpha_or_lambda(alpha_or_lambda_),
-            rank(rank_),
-            cycling_detected(false){}
+        WorkingSetLogEntry(Index obj_index_,
+                           Index ctr_index_,
+                           ConstraintActivationType ctr_type_,
+                           RealScalar alpha_or_lambda_,
+                           Index rank_)
+        : obj_index(obj_index_), ctr_index(ctr_index_), ctr_type(ctr_type_), alpha_or_lambda(alpha_or_lambda_),
+          rank(rank_), cycling_detected(false)
+        {
+        }
 
         /**
             \brief Index of objective
@@ -436,7 +428,6 @@ namespace LexLS
         bool cycling_detected;
     };
 
-
     /**
         \brief A class used to identify a constraint.
 
@@ -445,35 +436,35 @@ namespace LexLS
     class ConstraintIdentifier
     {
     public:
+        inline ConstraintIdentifier() {}
 
-        ConstraintIdentifier(){}
+        inline ConstraintIdentifier(Index obj_index_, Index ctr_index_, ConstraintActivationType ctr_type_)
+        : obj_index(obj_index_), ctr_index(ctr_index_), ctr_type(ctr_type_)
+        {
+        }
 
-        ConstraintIdentifier(Index obj_index_, Index ctr_index_, ConstraintActivationType ctr_type_):
-            obj_index(obj_index_),
-            ctr_index(ctr_index_),
-            ctr_type(ctr_type_) {}
+        inline ConstraintIdentifier(Index obj_index_,
+                                    Index ctr_index_,
+                                    ConstraintActivationType ctr_type_,
+                                    RealScalar alpha_or_lambda_)
+        : obj_index(obj_index_), ctr_index(ctr_index_), ctr_type(ctr_type_), alpha_or_lambda(alpha_or_lambda_),
+          cycling_detected(false)
+        {
+        }
 
-        ConstraintIdentifier(Index obj_index_, Index ctr_index_, ConstraintActivationType ctr_type_,
-                             RealScalar alpha_or_lambda_):
-            obj_index(obj_index_),
-            ctr_index(ctr_index_),
-            ctr_type(ctr_type_),
-            alpha_or_lambda(alpha_or_lambda_),
-            cycling_detected(false) {}
-
-        void set(Index obj_index_, Index ctr_index_, ConstraintActivationType ctr_type_)
+        inline void set(Index obj_index_, Index ctr_index_, ConstraintActivationType ctr_type_)
         {
             obj_index = obj_index_;
             ctr_index = ctr_index_;
             ctr_type  = ctr_type_;
         }
 
-        bool operator==(const ConstraintIdentifier& ci)
+        inline bool operator==(const ConstraintIdentifier &ci)
         {
             return compare(ci);
         }
 
-        bool compare(const ConstraintIdentifier& ci)
+        inline bool compare(const ConstraintIdentifier &ci)
         {
             if (obj_index != ci.obj_index)
             {
@@ -493,11 +484,10 @@ namespace LexLS
             return true;
         }
 
-        void print()
+        inline void print()
         {
             printf("type = %d, obj = %2d, ind = %3d \n", ctr_type, obj_index, ctr_index);
         }
-
 
         /**
             \brief Index of objective
@@ -533,7 +523,6 @@ namespace LexLS
         bool cycling_detected;
     };
 
-
     // ----------------------------------------------------------------------------------------------------------
     // internal
     // ----------------------------------------------------------------------------------------------------------
@@ -555,21 +544,21 @@ namespace LexLS
         class GivensRotation
         {
         public:
-            GivensRotation(){}
+            inline GivensRotation() {}
 
-            GivensRotation(RealScalar a, RealScalar b, Index i_, Index j_)
+            inline GivensRotation(RealScalar a, RealScalar b, Index i_, Index j_)
             {
                 set(a, b, i_, j_);
             }
 
-            void set(RealScalar a, RealScalar b, Index i_, Index j_)
+            inline void set(RealScalar a, RealScalar b, Index i_, Index j_)
             {
-                G.makeGivens(a,b);
+                G.makeGivens(a, b);
                 i = i_;
                 j = j_;
             }
 
-            void print()
+            inline void print()
             {
                 printf("i = % d, j = % d, c = % f, s = % f \n", i, j, G.c(), G.s());
             }
@@ -585,34 +574,34 @@ namespace LexLS
         class GivensRotationSequence
         {
         public:
-            GivensRotationSequence(){}
+            inline GivensRotationSequence() {}
 
-            GivensRotationSequence(Index dim)
+            inline GivensRotationSequence(Index dim)
             {
                 seq.reserve(dim);
             }
 
-            void push(GivensRotation& G)
+            inline void push(GivensRotation &G)
             {
                 seq.push_back(G);
             }
 
-            Eigen::JacobiRotation<RealScalar>& get(Index k)
+            inline Eigen::JacobiRotation<RealScalar> &get(Index k)
             {
                 return seq[k].G;
             }
 
-            Index get_i(Index k)
+            inline Index get_i(Index k)
             {
                 return seq[k].i;
             }
 
-            Index get_j(Index k)
+            inline Index get_j(Index k)
             {
                 return seq[k].j;
             }
 
-            Index size()
+            inline Index size()
             {
                 return seq.size();
             }
@@ -629,20 +618,17 @@ namespace LexLS
         class ObjectiveInfo
         {
         public:
-
-            ObjectiveInfo():
-                dim(0),
-                rank(0),
-                first_row_index(0),
-                first_col_index(0),
-                regularization_factor(0.0){}
+            inline ObjectiveInfo() : dim(0), rank(0), first_row_index(0), first_col_index(0), regularization_factor(0.0)
+            {
+            }
 
             /**
                \brief Print objective information.
             */
-            void print() const
+            inline void print() const
             {
-                printf("first_row_index = %d, first_col_index = %d, dim = %d, rank = %d, regularization_factor = %f \n", first_row_index, first_col_index, dim, rank, regularization_factor);
+                printf("first_row_index = %d, first_col_index = %d, dim = %d, rank = %d, regularization_factor = %f \n",
+                       first_row_index, first_col_index, dim, rank, regularization_factor);
             }
 
             /*
@@ -684,5 +670,3 @@ namespace LexLS
     // ----------------------------------------------------------------------------------------------------------
 
 } // END namespace LexLS
-
-#endif // TYPEDEFS

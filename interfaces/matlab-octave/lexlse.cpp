@@ -2,41 +2,34 @@
  * Copyright 2013-2021 INRIA
  */
 
-#include <vector>
 #include <cmath>
 #include <cstdarg>
+#include <vector>
 
-#include <stdint.h>
+#include <lexls/lexlse.h>
+#include <lexls/typedefs.h>
 #include <mex.h>
-#include <typedefs.h>
-#include <lexlse.h>
-
+#include <stdint.h>
 
 #include "lexls_common.h"
 
-
-const int MIN_INPUTS = 1;
-const int MAX_INPUTS = 2;
-const int MIN_OUTPUTS = 1;
-const int MAX_OUTPUTS = 3;
+const int MIN_INPUTS                  = 1;
+const int MAX_INPUTS                  = 2;
+const int MIN_OUTPUTS                 = 1;
+const int MAX_OUTPUTS                 = 3;
 const int MIN_NUMBER_OF_FIELDS_IN_OBJ = 2;
-
-
 
 /**
  * @brief The main function.
  */
-void mexFunction( int num_output, mxArray *output[],
-                  int num_input, const mxArray *input[])
+void mexFunction(int num_output, mxArray *output[], int num_input, const mxArray *input[])
 {
-    checkInputOutput(num_output, output, num_input, input, 
-                     MIN_OUTPUTS, MAX_OUTPUTS, MIN_INPUTS, MAX_INPUTS,
+    checkInputOutput(num_output, output, num_input, input, MIN_OUTPUTS, MAX_OUTPUTS, MIN_INPUTS, MAX_INPUTS,
                      MIN_NUMBER_OF_FIELDS_IN_OBJ);
 
-// parameters of the solver
+    // parameters of the solver
     LexLS::ParametersLexLSE lexlse_parameters;
     lexlse_parameters.setDefaults();
-
 
     bool is_variables_fixing_enabled = false;
 
@@ -45,79 +38,62 @@ void mexFunction( int num_output, mxArray *output[],
     bool is_regularization_set = false;
     std::vector<double> regularization_factors;
 
-// parse parameters
+    // parse parameters
 
     if (num_input == 2)
     {
         const mxArray *options_struct = input[1];
 
-
         // ================================================
         // parse options
 
-        getOptionDouble(&lexlse_parameters.tol_linear_dependence, 
-                        options_struct, 
-                        "tol_linear_dependence");
-        
-        getOptionBool(&is_variables_fixing_enabled,    
-                      options_struct, 
-                      "enable_fixed_variables");
+        getOptionDouble(&lexlse_parameters.tol_linear_dependence, options_struct, "tol_linear_dependence");
 
-        is_regularization_set = getOptionArray( regularization_factors, 
-                                                mxGetNumberOfElements (input[0]),
-                                                options_struct, 
-                                                "regularization_factors");
+        getOptionBool(&is_variables_fixing_enabled, options_struct, "enable_fixed_variables");
 
-        getOptionUnsignedInteger(&get_least_norm_solution, 
-                            options_struct, 
-                            "get_least_norm_solution");
+        is_regularization_set = getOptionArray(regularization_factors, mxGetNumberOfElements(input[0]), options_struct,
+                                               "regularization_factors");
+
+        getOptionUnsignedInteger(&get_least_norm_solution, options_struct, "get_least_norm_solution");
 
         unsigned int regularization_type = 0;
-        if (getOptionUnsignedInteger( &regularization_type, 
-                          options_struct, 
-                          "regularization_type"))
+        if (getOptionUnsignedInteger(&regularization_type, options_struct, "regularization_type"))
         {
-            lexlse_parameters.regularization_type = static_cast <LexLS::RegularizationType> (regularization_type);
+            lexlse_parameters.regularization_type = static_cast<LexLS::RegularizationType>(regularization_type);
         }
 
-        getOptionUnsignedInteger(&lexlse_parameters.max_number_of_CG_iterations, 
-                                 options_struct, 
+        getOptionUnsignedInteger(&lexlse_parameters.max_number_of_CG_iterations, options_struct,
                                  "max_number_of_CG_iterations");
 
-        getOptionDouble(&lexlse_parameters.variable_regularization_factor, 
-                        options_struct, 
+        getOptionDouble(&lexlse_parameters.variable_regularization_factor, options_struct,
                         "variable_regularization_factor");
 
         // ================================================
         // check provided options
 
         /// @todo This check should probably go to the solver interface
-        if ( 
-                ((lexlse_parameters.regularization_type == LexLS::REGULARIZATION_NONE) && (is_regularization_set)) ||
-                ((lexlse_parameters.regularization_type != LexLS::REGULARIZATION_NONE) && (!is_regularization_set))
-           )
+        if (((lexlse_parameters.regularization_type == LexLS::REGULARIZATION_NONE) && (is_regularization_set))
+            || ((lexlse_parameters.regularization_type != LexLS::REGULARIZATION_NONE) && (!is_regularization_set)))
         {
             mexWarnMsgTxt("Both regularization type and regularization factors must be specified.");
         }
     }
 
-// parse objectives
+    // parse objectives
 
     const mxArray *objectives = input[0];
 
-    LexLS::Index num_obj = mxGetNumberOfElements (objectives);
+    LexLS::Index num_obj                     = mxGetNumberOfElements(objectives);
     LexLS::Index number_of_normal_objectives = num_obj;
-    LexLS::Index index_first_normal_obj = 0;
+    LexLS::Index index_first_normal_obj      = 0;
 
     mxArray *fixed_var_i = NULL;
     mxArray *fixed_var_b = NULL;
-
 
     if (is_variables_fixing_enabled)
     { // fixed variables
         mxArray *A = getObjectiveMatrix(objectives, 0, "A");
         mxArray *b = getObjectiveMatrix(objectives, 0, "b");
-            
 
         // check A and b
         int num_rows = mxGetM(A);
@@ -133,7 +109,6 @@ void mexFunction( int num_output, mxArray *output[],
         failIfTrue(num_obj == 1, "Problems consisting of one level of fixed variables are not supported.");
     }
 
-
     LexLS::Index num_var = 0;
     int total_num_constr = 0;
 
@@ -142,9 +117,7 @@ void mexFunction( int num_output, mxArray *output[],
     num_constr.resize(number_of_normal_objectives);
     constraints.resize(number_of_normal_objectives);
 
-
-    for (LexLS::Index i = index_first_normal_obj, index_obj = 0; 
-         index_obj < number_of_normal_objectives; 
+    for (LexLS::Index i = index_first_normal_obj, index_obj = 0; index_obj < number_of_normal_objectives;
          ++index_obj, ++i)
     {
         mxArray *A = getObjectiveMatrix(objectives, i, "A");
@@ -162,19 +135,16 @@ void mexFunction( int num_output, mxArray *output[],
         checkInputMatrixSize(A, num_constr[index_obj], num_var, i, "A");
         checkInputMatrixSize(b, num_constr[index_obj], 1, i, "b");
 
-
         // form Ab = [A, b]
         // remember objective
         constraints[index_obj] = catenateMatrices(A, b);
     }
 
-
-// initialize solver
+    // initialize solver
     try
-    { 
+    {
         LexLS::internal::LexLSE lexlse(num_var, number_of_normal_objectives, num_constr.data());
         lexlse.setParameters(lexlse_parameters);
-
 
         // fixed variables
         if (is_variables_fixing_enabled)
@@ -184,7 +154,7 @@ void mexFunction( int num_output, mxArray *output[],
             lexlse.setFixedVariablesCount(fixed_var_num);
             for (int i = 0; i < fixed_var_num; ++i)
             {
-                LexLS::Index index = static_cast <int> (round(mxGetPr(fixed_var_i)[i])) - 1;
+                LexLS::Index index = static_cast<int>(round(mxGetPr(fixed_var_i)[i])) - 1;
                 //if ((index < 0) || (index > num_var))
                 if (index > num_var)
                 {
@@ -202,44 +172,36 @@ void mexFunction( int num_output, mxArray *output[],
             }
         }
 
-
-
         // constraints
         for (LexLS::Index i = 0; i < number_of_normal_objectives; ++i)
         {
-            lexlse.setData(
-                i, 
-                Eigen::Map<LexLS::dMatrixType>(
-                    mxGetPr(constraints[i]), 
-                    num_constr[i], 
-                    num_var + 1));
+            lexlse.setData(i, Eigen::Map<LexLS::dMatrixType>(mxGetPr(constraints[i]), num_constr[i], num_var + 1));
         }
-
 
         // solve the problem
         lexlse.factorize();
 
-        if (get_least_norm_solution == 1) 
+        if (get_least_norm_solution == 1)
         {
             lexlse.solveLeastNorm_1();
         }
-        else if (get_least_norm_solution == 2) 
+        else if (get_least_norm_solution == 2)
         {
             lexlse.solveLeastNorm_2();
-        }        
-        else if (get_least_norm_solution == 3) 
+        }
+        else if (get_least_norm_solution == 3)
         {
             lexlse.solveLeastNorm_3();
-        }        
+        }
         else
         {
             lexlse.solve();
         }
-        
+
         // output solution
-        LexLS::dVectorType& x = lexlse.get_x();
-        output[0] = mxCreateDoubleMatrix(num_var, 1, mxREAL);
-        double *x_out = mxGetPr(output[0]);
+        LexLS::dVectorType &x = lexlse.get_x();
+        output[0]             = mxCreateDoubleMatrix(num_var, 1, mxREAL);
+        double *x_out         = mxGetPr(output[0]);
         for (LexLS::Index i = 0; i < num_var; ++i)
         {
             x_out[i] = x(i);
@@ -248,27 +210,27 @@ void mexFunction( int num_output, mxArray *output[],
         // output additional information
         if (num_output >= 2)
         {
-            int num_info_fields = 1; 
-            const char *info_field_names[] = {"status"}; 
+            int num_info_fields            = 1;
+            const char *info_field_names[] = {"status"};
 
             output[1] = mxCreateStructMatrix(1, 1, num_info_fields, info_field_names);
 
-            mxArray *info_status = mxCreateNumericMatrix(1, 1, mxINT32_CLASS, mxREAL);
-            ((INT32_T *) mxGetData (info_status))[0] = STATUS_OK;
+            mxArray *info_status                   = mxCreateNumericMatrix(1, 1, mxINT32_CLASS, mxREAL);
+            ((INT32_T *)mxGetData(info_status))[0] = STATUS_OK;
 
-            mxSetField (output[1], 0, "status", info_status);
+            mxSetField(output[1], 0, "status", info_status);
         }
 
         // output residual
         if (num_output >= 3)
         {
-            LexLS::dVectorType& w = lexlse.get_v();
+            LexLS::dVectorType &w = lexlse.get_v();
 
-            output[2] = mxCreateCellMatrix(number_of_normal_objectives, 1);
+            output[2]   = mxCreateCellMatrix(number_of_normal_objectives, 1);
             int index_w = 0;
             for (LexLS::Index i = 0; i < number_of_normal_objectives; ++i)
             {
-                mxArray * wi = mxCreateDoubleMatrix(num_constr[i], 1, mxREAL);
+                mxArray *wi = mxCreateDoubleMatrix(num_constr[i], 1, mxREAL);
                 for (LexLS::Index j = 0; j < num_constr[i]; ++j)
                 {
                     mxGetPr(wi)[j] = w(index_w);
@@ -280,6 +242,6 @@ void mexFunction( int num_output, mxArray *output[],
     }
     catch (std::exception &e)
     {
-        mexErrMsgTxt (e.what());
+        mexErrMsgTxt(e.what());
     }
 }
