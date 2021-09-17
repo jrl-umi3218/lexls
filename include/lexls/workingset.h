@@ -16,7 +16,6 @@ namespace LexLS
         class WorkingSet
         {
         public:
-
             /**
                 \brief Resize and initialize the working set
 
@@ -25,10 +24,10 @@ namespace LexLS
             inline void resize(Index dim)
             {
                 // initialize all constraints as inactive
-                all_type.resize(dim,CTR_INACTIVE);
+                all_type.resize(dim, CTR_INACTIVE);
 
                 inactive.resize(dim);
-                for (Index CtrIndex=0; CtrIndex<dim; CtrIndex++)
+                for (Index CtrIndex = 0; CtrIndex < dim; CtrIndex++)
                 {
                     inactive[CtrIndex] = CtrIndex;
                 }
@@ -89,7 +88,8 @@ namespace LexLS
                 // ----------------------------------------------------------------------------
                 // remove the constraint with index CtrIndexActive in the working set
                 // ----------------------------------------------------------------------------
-                active.erase(active.begin() + CtrIndexActive); // we want to preserve the order of the remaining constraints
+                active.erase(active.begin()
+                             + CtrIndexActive); // we want to preserve the order of the remaining constraints
                 active_ctr_type.erase(active_ctr_type.begin() + CtrIndexActive);
 
                 all_type[CtrIndex] = CTR_INACTIVE;
@@ -194,8 +194,7 @@ namespace LexLS
                 // all
                 // -----------------------------------------------------------
                 std::cout << " all_type = {";
-                std::copy(all_type.begin(),
-                          all_type.end(),
+                std::copy(all_type.begin(), all_type.end(),
                           std::ostream_iterator<ConstraintActivationType>(std::cout, " "));
                 std::cout << "}" << std::endl;
 
@@ -203,8 +202,7 @@ namespace LexLS
                 // type
                 // -----------------------------------------------------------
                 std::cout << "     type = {";
-                std::copy(active_ctr_type.begin(),
-                          active_ctr_type.end(),
+                std::copy(active_ctr_type.begin(), active_ctr_type.end(),
                           std::ostream_iterator<ConstraintActivationType>(std::cout, " "));
                 std::cout << "}" << std::endl;
 
@@ -212,25 +210,20 @@ namespace LexLS
                 // active
                 // -----------------------------------------------------------
                 std::cout << "   active = {";
-                std::copy(active.begin(),
-                          active.end(),
-                          std::ostream_iterator<Index>(std::cout, " "));
+                std::copy(active.begin(), active.end(), std::ostream_iterator<Index>(std::cout, " "));
                 std::cout << "}" << std::endl;
 
                 // -----------------------------------------------------------
                 // inactive
                 // -----------------------------------------------------------
                 std::cout << " inactive = {";
-                std::copy(inactive.begin(),
-                          inactive.end(),
-                          std::ostream_iterator<Index>(std::cout, " "));
+                std::copy(inactive.begin(), inactive.end(), std::ostream_iterator<Index>(std::cout, " "));
                 std::cout << "}" << std::endl;
 
                 std::cout << std::endl;
             }
 
         private:
-
             /**
                \brief Indexes of active constraints
             */

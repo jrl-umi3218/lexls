@@ -24,42 +24,32 @@
 #include <lexls/lexlsi.h>
 #include <lexls/tools.h>
 
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 
 #define INITIALIZE_INEQUALITY
 
-void foo(const char * filename)
+void foo(const char *filename)
 {
 
-    LexLS::tools::HierarchyType       type_of_hierarchy;
-    LexLS::Index                      number_of_variables;
-    LexLS::Index                      number_of_objectives;
-    std::vector<LexLS::Index>         number_of_constraints;
+    LexLS::tools::HierarchyType type_of_hierarchy;
+    LexLS::Index number_of_variables;
+    LexLS::Index number_of_objectives;
+    std::vector<LexLS::Index> number_of_constraints;
     std::vector<LexLS::ObjectiveType> types_of_objectives;
-    std::vector<Eigen::MatrixXd>      objectives;
+    std::vector<Eigen::MatrixXd> objectives;
 
-    std::vector< std::vector<LexLS::ConstraintActivationType> > active_set_guess;
+    std::vector<std::vector<LexLS::ConstraintActivationType>> active_set_guess;
     Eigen::VectorXd solution_guess;
     Eigen::VectorXd solution;
 
     // ==============================================================
 
     LexLS::tools::HierarchyFileProcessor fprocessor;
-    fprocessor.import(filename,
-                      type_of_hierarchy,
-                      number_of_variables,
-                      number_of_objectives,
-                      number_of_constraints,
-                      types_of_objectives,
-                      objectives,
-                      active_set_guess,
-                      solution_guess,
-                      solution);
+    fprocessor.import(filename, type_of_hierarchy, number_of_variables, number_of_objectives, number_of_constraints,
+                      types_of_objectives, objectives, active_set_guess, solution_guess, solution);
 
-    LexLS::internal::LexLSI lsi(number_of_variables,
-                                number_of_objectives,
-                                &number_of_constraints[0],
+    LexLS::internal::LexLSI lsi(number_of_variables, number_of_objectives, &number_of_constraints[0],
                                 &types_of_objectives[0]);
 
     LexLS::ParametersLexLSI parameters;
@@ -68,15 +58,15 @@ void foo(const char * filename)
 
     for (unsigned int i = 0; i < number_of_objectives; ++i)
     {
-        lsi.setData(i,objectives[i]);
+        lsi.setData(i, objectives[i]);
     }
 
     lsi.solve();
 
-    int nCtr = 0;
+    int nCtr     = 0;
     int nCtrIneq = 0;
     std::vector<LexLS::Index> eq_obj_dim(number_of_objectives);
-    for (LexLS::Index k=0; k<number_of_objectives; k++)
+    for (LexLS::Index k = 0; k < number_of_objectives; k++)
     {
         eq_obj_dim[k] = lsi.getActiveCtrCount(k);
 
@@ -88,11 +78,11 @@ void foo(const char * filename)
 
     // ==============================================================
 
-    LexLS::dMatrixType X(number_of_variables,3);
+    LexLS::dMatrixType X(number_of_variables, 3);
 
     X.col(0) = lsi.get_xStar();
 
-    LexLS::dMatrixType data = lsi.get_data(); // call after lsi.get_xStar()
+    LexLS::dMatrixType data  = lsi.get_data(); // call after lsi.get_xStar()
     LexLS::dMatrixType lexqr = lsi.get_lexqr();
 
     std::vector<LexLS::ConstraintIdentifier> ctr;
@@ -100,21 +90,17 @@ void foo(const char * filename)
 
     // ==============================================================
 #ifdef INITIALIZE_INEQUALITY
-    LexLS::internal::LexLSE lse(number_of_variables,
-                                number_of_objectives,
-                                &number_of_constraints[0]);
+    LexLS::internal::LexLSE lse(number_of_variables, number_of_objectives, &number_of_constraints[0]);
     lse.setObjDim(&eq_obj_dim[0]);
 #else
-    LexLS::internal::LexLSE lse(number_of_variables,
-                                number_of_objectives,
-                                &eq_obj_dim[0]);
+    LexLS::internal::LexLSE lse(number_of_variables, number_of_objectives, &eq_obj_dim[0]);
 #endif
 
     LexLS::Index row_ind = 0;
-    int k=0;
+    int k                = 0;
     for (unsigned int i = 0; i < number_of_objectives; ++i)
     {
-        lse.setData(i,data.block(row_ind, 0, eq_obj_dim[i], number_of_variables+1));
+        lse.setData(i, data.block(row_ind, 0, eq_obj_dim[i], number_of_variables + 1));
 
         for (unsigned int j = 0; j < eq_obj_dim[i]; ++j)
         {
@@ -130,7 +116,7 @@ void foo(const char * filename)
     lse.solve();
 
     // ==============================================================
-    LexLS::dMatrixType data1 = lse.get_data();
+    LexLS::dMatrixType data1  = lse.get_data();
     LexLS::dMatrixType lexqr1 = lse.get_lexqr();
 
     std::cout << "nCtr = " << nCtr << std::endl;
@@ -153,7 +139,7 @@ void foo(const char * filename)
     // ==============================================================
     // residual
     // ==============================================================
-/*
+    /*
     LexLS::dMatrixType R(nCtr,3);
 
     std::cout << data.rows() << ", " << data.cols() << std::endl;
@@ -178,19 +164,21 @@ void foo(const char * filename)
     row_ind = 0;
     for (unsigned int i = 0; i < number_of_objectives; ++i)
     {
-        double e = (lexqr.block(row_ind, 0, eq_obj_dim[i], number_of_variables+1) - lexqr1.block(row_ind, 0, eq_obj_dim[i], number_of_variables+1)).norm();
-        printf("   obj(%d): %1.18e \n",i,e);
+        double e = (lexqr.block(row_ind, 0, eq_obj_dim[i], number_of_variables + 1)
+                    - lexqr1.block(row_ind, 0, eq_obj_dim[i], number_of_variables + 1))
+                       .norm();
+        printf("   obj(%d): %1.18e \n", i, e);
 
         row_ind += eq_obj_dim[i];
     }
 }
 
-int main(int argc, char * argv[])
+int main(int argc, char *argv[])
 {
-    if(argc < 2)
+    if (argc < 2)
     {
-      std::cout << "Usage:\n" << argv[0] << " [hierarchy.dat]\n";
-      return 1;
+        std::cout << "Usage:\n" << argv[0] << " [hierarchy.dat]\n";
+        return 1;
     }
     foo(argv[1]);
 

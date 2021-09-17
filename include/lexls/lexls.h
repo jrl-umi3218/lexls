@@ -16,8 +16,7 @@ namespace LexLS
     class LexLSE
     {
     public:
-
-        inline LexLSE(){}
+        inline LexLSE() {}
 
         inline LexLSE(Index nVar_, Index nObj_, Index *ObjDim_)
         {
@@ -37,11 +36,12 @@ namespace LexLS
 
         // @todo introduce enum
         // @todo include solve_option in the list of parameters
-        inline dVectorType& solve(Index solve_option = 0)
+        inline dVectorType &solve(Index solve_option = 0)
         {
             lexlse.factorize();
 
-            switch(solve_option){
+            switch (solve_option)
+            {
 
             case 0:
                 lexlse.solve();
@@ -64,8 +64,7 @@ namespace LexLS
         }
 
     private:
-
         internal::LexLSE lexlse;
     };
 
-}
+} // namespace LexLS

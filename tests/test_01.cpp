@@ -9,13 +9,11 @@
     @brief 
 */
 
-
 #include <lexls/lexlsi.h>
 #include <lexls/tools.h>
 
-#include <iostream>
 #include <iomanip>
-
+#include <iostream>
 
 int main(int argc, char **argv)
 {
@@ -23,33 +21,24 @@ int main(int argc, char **argv)
     {
         return (-1);
     }
-    
 
-    LexLS::tools::HierarchyType          type_of_hierarchy;
-    unsigned int                         number_of_variables;
-    unsigned int                         number_of_objectives;
-    std::vector<unsigned int>            number_of_constraints;
-    std::vector<LexLS::ObjectiveType>    types_of_objectives;
-    std::vector<Eigen::MatrixXd>         objectives;
+    LexLS::tools::HierarchyType type_of_hierarchy;
+    unsigned int number_of_variables;
+    unsigned int number_of_objectives;
+    std::vector<unsigned int> number_of_constraints;
+    std::vector<LexLS::ObjectiveType> types_of_objectives;
+    std::vector<Eigen::MatrixXd> objectives;
 
-    std::vector< std::vector<LexLS::ConstraintActivationType> >  active_set_guess;
-    Eigen::VectorXd                                     solution_guess;
-    Eigen::VectorXd                                     solution;
+    std::vector<std::vector<LexLS::ConstraintActivationType>> active_set_guess;
+    Eigen::VectorXd solution_guess;
+    Eigen::VectorXd solution;
 
     try
     {
         LexLS::tools::HierarchyFileProcessor fprocessor;
 
-        fprocessor.import(  argv[1],
-                            type_of_hierarchy,
-                            number_of_variables,
-                            number_of_objectives,
-                            number_of_constraints,
-                            types_of_objectives,
-                            objectives,
-                            active_set_guess,
-                            solution_guess,
-                            solution);
+        fprocessor.import(argv[1], type_of_hierarchy, number_of_variables, number_of_objectives, number_of_constraints,
+                          types_of_objectives, objectives, active_set_guess, solution_guess, solution);
 
         // ==============================================================
         for (unsigned int i = 0; i < number_of_objectives; ++i)
@@ -57,7 +46,6 @@ int main(int argc, char **argv)
             std::cout << objectives[i] << std::endl << std::endl << std::endl << std::endl;
         }
         // ==============================================================
-
 
         // ==============================================================
         if (active_set_guess.size() != 0)
@@ -73,7 +61,6 @@ int main(int argc, char **argv)
         }
         // ==============================================================
 
-    
         // ==============================================================
         if (solution_guess.size() != 0)
         {
@@ -85,7 +72,6 @@ int main(int argc, char **argv)
         }
         // ==============================================================
 
-        
         // ==============================================================
         if (solution.size() != 0)
         {
@@ -97,11 +83,10 @@ int main(int argc, char **argv)
         }
         // ==============================================================
     }
-    catch(const std::exception &e)
+    catch (const std::exception &e)
     {
         std::cout << e.what() << std::endl;
     }
-
 
     return (0);
 }

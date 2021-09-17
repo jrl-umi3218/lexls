@@ -16,14 +16,10 @@ namespace LexLS
         class CyclingHandler
         {
         public:
-
-            inline CyclingHandler():
-                       counter(0),
-                       max_counter(50),
-                       relax_step(1e-08),
-                       previous_operation(OPERATION_UNDEFINED)
+            inline CyclingHandler()
+            : counter(0), max_counter(50), relax_step(1e-08), previous_operation(OPERATION_UNDEFINED)
             {
-                previous_ctr_identifier.set(0,0,CTR_INACTIVE);
+                previous_ctr_identifier.set(0, 0, CTR_INACTIVE);
             }
 
             inline TerminationStatus update(OperationType operation,
@@ -32,8 +28,7 @@ namespace LexLS
                                             bool &cycling_detected)
             {
                 cycling_detected = false;
-                if ((operation == OPERATION_ADD) &&
-                    (previous_operation == OPERATION_REMOVE))
+                if ((operation == OPERATION_ADD) && (previous_operation == OPERATION_REMOVE))
                 {
                     if (ctr_identifier == previous_ctr_identifier)
                     {
@@ -56,10 +51,8 @@ namespace LexLS
 
             inline void relax_bounds(std::vector<Objective> &Obj)
             {
-                Obj[previous_ctr_identifier.obj_index]
-                    .relax_bounds(previous_ctr_identifier.ctr_index,
-                                  previous_ctr_identifier.ctr_type,
-                                  relax_step);
+                Obj[previous_ctr_identifier.obj_index].relax_bounds(previous_ctr_identifier.ctr_index,
+                                                                    previous_ctr_identifier.ctr_type, relax_step);
 
                 counter++;
             }
