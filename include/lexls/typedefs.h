@@ -26,6 +26,9 @@ namespace LexLS
     typedef Eigen::Block<dMatrixType, Eigen::Dynamic, 1> dBlockType2Vector;
     typedef Eigen::VectorBlock<dVectorType, Eigen::Dynamic> dVectorBlockType;
 
+    typedef Eigen::Ref<dMatrixType> dMatrixRef;
+    typedef Eigen::Ref<const dMatrixType> dMatrixConstRef;
+
     enum RegularizationType
     {
         REGULARIZATION_NONE = 0,    // 0

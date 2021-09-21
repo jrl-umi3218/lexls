@@ -300,7 +300,7 @@ namespace LexLS
                 \param[in] ObjIndex Index of objective
                 \param[in] data     [A,LowerBounds,UpperBounds]
             */
-            inline void setData(Index ObjIndex, const dMatrixType &data)
+            inline void setData(Index ObjIndex, const dMatrixConstRef &data)
             {
                 if (ObjIndex >= nObj)
                 {
@@ -394,7 +394,7 @@ namespace LexLS
                 \param[in] VarIndex Index variables subject to simple bounds
                 \param[in] data     [LowerBounds,UpperBounds]
             */
-            inline void setData(Index ObjIndex, Index *VarIndex, const dMatrixType &data)
+            inline void setData(Index ObjIndex, Index *VarIndex, const dMatrixConstRef &data)
             {
                 if (ObjIndex >= nObj)
                 {

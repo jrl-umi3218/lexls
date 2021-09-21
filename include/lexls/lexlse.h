@@ -1508,7 +1508,7 @@ namespace LexLS
             /**
                 \brief set a random problem [A,RHS]
             */
-            inline void setProblem(const dMatrixType &data)
+            inline void setProblem(const dMatrixConstRef &data)
             {
                 LOD = data;
             }
@@ -1519,7 +1519,7 @@ namespace LexLS
                 \param[in] ObjIndex Index of objective
                 \param[in] data     data (including LHS & RHS)
             */
-            inline void setData(Index ObjIndex, const dMatrixType &data)
+            inline void setData(Index ObjIndex, const dMatrixConstRef &data)
             {
                 if (ObjIndex >= nObj)
                 {

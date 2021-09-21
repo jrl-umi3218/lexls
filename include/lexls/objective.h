@@ -782,7 +782,7 @@ namespace LexLS
             /**
                \brief Set objective data (obj_type = GENERAL_OBJECTIVE)
             */
-            inline void setData(const dMatrixType &data_)
+            inline void setData(const dMatrixConstRef &data_)
             {
                 data = data_;
             }
@@ -790,7 +790,7 @@ namespace LexLS
             /**
                \brief Set objective data + var_index (obj_type = SIMPLE_BOUNDS_OBJECTIVE)
             */
-            inline void setData(Index *var_index_, const dMatrixType &data_)
+            inline void setData(Index *var_index_, const dMatrixConstRef &data_)
             {
                 var_index = Eigen::Map<iVectorType>(var_index_, nCtr);
                 data      = data_;
