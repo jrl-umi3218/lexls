@@ -521,7 +521,7 @@ namespace LexLS
             inline bool checkBlockingConstraints(Index &CtrIndexBlocking,
                                                  ConstraintActivationType &CtrTypeBlocking,
                                                  RealScalar &alpha,
-                                                 const RealScalar tol_feasibility)
+                                                 const RealScalar tol_feasibility) const
             {
                 bool condition;
                 RealScalar num, den, ratio, rhs, alpha_input = alpha;
@@ -595,7 +595,7 @@ namespace LexLS
             /**
                \brief Returns #v
             */
-            inline dVectorType &get_v()
+            inline const dVectorType &get_v() const
             {
                 return v;
             }
@@ -608,7 +608,7 @@ namespace LexLS
                \note The result might be different from get_v() if the active-set iterations are
                prematurely terminated.
             */
-            inline void getConstraintViolation(dVectorType &ctr_violation)
+            inline void getConstraintViolation(dVectorType &ctr_violation) const
             {
                 ctr_violation.resize(nCtr);
 
@@ -632,7 +632,7 @@ namespace LexLS
             /**
                \brief Returns #dv
             */
-            inline dVectorType &get_dv()
+            inline const dVectorType &get_dv() const
             {
                 return dv;
             }
@@ -656,7 +656,7 @@ namespace LexLS
             /**
                \brief see working_set.getCtrIndex()
             */
-            inline Index getCtrIndex(Index k)
+            inline Index getCtrIndex(Index k) const
             {
                 return working_set.getCtrIndex(k);
             }
@@ -720,7 +720,7 @@ namespace LexLS
             /**
                 \brief Get objective data
             */
-            inline dMatrixType &getData()
+            inline const dMatrixType &getData() const
             {
                 return data;
             }
@@ -823,7 +823,7 @@ namespace LexLS
             /**
                \brief Get the regularization factor
             */
-            inline RealScalar getRegularization()
+            inline RealScalar getRegularization() const
             {
                 return regularization_factor;
             }

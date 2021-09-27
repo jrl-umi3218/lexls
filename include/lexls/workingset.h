@@ -136,19 +136,17 @@ namespace LexLS
                active constraints. If the constraint with index k is inactive then return its index
                among the inactive constraints.
             */
-            inline Index getCtrIndex(Index k)
+            inline Index getCtrIndex(Index k) const
             {
-                std::vector<Index>::iterator it;
-
                 if (isActive(k))
                 {
-                    it = std::find(active.begin(), active.end(), k);
+                    auto it = std::find(active.begin(), active.end(), k);
 
                     return std::distance(active.begin(), it); // it - active.begin()
                 }
                 else
                 {
-                    it = std::find(inactive.begin(), inactive.end(), k);
+                    auto it = std::find(inactive.begin(), inactive.end(), k);
 
                     return std::distance(inactive.begin(), it); // it - inactive.begin()
                 }

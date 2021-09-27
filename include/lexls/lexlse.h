@@ -1484,7 +1484,7 @@ namespace LexLS
             /**
                 \brief Get number of fixed variables
             */
-            inline Index getFixedVariablesCount()
+            inline Index getFixedVariablesCount() const
             {
                 return nVarFixed;
             }
@@ -1492,7 +1492,7 @@ namespace LexLS
             /**
                 \brief Get indexes of fixed variables
             */
-            inline iVectorType &getFixedVarIndex()
+            inline const iVectorType &getFixedVarIndex() const
             {
                 return fixed_var_index;
             }
@@ -1500,7 +1500,7 @@ namespace LexLS
             /**
                \brief Return #TotalRank (should be called after factorizing)
             */
-            inline Index getTotalRank()
+            inline Index getTotalRank() const
             {
                 return TotalRank;
             }
@@ -1584,7 +1584,7 @@ namespace LexLS
             /**
                 \brief Return the (primal) solution vector
             */
-            inline dVectorType &get_x()
+            inline const dVectorType &get_x() const
             {
                 return x;
             }
@@ -1605,12 +1605,12 @@ namespace LexLS
                 return obj_info[ObjIndex].rank;
             }
 
-            inline Index get_nObj()
+            inline Index get_nObj() const
             {
                 return nObj;
             }
 
-            inline Index get_nVar()
+            inline Index get_nVar() const
             {
                 return nVar;
             }
@@ -1618,32 +1618,32 @@ namespace LexLS
             /**
                 \brief Return dWorkspace
             */
-            inline dVectorType &getWorkspace()
+            inline const dVectorType &getWorkspace() const
             {
                 return dWorkspace;
             }
 
-            inline dMatrixType get_lexqr()
+            inline const dMatrixType &get_lexqr() const
             {
                 return LOD;
             }
 
-            inline dMatrixType get_data()
+            inline const dMatrixType &get_data() const
             {
                 return PROBLEM_DATA;
             }
 
-            inline dMatrixType get_X_mu()
+            inline const dMatrixType &get_X_mu() const
             {
                 return X_mu;
             }
 
-            inline dMatrixType get_X_mu_rhs()
+            inline const dMatrixType &get_X_mu_rhs() const
             {
                 return X_mu_rhs;
             }
 
-            inline dVectorType get_residual_mu()
+            inline const dVectorType &get_residual_mu() const
             {
                 return residual_mu;
             }

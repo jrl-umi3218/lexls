@@ -206,7 +206,7 @@ namespace LexLS
 
                \todo Remove this function.
             */
-            inline void print(const char *field)
+            inline void print(const char *field) const
             {
                 if (!strcmp(field, "working_set"))
                 {
@@ -458,7 +458,7 @@ namespace LexLS
             /**
                 \brief Return the (primal) solution vector
             */
-            inline dVectorType &get_x()
+            inline const dVectorType &get_x() const
             {
                 return x;
             }
@@ -469,7 +469,7 @@ namespace LexLS
 
                 \todo In getLambda as well I solve a lexlse problem (this is wasteful).
             */
-            inline dVectorType &get_xStar()
+            inline const dVectorType &get_xStar()
             {
                 formLexLSE();
                 lexlse.factorize();
@@ -478,7 +478,7 @@ namespace LexLS
                 return lexlse.get_x();
             }
 
-            inline dVectorType &get_v(Index ObjIndex)
+            inline const dVectorType &get_v(Index ObjIndex) const
             {
                 return objectives[ObjIndex].get_v();
             }
@@ -492,7 +492,7 @@ namespace LexLS
                \note The result might be different from get_v() if the active-set iterations are
                prematurely terminated.
             */
-            inline void getConstraintViolation(Index ObjIndex, dVectorType &ctr_violation)
+            inline void getConstraintViolation(Index ObjIndex, dVectorType &ctr_violation) const
             {
                 objectives[ObjIndex].getConstraintViolation(ctr_violation);
             }
@@ -557,27 +557,27 @@ namespace LexLS
                 }
             }
 
-            inline dMatrixType get_lexqr()
+            inline const dMatrixType &get_lexqr() const
             {
                 return lexlse.get_lexqr();
             }
 
-            inline dMatrixType get_data()
+            inline const dMatrixType &get_data() const
             {
                 return lexlse.get_data();
             }
 
-            inline dMatrixType get_X_mu()
+            inline const dMatrixType &get_X_mu() const
             {
                 return lexlse.get_X_mu();
             }
 
-            inline dMatrixType get_X_mu_rhs()
+            inline const dMatrixType &get_X_mu_rhs() const
             {
                 return lexlse.get_X_mu_rhs();
             }
 
-            inline dVectorType get_residual_mu()
+            inline const dVectorType &get_residual_mu() const
             {
                 return lexlse.get_residual_mu();
             }
@@ -873,7 +873,7 @@ namespace LexLS
                 \param[in] ObjDim_  Number of constraints involved in each objective
                 \param[in] ObjType_ Type of each objective
             */
-            void resize(Index *ObjDim_, ObjectiveType *ObjType_)
+            inline void resize(Index *ObjDim_, ObjectiveType *ObjType_)
             {
                 nObjOffset = 0;
                 if (ObjType_[0] == SIMPLE_BOUNDS_OBJECTIVE) // If only simple bounds in first objective of LexLSI

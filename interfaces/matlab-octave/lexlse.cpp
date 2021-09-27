@@ -199,7 +199,7 @@ void mexFunction(int num_output, mxArray *output[], int num_input, const mxArray
         }
 
         // output solution
-        LexLS::dVectorType &x = lexlse.get_x();
+        const LexLS::dVectorType &x = lexlse.get_x();
         output[0]             = mxCreateDoubleMatrix(num_var, 1, mxREAL);
         double *x_out         = mxGetPr(output[0]);
         for (LexLS::Index i = 0; i < num_var; ++i)
