@@ -38,6 +38,7 @@ endif()
 if(BUILD_MATLAB_BINDINGS)
   cmake_minimum_required(VERSION 3.16.3) #see https://gitlab.kitware.com/cmake/cmake/-/issues/19382 and https://gitlab.kitware.com/cmake/cmake/-/merge_requests/4206
   find_package(Matlab REQUIRED COMPONENTS MAIN_PROGRAM)
+  set(Matlab_INSTALL_DIR  "${Matlab_ROOT_DIR}/toolbox/lexls" CACHE PATH "installation directory for Matlab binding libraries")
   matlab_add_mex(NAME matlab_lexlse
                  SRC "${CMAKE_CURRENT_SOURCE_DIR}/lexlse.cpp"
                  OUTPUT_NAME lexlse
@@ -47,7 +48,7 @@ if(BUILD_MATLAB_BINDINGS)
                  OUTPUT_NAME lexlsi
                  LINK_TO lexls)
   # FIXME Maybe not the correct location
-  install(TARGETS matlab_lexlse matlab_lexlsi DESTINATION "${Matlab_ROOT_DIR}/toolbox/lexls")
+  install(TARGETS matlab_lexlse matlab_lexlsi DESTINATION ${Matlab_INSTALL_DIR})
 endif()
 
 macro(add_binding_test NAME FILE_IN)
