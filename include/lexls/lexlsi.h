@@ -57,6 +57,31 @@ namespace LexLS
                 resize(ObjDim_, ObjType_);
             }
 
+            /**
+                \brief Default construct. Use LexLSI::resize() before setting data.
+            */
+            inline LexLSI() : x_guess_is_specified(false), status(TERMINATION_STATUS_UNKNOWN)
+            {
+                parameters.setDefaults();
+                setParameters(parameters);
+            }
+
+            /**
+                \brief Resize the problem.
+
+                \param[in] nVar_    Number of variables (only number of elements in x, and not in the residuals w)
+                \param[in] nObj_    Number of objectives
+                \param[in] ObjDim_  Number of constraints involved in each objective
+                \param[in] ObjType_ Type of each objective
+            */
+            inline void resize(Index nVar_, Index nObj_, Index *ObjDim_, ObjectiveType *ObjType_)
+            {
+                nVar = nVar_;
+                nObj = nObj_;
+
+                resize(ObjDim_, ObjType_);
+            }
+
             // ---------------------------------------------------------------------------------
 
             /**
@@ -238,11 +263,11 @@ namespace LexLS
                     std::cout << "x = \n" << x << std::endl;
                     std::cout << std::endl;
                 }
-                else if (!strcmp(field, "w"))
+                else if (!strcmp(field, "v"))
                 {
                     for (Index ObjIndex = 0; ObjIndex < nObj; ObjIndex++)
                     {
-                        std::cout << "w[" << ObjIndex << "] = \n" << objectives[ObjIndex].get_v() << std::endl;
+                        std::cout << "v[" << ObjIndex << "] = \n" << objectives[ObjIndex].get_v() << std::endl;
                         std::cout << std::endl;
                     }
                     std::cout << std::endl;
