@@ -6,6 +6,8 @@
 
 #include <lexls/typedefs.h>
 
+#include <numeric> // for std::iota
+
 namespace LexLS
 {
     namespace internal
@@ -23,14 +25,23 @@ namespace LexLS
             */
             inline void resize(Index dim)
             {
-                // initialize all constraints as inactive
-                all_type.resize(dim, CTR_INACTIVE);
-
+                all_type.resize(dim);
+                active.reserve(dim);
+                active_ctr_type.reserve(dim);
                 inactive.resize(dim);
-                for (Index CtrIndex = 0; CtrIndex < dim; CtrIndex++)
-                {
-                    inactive[CtrIndex] = CtrIndex;
-                }
+                reset();
+            }
+
+            /**
+                \brief Reset the working set to all constraints being inactive.
+            */
+            inline void reset() {
+                // initialize all constraints as inactive
+                std::fill(all_type.begin(), all_type.end(), CTR_INACTIVE);
+                active.clear();
+                active_ctr_type.clear();
+                // initialize inactive with [0, 1, 2, ...]
+                std::iota(inactive.begin(), inactive.end(), 0);
             }
 
             /**
@@ -80,6 +91,8 @@ namespace LexLS
                 // CtrIndex is the index of WorkingSet.active[CtrIndexActive] in the LexLSI objective
                 Index CtrIndex = getActiveCtrIndex(CtrIndexActive); // CtrIndexActive --> CtrIndex
 
+                // \todo This test is useless: attempting to deactivate a non activated constraint will
+                // make the above line crash.
                 if (all_type[CtrIndex] == CTR_INACTIVE)
                 {
                     throw Exception("Cannot deactivate an inactive constraint");
@@ -104,7 +117,7 @@ namespace LexLS
             */
             inline Index getActiveCtrCount() const
             {
-                return active.size();
+                return static_cast<Index>(active.size());
             }
 
             /**
@@ -142,13 +155,13 @@ namespace LexLS
                 {
                     auto it = std::find(active.begin(), active.end(), k);
 
-                    return std::distance(active.begin(), it); // it - active.begin()
+                    return static_cast<Index>(std::distance(active.begin(), it)); // it - active.begin()
                 }
                 else
                 {
                     auto it = std::find(inactive.begin(), inactive.end(), k);
 
-                    return std::distance(inactive.begin(), it); // it - inactive.begin()
+                    return static_cast<Index>(std::distance(inactive.begin(), it)); // it - inactive.begin()
                 }
             }
 
@@ -157,7 +170,7 @@ namespace LexLS
             */
             inline Index getInactiveCtrCount() const
             {
-                return inactive.size();
+                return static_cast<Index>(inactive.size());
             }
 
             /**

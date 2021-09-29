@@ -606,7 +606,7 @@ namespace LexLS
 
             inline Index size()
             {
-                return seq.size();
+                return static_cast<Index>(seq.size());
             }
 
         private:
