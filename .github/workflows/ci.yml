@@ -1,0 +1,54 @@
+name: CI of LexLS
+
+on:
+  repository_dispatch:
+    types:
+    - run-ci
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+  schedule:
+    # Run on Sunday, Tuesday and Thursday nights
+    - cron: '0 23 * * 0,1,4'
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-18.04, ubuntu-20.04, macos-latest, windows-latest]
+        compiler: [gcc, clang]
+        build-type: [Debug, RelWithDebInfo]
+        exclude:
+          # Only default compiler on macos-latest and windows-latest
+          - os: macos-latest
+            compiler: clang
+          - os: windows-latest
+            compiler: clang
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - name: Install dependencies
+      uses: jrl-umi3218/github-actions/install-dependencies@master
+      with:
+        compiler: ${{ matrix.compiler }}
+        build-type: ${{ matrix.build-type }}
+        ubuntu: |
+          apt: libeigen3-dev doxygen texlive-base texlive-science texlive-fonts-extra octave liboctave-dev
+        macos: |
+          brew: eigen
+        windows: |
+          github:
+            - path: eigenteam/eigen-git-mirror
+              ref: 3.3.7
+    - name: Build and test
+      uses: jrl-umi3218/github-actions/build-cmake-project@master
+      with:
+        compiler: ${{ matrix.compiler }}
+        build-type: ${{ matrix.build-type }}
+        linux-options: -DBUILD_OCTAVE_BINDINGS=ON
