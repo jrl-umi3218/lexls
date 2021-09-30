@@ -9,6 +9,9 @@ list(APPEND LEXLS_INCLUDE_DIRECTORIES "$<TARGET_PROPERTY:lexls,INTERFACE_INCLUDE
 list(APPEND LEXLS_LINK_FLAGS "$<TARGET_PROPERTY:lexls,LINK_FLAGS>")
 
 if(BUILD_OCTAVE_BINDINGS)
+  if(CMAKE_CXX_COMPILER_ID STREQUAL Clang)
+    find_package(OpenMP REQUIRED)
+  endif()
   find_program(OCTAVE_CONFIG octave-config)
   if(NOT OCTAVE_CONFIG)
     message(FATAL_ERROR "BUILD_OCTAVE_BINDINGS is ON but the octave-config program is not installed")
