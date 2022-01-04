@@ -638,6 +638,14 @@ namespace LexLS
             }
 
             /**
+               \brief Reset the active set
+            */
+            inline void resetActiveSet()
+            {
+                return working_set.reset();
+            }
+
+            /**
                \brief Returns the number of active constraints
             */
             inline Index getActiveCtrCount() const

@@ -22,6 +22,13 @@ namespace LexLS
                 previous_ctr_identifier.set(0, 0, CTR_INACTIVE);
             }
 
+            inline void reset()
+            {
+                counter            = 0;
+                previous_operation = OPERATION_UNDEFINED;
+                previous_ctr_identifier.set(0, 0, CTR_INACTIVE);
+            }
+
             inline TerminationStatus update(OperationType operation,
                                             ConstraintIdentifier ctr_identifier,
                                             std::vector<Objective> &Obj,

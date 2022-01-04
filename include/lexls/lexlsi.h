@@ -82,6 +82,27 @@ namespace LexLS
                 resize(ObjDim_, ObjType_);
             }
 
+            /**
+                \brief Reset the data to enable a new run
+            */
+            inline void reset()
+            {
+                for (Index ObjIndex = 0; ObjIndex < nObj; ObjIndex++)
+                {
+                    objectives[ObjIndex].resetActiveSet();
+                }
+
+                initialize();
+
+                bool x_guess_is_specified = false;
+                nActive.setZero();
+                status = TERMINATION_STATUS_UNKNOWN;
+                //lexlse;
+                working_set_log.clear();
+                cycling_handler.reset();
+                WS.clear();
+            }
+
             // ---------------------------------------------------------------------------------
 
             /**
@@ -260,14 +281,14 @@ namespace LexLS
                 }
                 else if (!strcmp(field, "x"))
                 {
-                    std::cout << "x = \n" << x << std::endl;
+                    std::cout << "x = \n" << x.transpose() << std::endl;
                     std::cout << std::endl;
                 }
                 else if (!strcmp(field, "v"))
                 {
                     for (Index ObjIndex = 0; ObjIndex < nObj; ObjIndex++)
                     {
-                        std::cout << "v[" << ObjIndex << "] = \n" << objectives[ObjIndex].get_v() << std::endl;
+                        std::cout << "v[" << ObjIndex << "] = \n" << objectives[ObjIndex].get_v().transpose() << std::endl;
                         std::cout << std::endl;
                     }
                     std::cout << std::endl;

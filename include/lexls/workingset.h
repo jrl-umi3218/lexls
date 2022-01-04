@@ -41,6 +41,7 @@ namespace LexLS
                 active.clear();
                 active_ctr_type.clear();
                 // initialize inactive with [0, 1, 2, ...]
+                inactive.resize(all_type.size());
                 std::iota(inactive.begin(), inactive.end(), 0);
             }
 
