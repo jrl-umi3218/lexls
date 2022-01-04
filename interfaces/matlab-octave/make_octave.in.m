@@ -7,7 +7,7 @@ FILE{2}       = '@CMAKE_CURRENT_SOURCE_DIR@/lexlsi.cpp';
 
 function retval = flatten_cmake_list(l, joinc = ' ')
   retval = strsplit(l, ';');
-  retval(~cellfun('isempty',retval));
+  retval = retval(~cellfun('isempty',retval));
   retval = strjoin(retval, joinc);
 endfunction
 
@@ -21,12 +21,13 @@ end
 
 CMAKE_CXX_FLAGS = {
   '@CMAKE_CXX_FLAGS@',
+  '@OpenMP_CXX_FLAGS@',
   '$<$<CONFIG:DEBUG>:@CMAKE_CXX_FLAGS_DEBUG@>'
   '$<$<CONFIG:MINSIZEREL>:@CMAKE_CXX_FLAGS_MINSIZEREL@>'
   '$<$<CONFIG:RELWITHDEBINFO>:@CMAKE_CXX_FLAGS_RELWITHDEBINFO@>'
   '$<$<CONFIG:RELEASE>:@CMAKE_CXX_FLAGS_RELEASE@>'
 };
-CMAKE_CXX_FLAGS(~cellfun('isempty',CMAKE_CXX_FLAGS));
+CMAKE_CXX_FLAGS = CMAKE_CXX_FLAGS(~cellfun('isempty',CMAKE_CXX_FLAGS));
 CMAKE_CXX_FLAGS = strjoin(CMAKE_CXX_FLAGS, ' ');
 
 setenv('CXXFLAGS', [LEXLS_COMPILE_DEFINITIONS, ' ', LEXLS_COMPILE_FLAGS', ' ', '@CMAKE_CXX_FLAGS@ $<$<CONFIG:RelWithDebInfo>:@CMAKE_CXX_FLAGS_RELWITHDEBINFO@>'])
