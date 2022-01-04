@@ -288,7 +288,8 @@ namespace LexLS
                 {
                     for (Index ObjIndex = 0; ObjIndex < nObj; ObjIndex++)
                     {
-                        std::cout << "v[" << ObjIndex << "] = \n" << objectives[ObjIndex].get_v().transpose() << std::endl;
+                        std::cout << "v[" << ObjIndex << "] = \n"
+                                  << objectives[ObjIndex].get_v().transpose() << std::endl;
                         std::cout << std::endl;
                     }
                     std::cout << std::endl;

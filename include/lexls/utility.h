@@ -16,7 +16,8 @@ namespace LexLS
     */
     inline void print_eigen_matrix(dMatrixType M, const char *variable_name)
     {
-        printf(" %s(%lu,%lu) = \n", variable_name, static_cast<unsigned long>(M.rows()), static_cast<unsigned long>(M.cols()));
+        printf(" %s(%lu,%lu) = \n", variable_name, static_cast<unsigned long>(M.rows()),
+               static_cast<unsigned long>(M.cols()));
         for (Index d1 = 0; d1 < M.rows(); d1++)
         {
             for (Index d2 = 0; d2 < M.cols(); d2++)

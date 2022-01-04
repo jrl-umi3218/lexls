@@ -35,7 +35,8 @@ namespace LexLS
             /**
                 \brief Reset the working set to all constraints being inactive.
             */
-            inline void reset() {
+            inline void reset()
+            {
                 // initialize all constraints as inactive
                 std::fill(all_type.begin(), all_type.end(), CTR_INACTIVE);
                 active.clear();

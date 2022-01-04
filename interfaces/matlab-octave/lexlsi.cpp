@@ -633,8 +633,8 @@ void mexFunction(int num_output, mxArray *output[], int num_input, const mxArray
     try
     {
         const LexLS::dVectorType &x = lexlsi.get_x();
-        output[0]             = mxCreateDoubleMatrix(num_var, 1, mxREAL);
-        double *x_out         = mxGetPr(output[0]);
+        output[0]                   = mxCreateDoubleMatrix(num_var, 1, mxREAL);
+        double *x_out               = mxGetPr(output[0]);
         for (LexLS::Index i = 0; i < num_var; ++i)
         {
             x_out[i] = x(i);
