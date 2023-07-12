@@ -6,7 +6,7 @@
     @file
     @author  Alexander Sherikov
 
-    @brief 
+    @brief
 */
 
 #include <lexls/lexlsi.h>

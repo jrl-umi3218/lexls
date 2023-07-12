@@ -1,8 +1,8 @@
 /// <--! Copyright 2013-2021 INRIA -->
 
 /**
- * \mainpage Lexicographic Least-Squares solver. 
- * 	
+ * \mainpage Lexicographic Least-Squares solver.
+ *
  * \section Contents Contents
  * - \ref ContactItem
  * - \ref PurposeItem
@@ -10,7 +10,7 @@
  * - \ref ReferencesItem
  * - \ref InstallItem
  *
- * \section ContactItem Contact 
+ * \section ContactItem Contact
  * - Please send questions/remarks to dimitar.dimitrov@inria.fr or pierre-brice.wieber@inria.fr
  *
  * \section PurposeItem Purpose of the library
@@ -25,19 +25,19 @@
  *  \left[\begin{array}{c} v_1 \\ \vdots \\ v_P \end{array}\right]
  *  \leq \left[\begin{array}{c} b_1^u \\ \vdots \\ b_P^u \end{array}\right], \nonumber
  * \f}
- * where it is assumed that \f$b_k^{\ell} \leq b_{k}^{u}$, $k=1,\dots,P\f$. We refer to 
+ * where it is assumed that \f$b_k^{\ell} \leq b_{k}^{u}$, $k=1,\dots,P\f$. We refer to
  * \f[
  * b_k^{\ell} \leq A_kx - v_k \leq b_k^{u}
  * \f]
  * as the constraints (\f$A\in \mathbb{R}^{m_k \times n}\f$) involved in the \f$k\f$-th objective, i.e., minimize
  * \f$\norm{v_k}_2^2\f$. Objective \f$i\f$ has a (strict) priority over objective \f$j\f$ for \f$i<j\f$.
  *
- * If \f$b_k^{\ell} = b_{k}^{u} = b_k\f$, \f$k=1,\dots,P\f$, the problem is referred to as LexLSE 
+ * If \f$b_k^{\ell} = b_{k}^{u} = b_k\f$, \f$k=1,\dots,P\f$, the problem is referred to as LexLSE
  * i.e., lexicographic least-squares problem with equality constraints
  *
  * \f{eqnarray}{
  *  \mathop{\mbox{lexminimize}}_{x,\, v_1,\dots,v_P} & & ( \norm{v_1}_2^2, \, \dots, \, \norm{v_P}_2^2 ) \nonumber \\
- *  \mbox{subject to} & & 
+ *  \mbox{subject to} & &
  * \left[\begin{array}{c} A_1 \\ \vdots \\ A_P \end{array}\right]x -
  * \left[\begin{array}{c} v_1 \\ \vdots \\ v_P \end{array}\right] =
  * \left[\begin{array}{c} b_1 \\ \vdots \\ b_P \end{array}\right]. \nonumber
@@ -49,6 +49,6 @@
  * Work in progress ...
  *
  * \section InstallItem Compilation & other
- *	
+ *
  * \n
  */

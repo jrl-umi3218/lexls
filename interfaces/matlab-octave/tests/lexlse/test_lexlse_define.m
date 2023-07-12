@@ -4,7 +4,7 @@
 
 function options = test_lexlse_define()
 %
-% defines tests 
+% defines tests
 %
 
 load_labels

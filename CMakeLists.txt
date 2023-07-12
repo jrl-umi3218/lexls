@@ -7,7 +7,11 @@ cmake_minimum_required(VERSION 3.1.3)
 set(CMAKE_CXX_STANDARD 11)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-project(lexls LANGUAGES CXX VERSION 0.5.0)
+project(
+  lexls
+  LANGUAGES CXX
+  VERSION 0.5.0
+)
 
 include(CTest)
 enable_testing()

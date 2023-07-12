@@ -15,7 +15,7 @@ end
 if n1 == 1
   ind      = obj(1).A;
   n        = size(obj(2).A,2);
-  A        = zeros(m1,n); 
+  A        = zeros(m1,n);
   A(:,ind) = eye(length(ind));
   obj(1).A = A;
   end
