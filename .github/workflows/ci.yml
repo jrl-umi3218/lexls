@@ -52,3 +52,4 @@ jobs:
         compiler: ${{ matrix.compiler }}
         build-type: ${{ matrix.build-type }}
         linux-options: -DBUILD_OCTAVE_BINDINGS=ON -DBUILD_OCTAVE_BINDINGS_WITH_CLANG=OFF
+        windows-options: -DINSTALL_PDF_DOCUMENTATION:BOOL=OFF -DINSTALL_HTML_DOCUMENTATION:BOOL=OFF
