@@ -1,7 +1,7 @@
 include(CMakePackageConfigHelpers)
 set(VERSION_CONFIG "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake")
 set(PROJECT_CONFIG "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake")
-set(CONFIG_INSTALL_DIR "lib/cmake/${PROJECT_NAME}")
+set(CONFIG_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}")
 write_basic_package_version_file(
   ${VERSION_CONFIG}
   VERSION ${PROJECT_VERSION}
@@ -18,5 +18,5 @@ install(
   EXPORT ${PROJECT_NAME}Targets
   FILE ${PROJECT_NAME}Targets.cmake
   NAMESPACE ${PROJECT_NAME}::
-  DESTINATION lib/cmake/${PROJECT_NAME}
+  DESTINATION "${CONFIG_INSTALL_DIR}"
 )

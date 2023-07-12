@@ -7,13 +7,16 @@ cmake_minimum_required(VERSION 3.1.3)
 set(CMAKE_CXX_STANDARD 11)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
+set(PROJECT_NAME lexls)
+set(PROJECT_VERSION 0.5.0)
 project(
-  lexls
+  ${PROJECT_NAME}
   LANGUAGES CXX
-  VERSION 0.5.0
+  VERSION ${PROJECT_VERSION}
 )
 
 include(CTest)
+include(GNUInstallDirs)
 enable_testing()
 
 option(INSTALL_HTML_DOCUMENTATION "Install project HTML documentation" ON)

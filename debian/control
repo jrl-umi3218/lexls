@@ -1,0 +1,46 @@
+Source: lexls
+Priority: optional
+Maintainer: Pierre Gergondet <pierre.gergondet+ppa@gmail.com>
+Standards-Version: 3.9.5
+Section: libdevel
+Homepage: http://github.com/jrl-umi3218/lexls
+Vcs-Git: git://github.com/jrl-umi3218/lexls -b debian
+Vcs-Browser: http://github.com/jrl-umi3218/lexls
+Build-Depends: debhelper (>= 9),
+ pkg-config,
+ cmake,
+ doxygen,
+ graphviz,
+ texlive-base,
+ texlive-science,
+ texlive-fonts-extra,
+ octave,
+ liboctave-dev,
+ libeigen3-dev (>= 3.2)
+
+Package: liblexls-dev
+Section: libdevel
+Architecture: any
+Depends: pkg-config,
+         libeigen3-dev,
+         ${misc:Depends}
+Suggests: liblexls-doc
+Description: lexls: Lexicographic Least-Squares
+ A fast C++ solver for lexicographic least-squares problems based on the
+ lexicographic QR (l-QR) presented in the paper "Efficient resolution of
+ potentially conflicting linear constraints in robotics" by D. Dimitrov,
+ A. Sherikov and P.-B. Wieber.
+
+Package: liblexls-doc
+Section: doc
+Architecture: all
+Depends: ${misc:Depends}
+Multi-Arch: foreign
+Suggests: liblexls-dev
+Description: lexls API documentation
+ A fast C++ solver for lexicographic least-squares problems based on the
+ lexicographic QR (l-QR) presented in the paper "Efficient resolution of
+ potentially conflicting linear constraints in robotics" by D. Dimitrov,
+ A. Sherikov and P.-B. Wieber.
+ .
+ This package provides the complete API documentation in HTML/PDF format.
