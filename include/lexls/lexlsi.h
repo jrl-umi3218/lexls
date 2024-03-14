@@ -1295,8 +1295,7 @@ namespace LexLS
 
                 dVectorType xStar = lexlse.get_x();
 
-                file << "% obtained with old working set"
-                     << "\n";
+                file << "% obtained with old working set" << "\n";
                 file << "xStar_(:," << nIterations + 1 << ") = [ ";
                 for (Index k = 0; k < nVar; k++)
                 {
