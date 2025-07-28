@@ -24,7 +24,7 @@ jobs:
       deps: '["jrl-umi3218/tvm"]'
       matrix: |
           {
-            "dist": ["bionic", "focal", "jammy", "noble"],
+            "dist": ["bionic", "focal", "jammy"],
             "arch": ["amd64"],
             "include":
             [
