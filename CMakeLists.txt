@@ -1,14 +1,14 @@
 #
-# Copyright 2013-2021 CNRS-UM LIRMM, CNRS-AIST JRL, INRIA
+# Copyright 2013-2026 CNRS-UM LIRMM, CNRS-AIST JRL, INRIA
 #
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.22)
 
 set(CMAKE_CXX_STANDARD 11)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 set(PROJECT_NAME lexls)
-set(PROJECT_VERSION 0.5.0)
+set(PROJECT_VERSION 1.0.0)
 project(
   ${PROJECT_NAME}
   LANGUAGES CXX
