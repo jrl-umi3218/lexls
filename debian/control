@@ -1,6 +1,6 @@
 Source: lexls
 Priority: optional
-Maintainer: Pierre Gergondet <pierre.gergondet+ppa@gmail.com>
+Maintainer: Arnaud Tanguy <arn.tanguy+ppa@gmail.com>
 Standards-Version: 3.9.5
 Section: libdevel
 Homepage: http://github.com/jrl-umi3218/lexls
@@ -14,8 +14,6 @@ Build-Depends: debhelper (>= 9),
  texlive-base,
  texlive-science,
  texlive-fonts-extra,
- octave,
- liboctave-dev,
  libeigen3-dev (>= 3.2)
 
 Package: liblexls-dev
